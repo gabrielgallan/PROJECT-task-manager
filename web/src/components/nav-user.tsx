@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { Button } from './ui/button'
 
 export function NavUser() {
 	return (
@@ -15,9 +16,9 @@ export function NavUser() {
 				<DropdownMenu>
 					<DropdownMenuTrigger className="flex w-full">
 						<SidebarMenuButton className="py-6">
-							<Avatar className="size-8">
+							<Avatar>
 								<AvatarImage src="https://github.com/gabrielgallan.png" alt="gabrielgallan" />
-								<AvatarFallback>CN</AvatarFallback>
+								<AvatarFallback>GG</AvatarFallback>
 							</Avatar>
 
 							<div className="grid flex-1 text-left text-sm leading-tight">
@@ -28,7 +29,9 @@ export function NavUser() {
 								</span>
 							</div>
 
-							<EllipsisVertical className="ml-auto size-4" />
+							<Button size="icon" className="ml-auto" variant="ghost">
+								<EllipsisVertical className="size-4" />
+							</Button>
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 

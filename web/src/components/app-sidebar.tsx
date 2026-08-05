@@ -1,4 +1,4 @@
-import { CalendarDays, ChartNoAxesGantt, Clock, Workflow } from 'lucide-react'
+import { Calendar, ChartNoAxesGantt, Clock, Workflow } from 'lucide-react'
 import type * as React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -27,7 +27,7 @@ const groups = [
 			{
 				label: 'Plans',
 				url: '/registers/plans',
-				icon: CalendarDays,
+				icon: Calendar,
 			},
 			{
 				label: 'Work Logs',
@@ -65,11 +65,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								{group.items.map((item) => (
 									<SidebarMenuItem key={item.label}>
 										<SidebarMenuButton
-											className="py-4"
+											className="py-5"
 											tooltip={item.label}
 											isActive={item.url === '/' ? pathname === '/' : pathname.startsWith(item.url)}
 										>
-											<Link to={item.url} className="flex gap-2 items-center">
+											<Link to={item.url} className="flex gap-2 items-center w-full">
 												{item.icon && <item.icon />}
 
 												<span>{item.label}</span>

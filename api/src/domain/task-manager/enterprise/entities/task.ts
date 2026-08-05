@@ -1,24 +1,25 @@
-import { Entity } from "@/core/entities/entity";
-import type { UniqueEntityID } from "@/core/entities/unique-entity-id";
-import type { Optional } from "@/core/types/optional";
+import { Entity } from '@/core/entities/entity'
+import type { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import type { Optional } from '@/core/types/optional'
+
+type TaskStatus = 'backlog' | 'in_process' | 'done'
 
 export interface TaskProps {
-  registeredAt: Date;
+	title: string
+	status: TaskStatus
+	createdAt: Date
+	updatedAt?: Date | null
 }
 
 export class Task extends Entity<TaskProps> {
-	static create(
-		props: Optional<TaskProps, "registeredAt">,
-		id?: UniqueEntityID,
-	) {
+	static create(props: Optional<TaskProps, 'createdAt'>, id?: UniqueEntityID) {
 		const task = new Task(
 			{
 				...props,
-				registeredAt: props.registeredAt ?? new Date(),
 			},
 			id,
-		);
+		)
 
-		return task;
+		return task
 	}
 }
