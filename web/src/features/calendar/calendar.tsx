@@ -1,38 +1,87 @@
 import { CalendarBody } from '@/features/calendar/calendar-body'
-import { CalendarHeader } from '@/features/calendar/calendar-header'
-import { CalendarProvider } from '@/features/calendar/contexts/calendar-context'
-import { DndProvider } from '@/features/calendar/contexts/dnd-context'
-import type { IPlan } from '@/features/calendar/interfaces'
-import { PlanDialog } from '@/features/calendar/plan-dialog'
-import type { TCalendarView } from '@/features/calendar/types'
+import { CalendarProvider, useCalendar } from '@/features/calendar/calendar-provider'
+import { CalendarHeader } from '@/features/calendar/components/calendar-header'
+import { DragDropProvider } from '@/features/calendar/interactions/drag-drop-context'
+import '@/features/calendar/styles/calendar-scrollbar.css'
+import {
+	CALENDAR_VIEWS,
+	type ICalendarItem,
+	type ICalendarProps,
+} from '@/features/calendar/types'
 import { cn } from '@/lib/utils'
 
-interface IProps {
-	plans: IPlan[]
-	defaultView?: TCalendarView
-	className?: string
+function CalendarContent<TItem extends ICalendarItem>({
+	items,
+	className,
+	onCreate,
+	onOpen,
+	onMove,
+	onResize,
+	renderItem,
+	getItemClassName,
+	getAgendaEmptyText,
+	renderToolbarActions,
+	renderSettingsItems,
+	renderOverlay,
+	availableViews = CALENDAR_VIEWS,
+	settings,
+}: ICalendarProps<TItem>) {
+	const { selectedDate, view, use24HourFormat } = useCalendar()
+
+	return (
+		<>
+			<div
+				className={cn(
+					'flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-background',
+					className,
+				)}
+			>
+				<CalendarHeader
+					availableViews={availableViews}
+					settings={settings}
+					renderToolbarActions={renderToolbarActions}
+					renderSettingsItems={renderSettingsItems}
+				/>
+				<CalendarBody
+					items={items}
+					onCreate={onCreate}
+					onOpen={onOpen}
+					onMove={onMove}
+					onResize={onResize}
+					renderItem={renderItem}
+					getItemClassName={getItemClassName}
+					getAgendaEmptyText={getAgendaEmptyText}
+				/>
+			</div>
+
+			{renderOverlay?.({ selectedDate, view, use24HourFormat })}
+		</>
+	)
 }
 
-/**
- * Fills the height it is given, so the page is responsible for the outer box.
- */
-export function Calendar({ plans, defaultView = 'week', className }: IProps) {
-	return (
-		<CalendarProvider plans={plans} defaultView={defaultView}>
-			<DndProvider>
-				<div
-					className={cn(
-						'flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-xl bg-background',
-						className,
-					)}
-				>
-					<CalendarHeader />
-					<CalendarBody />
-				</div>
+export function Calendar<TItem extends ICalendarItem>({
+	defaultView = 'week',
+	availableViews = CALENDAR_VIEWS,
+	storageKey = 'calendar-settings',
+	...props
+}: ICalendarProps<TItem>) {
+	const views = availableViews.length > 0 ? availableViews : CALENDAR_VIEWS
+	const initialView = views.includes(defaultView) ? defaultView : (views[0] ?? 'week')
 
-				{/* Mounted once for the whole calendar. */}
-				<PlanDialog />
-			</DndProvider>
+	return (
+		<CalendarProvider
+			defaultView={initialView}
+			availableViews={views}
+			storageKey={storageKey}
+		>
+			<DragDropProvider>
+				<CalendarContent
+					defaultView={initialView}
+					availableViews={views}
+					storageKey={storageKey}
+					{...props}
+				/>
+			</DragDropProvider>
 		</CalendarProvider>
 	)
 }

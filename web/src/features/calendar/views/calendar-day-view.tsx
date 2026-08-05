@@ -1,15 +1,24 @@
 import { format, isToday } from 'date-fns'
-import { AllDayRow } from '@/features/calendar/all-day-row'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
-import { splitPlansBySpan } from '@/features/calendar/helpers'
-import type { IPlan } from '@/features/calendar/interfaces'
-import { DayColumn, GUTTER_CLASS, TimeGridScroller, TimeGutter } from '@/features/calendar/time-grid'
+import { useCalendar } from '@/features/calendar/calendar-provider'
+import { AllDayRow } from '@/features/calendar/components/all-day-row'
+import {
+	DayColumn,
+	GUTTER_CLASS,
+	TimeGridScroller,
+	TimeGutter,
+} from '@/features/calendar/components/time-grid'
+import { splitItemsBySpan } from '@/features/calendar/lib/layout'
+import type { ICalendarItem, ICalendarProps } from '@/features/calendar/types'
 import { cn } from '@/lib/utils'
 
-export function CalendarDayView({ plans }: { plans: IPlan[] }) {
-	const { selectedDate } = useCalendar()
+type TDayViewProps<TItem extends ICalendarItem> = Pick<
+	ICalendarProps<TItem>,
+	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+>
 
-	const { timed, multiDay } = splitPlansBySpan(plans)
+export function CalendarDayView<TItem extends ICalendarItem>(props: TDayViewProps<TItem>) {
+	const { selectedDate } = useCalendar()
+	const { timed, multiDay } = splitItemsBySpan(props.items)
 
 	return (
 		<TimeGridScroller>
@@ -42,7 +51,13 @@ export function CalendarDayView({ plans }: { plans: IPlan[] }) {
 							All day
 						</div>
 						<div className="flex-1 border-l px-px">
-							<AllDayRow days={[selectedDate]} plans={multiDay} />
+							<AllDayRow
+								days={[selectedDate]}
+								items={multiDay}
+								onOpen={props.onOpen}
+								renderItem={props.renderItem}
+								getItemClassName={props.getItemClassName}
+							/>
 						</div>
 					</div>
 				)}
@@ -51,7 +66,7 @@ export function CalendarDayView({ plans }: { plans: IPlan[] }) {
 			<div className="flex">
 				<TimeGutter />
 				<div className="flex flex-1 border-l">
-					<DayColumn day={selectedDate} plans={timed} showCurrentTimeLabel />
+					<DayColumn {...props} items={timed} day={selectedDate} showCurrentTimeLabel />
 				</div>
 			</div>
 		</TimeGridScroller>

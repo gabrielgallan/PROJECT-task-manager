@@ -5,13 +5,13 @@ import { Calendar } from '@/components/ui/calendar'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
 import { cn } from '@/lib/utils'
 
-interface DateTimePickerProps {
+interface IDateTimePickerProps {
 	id: string
 	label: string
 	value?: Date
+	use24HourFormat: boolean
 	onChange: (date: Date) => void
 	onBlur?: () => void
 	invalid?: boolean
@@ -22,39 +22,29 @@ export function DateTimePicker({
 	id,
 	label,
 	value,
+	use24HourFormat,
 	onChange,
 	onBlur,
 	invalid,
 	error,
-}: DateTimePickerProps) {
-	const { use24HourFormat } = useCalendar()
-
+}: IDateTimePickerProps) {
 	const hours = use24HourFormat
-		? Array.from({ length: 24 }, (_, i) => i)
-		: [12, ...Array.from({ length: 11 }, (_, i) => i + 1)]
-	const minutes = Array.from({ length: 12 }, (_, i) => i * 5)
+		? Array.from({ length: 24 }, (_, index) => index)
+		: [12, ...Array.from({ length: 11 }, (_, index) => index + 1)]
+	const minutes = Array.from({ length: 12 }, (_, index) => index * 5)
 
 	function handleDateSelect(date: Date | undefined) {
 		if (!date) return
-
-		// react-day-picker returns the day at midnight, so carry the current time over
 		const next = new Date(date)
-		if (value) {
-			next.setHours(value.getHours(), value.getMinutes(), 0, 0)
-		} else {
-			next.setSeconds(0, 0)
-		}
+		if (value) next.setHours(value.getHours(), value.getMinutes(), 0, 0)
+		else next.setSeconds(0, 0)
 		onChange(next)
 	}
 
 	function handleHourSelect(hour: number) {
 		const next = new Date(value ?? new Date())
-		if (use24HourFormat) {
-			next.setHours(hour)
-		} else {
-			const isPM = next.getHours() >= 12
-			next.setHours((hour % 12) + (isPM ? 12 : 0))
-		}
+		if (use24HourFormat) next.setHours(hour)
+		else next.setHours((hour % 12) + (next.getHours() >= 12 ? 12 : 0))
 		onChange(next)
 	}
 
@@ -67,13 +57,8 @@ export function DateTimePicker({
 	function handleMeridiemSelect(meridiem: 'AM' | 'PM') {
 		const next = new Date(value ?? new Date())
 		const currentHours = next.getHours()
-
-		if (meridiem === 'AM' && currentHours >= 12) {
-			next.setHours(currentHours - 12)
-		} else if (meridiem === 'PM' && currentHours < 12) {
-			next.setHours(currentHours + 12)
-		}
-
+		if (meridiem === 'AM' && currentHours >= 12) next.setHours(currentHours - 12)
+		else if (meridiem === 'PM' && currentHours < 12) next.setHours(currentHours + 12)
 		onChange(next)
 	}
 

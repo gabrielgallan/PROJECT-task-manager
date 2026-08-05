@@ -2,7 +2,7 @@ import { BrowserTitle } from '@/components/browser-title'
 import { PlansCalendar } from '@/features/plans/calendar/plans-calendar'
 import { PLANS_MOCK } from '@/features/plans/mocks/plans'
 
-export function PlansPage() {
+export function WorkLogsPage() {
 	return (
 		<>
 			<BrowserTitle title="Plans" />

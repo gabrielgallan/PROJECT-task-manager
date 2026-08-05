@@ -1,20 +1,29 @@
 import { format, isToday } from 'date-fns'
-import { AllDayRow } from '@/features/calendar/all-day-row'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
-import { getWeekDays, splitPlansBySpan } from '@/features/calendar/helpers'
-import type { IPlan } from '@/features/calendar/interfaces'
-import { DayColumn, GUTTER_CLASS, TimeGridScroller, TimeGutter } from '@/features/calendar/time-grid'
+import { useCalendar } from '@/features/calendar/calendar-provider'
+import { AllDayRow } from '@/features/calendar/components/all-day-row'
+import {
+	DayColumn,
+	GUTTER_CLASS,
+	TimeGridScroller,
+	TimeGutter,
+} from '@/features/calendar/components/time-grid'
+import { getWeekDays } from '@/features/calendar/lib/date'
+import { splitItemsBySpan } from '@/features/calendar/lib/layout'
+import type { ICalendarItem, ICalendarProps } from '@/features/calendar/types'
 import { cn } from '@/lib/utils'
 
-export function CalendarWeekView({ plans }: { plans: IPlan[] }) {
-	const { selectedDate, showWeekends, setView, setSelectedDate } = useCalendar()
+type TWeekViewProps<TItem extends ICalendarItem> = Pick<
+	ICalendarProps<TItem>,
+	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+>
 
+export function CalendarWeekView<TItem extends ICalendarItem>(props: TWeekViewProps<TItem>) {
+	const { selectedDate, showWeekends, setView, setSelectedDate } = useCalendar()
 	const days = getWeekDays(selectedDate, showWeekends)
-	const { timed, multiDay } = splitPlansBySpan(plans)
+	const { timed, multiDay } = splitItemsBySpan(props.items)
 
 	return (
 		<TimeGridScroller>
-			{/* Header travels with the grid so the columns can never drift apart. */}
 			<div className="sticky top-0 z-30 border-b bg-background">
 				<div className="flex">
 					<div className={GUTTER_CLASS} />
@@ -56,7 +65,13 @@ export function CalendarWeekView({ plans }: { plans: IPlan[] }) {
 							All day
 						</div>
 						<div className="flex-1 border-l px-px">
-							<AllDayRow days={days} plans={multiDay} />
+							<AllDayRow
+								days={days}
+								items={multiDay}
+								onOpen={props.onOpen}
+								renderItem={props.renderItem}
+								getItemClassName={props.getItemClassName}
+							/>
 						</div>
 					</div>
 				)}
@@ -70,7 +85,12 @@ export function CalendarWeekView({ plans }: { plans: IPlan[] }) {
 							key={day.toISOString()}
 							className={cn('flex flex-1 border-l', isToday(day) && 'bg-primary/[0.03]')}
 						>
-							<DayColumn day={day} plans={timed} showCurrentTimeLabel={index === 0} />
+							<DayColumn
+								{...props}
+								items={timed}
+								day={day}
+								showCurrentTimeLabel={index === 0}
+							/>
 						</div>
 					))}
 				</div>

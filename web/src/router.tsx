@@ -5,6 +5,7 @@ import { SignInPage } from './app/pages/auth/sign-in'
 import { SignUpPage } from './app/pages/auth/sign-up'
 import { PlansPage } from './app/pages/registers/plans'
 import { TasksPage } from './app/pages/registers/tasks'
+import { WorkLogsPage } from './app/pages/registers/work-logs'
 
 export const router = createBrowserRouter([
 	{
@@ -36,6 +37,10 @@ export const router = createBrowserRouter([
 			{
 				path: 'registers/plans',
 				element: <PlansPage />,
+			},
+			{
+				path: 'registers/work-logs',
+				element: <WorkLogsPage />,
 			},
 		],
 	},

@@ -1,44 +1,56 @@
 import { format, isSameMonth, isToday, parseISO } from 'date-fns'
 import { CalendarOff } from 'lucide-react'
 import { useMemo } from 'react'
-import { PLAN_SURFACE } from '@/features/calendar/colors'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
-import { formatDuration, formatTime } from '@/features/calendar/helpers'
-import type { IPlan } from '@/features/calendar/interfaces'
+import { useCalendar } from '@/features/calendar/calendar-provider'
+import type { ICalendarItem, ICalendarProps } from '@/features/calendar/types'
 import { cn } from '@/lib/utils'
 
-export function CalendarAgendaView({ plans }: { plans: IPlan[] }) {
-	const { selectedDate, use24HourFormat, openEditPlan } = useCalendar()
+type TAgendaViewProps<TItem extends ICalendarItem> = Pick<
+	ICalendarProps<TItem>,
+	'items' | 'onOpen' | 'renderItem' | 'getItemClassName'
+> & {
+	getEmptyText?: (selectedDate: Date) => string
+}
 
+export function CalendarAgendaView<TItem extends ICalendarItem>({
+	items,
+	onOpen,
+	renderItem,
+	getItemClassName,
+	getEmptyText,
+}: TAgendaViewProps<TItem>) {
+	const { selectedDate } = useCalendar()
 	const groups = useMemo(() => {
-		const monthPlans = plans
-			.filter((plan) => isSameMonth(parseISO(plan.startDate), selectedDate))
+		const monthItems = items
+			.filter((item) => isSameMonth(parseISO(item.startDate), selectedDate))
 			.sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+		const byDay = new Map<string, TItem[]>()
 
-		const byDay = new Map<string, IPlan[]>()
-		for (const plan of monthPlans) {
-			const key = format(parseISO(plan.startDate), 'yyyy-MM-dd')
+		for (const item of monthItems) {
+			const key = format(parseISO(item.startDate), 'yyyy-MM-dd')
 			const bucket = byDay.get(key)
-			if (bucket) bucket.push(plan)
-			else byDay.set(key, [plan])
+			if (bucket) bucket.push(item)
+			else byDay.set(key, [item])
 		}
 
 		return [...byDay.entries()]
-	}, [plans, selectedDate])
+	}, [items, selectedDate])
 
 	if (groups.length === 0) {
 		return (
 			<div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
 				<CalendarOff className="size-6" />
-				<p className="text-sm">No plans for {format(selectedDate, 'MMMM yyyy')}.</p>
+				<p className="text-sm">
+					{getEmptyText?.(selectedDate) ?? `No items for ${format(selectedDate, 'MMMM yyyy')}.`}
+				</p>
 			</div>
 		)
 	}
 
 	return (
-		<div className="min-h-0 flex-1 overflow-y-auto">
+		<div className="calendar-scrollbar min-h-0 flex-1 overflow-y-auto">
 			<div className="mx-auto flex max-w-3xl flex-col gap-6 p-4">
-				{groups.map(([key, dayPlans]) => {
+				{groups.map(([key, dayItems]) => {
 					const day = parseISO(key)
 
 					return (
@@ -56,33 +68,25 @@ export function CalendarAgendaView({ plans }: { plans: IPlan[] }) {
 							</div>
 
 							<div className="flex flex-1 flex-col gap-1.5">
-								{dayPlans.map((plan) => {
-									const start = parseISO(plan.startDate)
-									const end = parseISO(plan.endDate)
+								{dayItems.map((item) => {
+									const context = {
+										variant: 'agenda' as const,
+										startDate: parseISO(item.startDate),
+										endDate: parseISO(item.endDate),
+										isCompact: false,
+									}
 
 									return (
 										<button
-											key={plan.id}
+											key={item.id}
 											type="button"
-											onClick={() => openEditPlan(plan)}
+											onClick={() => onOpen?.(item)}
 											className={cn(
 												'flex flex-col gap-0.5 rounded-xs border border-l-4 border-transparent px-3 py-2 text-left transition-colors',
-												PLAN_SURFACE[plan.color],
+												getItemClassName?.(item, context),
 											)}
 										>
-											<div className="flex items-baseline justify-between gap-3">
-												<span className="truncate text-sm font-medium">{plan.title}</span>
-												<span className="shrink-0 text-xs tabular-nums opacity-70">
-													{formatTime(start, use24HourFormat)} – {formatTime(end, use24HourFormat)}
-												</span>
-											</div>
-
-											<div className="flex items-baseline justify-between gap-3">
-												<span className="truncate text-xs opacity-70">{plan.description}</span>
-												<span className="shrink-0 text-xs opacity-60">
-													{formatDuration(start, end)}
-												</span>
-											</div>
+											{renderItem(item, context)}
 										</button>
 									)
 								})}

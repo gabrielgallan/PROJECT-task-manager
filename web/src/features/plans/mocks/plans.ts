@@ -1,17 +1,9 @@
 import { addDays, set, startOfWeek } from 'date-fns'
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { IPlan } from '@/features/calendar/interfaces'
-import type { TPlanColor } from '@/features/calendar/types'
-
-/**
- * Static seed data. Deterministic on purpose — the layout should look the same on
- * every reload so visual regressions are obvious.
- *
- * Anchored to the current week so the calendar always opens with content.
- */
+import type { TPlanColor } from '@/features/plans/model/plan-colors'
+import type { IPlan } from '@/features/plans/model/plan-types'
 
 interface ISeed {
-	/** Day offset from the start of the current week (0 = Monday). */
 	day: number
 	start: [hour: number, minute: number]
 	end: [hour: number, minute: number]
@@ -22,7 +14,6 @@ interface ISeed {
 }
 
 const SEEDS: ISeed[] = [
-	// Monday
 	{
 		day: 0,
 		start: [9, 0],
@@ -42,8 +33,6 @@ const SEEDS: ISeed[] = [
 	},
 	{ day: 0, start: [14, 0], end: [15, 30], title: 'Code review', color: 'green' },
 	{ day: 0, start: [16, 0], end: [17, 0], title: 'Bug triage', color: 'red', taskId: 'task-4' },
-
-	// Tuesday
 	{
 		day: 1,
 		start: [9, 30],
@@ -63,8 +52,6 @@ const SEEDS: ISeed[] = [
 		taskId: 'task-2',
 	},
 	{ day: 1, start: [16, 0], end: [16, 30], title: 'Deploy window', color: 'yellow' },
-
-	// Wednesday — overlapping blocks to exercise the layout algorithm
 	{ day: 2, start: [9, 0], end: [10, 30], title: 'Architecture review', color: 'purple' },
 	{ day: 2, start: [9, 30], end: [11, 0], title: 'Pairing session', color: 'green' },
 	{
@@ -76,8 +63,6 @@ const SEEDS: ISeed[] = [
 		taskId: 'task-2',
 	},
 	{ day: 2, start: [17, 0], end: [18, 0], title: 'Retro', color: 'orange' },
-
-	// Thursday
 	{ day: 3, start: [8, 30], end: [9, 0], title: 'Inbox & follow-ups', color: 'yellow' },
 	{
 		day: 3,
@@ -90,8 +75,6 @@ const SEEDS: ISeed[] = [
 	},
 	{ day: 3, start: [14, 0], end: [15, 0], title: 'Stakeholder call', color: 'red' },
 	{ day: 3, start: [15, 30], end: [17, 0], title: 'Documentation', color: 'green' },
-
-	// Friday
 	{ day: 4, start: [9, 0], end: [11, 0], title: 'Focus block — migrations', color: 'blue' },
 	{ day: 4, start: [11, 0], end: [11, 30], title: 'Daily sync', color: 'orange' },
 	{
@@ -103,8 +86,6 @@ const SEEDS: ISeed[] = [
 		color: 'purple',
 	},
 	{ day: 4, start: [16, 0], end: [17, 30], title: 'Tech debt cleanup', color: 'green' },
-
-	// Saturday — so the weekend toggle has something to hide
 	{ day: 5, start: [10, 0], end: [12, 0], title: 'Side project', color: 'orange' },
 ]
 

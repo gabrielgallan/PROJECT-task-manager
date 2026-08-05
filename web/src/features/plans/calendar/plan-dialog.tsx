@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { DateTimePicker } from '@/components/date-time-picker'
 import { Button } from '@/components/ui/button'
 import {
 	Dialog,
@@ -22,12 +22,9 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PLAN_DOT } from '@/features/calendar/colors'
-import { PLAN_COLORS } from '@/features/calendar/constants'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
-import { DateTimePicker } from '@/features/calendar/date-time-picker'
-import type { IPlan } from '@/features/calendar/interfaces'
-import { planSchema, type TPlanFormData } from '@/features/calendar/schemas'
+import { PLAN_COLORS, PLAN_DOT } from '@/features/plans/model/plan-colors'
+import { planSchema, type TPlanFormData } from '@/features/plans/model/plan-schema'
+import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
 import { cn } from '@/lib/utils'
 
 const EMPTY_VALUES: TPlanFormData = {
@@ -39,16 +36,25 @@ const EMPTY_VALUES: TPlanFormData = {
 	taskId: null,
 }
 
-/**
- * The one and only plan form. Mounted once at the calendar root and driven by
- * `dialog` in the calendar context — grid cells never mount a form of their own.
- */
-export function PlanDialog() {
-	const { dialog, closeDialog, addPlan, updatePlan, removePlan } = useCalendar()
+interface IPlanDialogProps {
+	state: TPlanDialogState
+	use24HourFormat: boolean
+	onClose: () => void
+	onCreate: (plan: IPlan) => void
+	onUpdate: (plan: IPlan) => void
+	onDelete: (plan: IPlan) => void
+}
 
-	const isOpen = dialog.mode !== 'closed'
-	const isEditing = dialog.mode === 'edit'
-
+export function PlanDialog({
+	state,
+	use24HourFormat,
+	onClose,
+	onCreate,
+	onUpdate,
+	onDelete,
+}: IPlanDialogProps) {
+	const isOpen = state.mode !== 'closed'
+	const isEditing = state.mode === 'edit'
 	const {
 		control,
 		register,
@@ -61,29 +67,27 @@ export function PlanDialog() {
 	})
 
 	useEffect(() => {
-		if (dialog.mode === 'create') {
+		if (state.mode === 'create') {
 			reset({
 				...EMPTY_VALUES,
-				startDate: dialog.startDate,
-				endDate: dialog.endDate,
+				startDate: state.range.startDate,
+				endDate: state.range.endDate,
 			})
-		}
-
-		if (dialog.mode === 'edit') {
+		} else if (state.mode === 'edit') {
 			reset({
-				title: dialog.plan.title,
-				description: dialog.plan.description ?? '',
-				startDate: new Date(dialog.plan.startDate),
-				endDate: new Date(dialog.plan.endDate),
-				color: dialog.plan.color,
-				taskId: dialog.plan.taskId ?? null,
+				title: state.plan.title,
+				description: state.plan.description ?? '',
+				startDate: new Date(state.plan.startDate),
+				endDate: new Date(state.plan.endDate),
+				color: state.plan.color,
+				taskId: state.plan.taskId ?? null,
 			})
 		}
-	}, [dialog, reset])
+	}, [state, reset])
 
 	const onSubmit = (values: TPlanFormData) => {
 		const plan: IPlan = {
-			id: dialog.mode === 'edit' ? dialog.plan.id : crypto.randomUUID(),
+			id: state.mode === 'edit' ? state.plan.id : crypto.randomUUID(),
 			title: values.title,
 			description: values.description?.trim() ? values.description : undefined,
 			startDate: values.startDate.toISOString(),
@@ -92,31 +96,12 @@ export function PlanDialog() {
 			taskId: values.taskId ?? null,
 		}
 
-		if (dialog.mode === 'edit') {
-			updatePlan(plan)
-			toast.success('Plan updated')
-		} else {
-			addPlan(plan)
-			toast.success('Plan created')
-		}
-
-		closeDialog()
-	}
-
-	const handleDelete = () => {
-		if (dialog.mode !== 'edit') return
-		removePlan(dialog.plan.id)
-		toast.success('Plan deleted')
-		closeDialog()
+		if (state.mode === 'edit') onUpdate(plan)
+		else onCreate(plan)
 	}
 
 	return (
-		<Dialog
-			open={isOpen}
-			onOpenChange={(open) => {
-				if (!open) closeDialog()
-			}}
-		>
+		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>{isEditing ? 'Edit plan' : 'New plan'}</DialogTitle>
@@ -149,6 +134,7 @@ export function PlanDialog() {
 										id="plan-start"
 										label="Start"
 										value={field.value}
+										use24HourFormat={use24HourFormat}
 										onChange={field.onChange}
 										onBlur={field.onBlur}
 										invalid={fieldState.invalid}
@@ -165,6 +151,7 @@ export function PlanDialog() {
 										id="plan-end"
 										label="End"
 										value={field.value}
+										use24HourFormat={use24HourFormat}
 										onChange={field.onChange}
 										onBlur={field.onBlur}
 										invalid={fieldState.invalid}
@@ -180,12 +167,7 @@ export function PlanDialog() {
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel htmlFor="plan-color">Color</FieldLabel>
-									<Select
-										value={field.value}
-										onValueChange={(value) => {
-											if (value) field.onChange(value)
-										}}
-									>
+									<Select value={field.value} onValueChange={(value) => value && field.onChange(value)}>
 										<SelectTrigger
 											id="plan-color"
 											className="w-full capitalize"
@@ -212,18 +194,14 @@ export function PlanDialog() {
 
 						<Field>
 							<FieldLabel htmlFor="plan-description">Description</FieldLabel>
-							<Textarea
-								id="plan-description"
-								placeholder="Optional notes"
-								{...register('description')}
-							/>
+							<Textarea id="plan-description" placeholder="Optional notes" {...register('description')} />
 						</Field>
 					</FieldGroup>
 				</form>
 
 				<DialogFooter className="sm:justify-between">
-					{isEditing ? (
-						<Button type="button" variant="destructive" onClick={handleDelete}>
+					{state.mode === 'edit' ? (
+						<Button type="button" variant="destructive" onClick={() => onDelete(state.plan)}>
 							<Trash2 />
 							Delete
 						</Button>
@@ -232,7 +210,7 @@ export function PlanDialog() {
 					)}
 
 					<div className="flex gap-2">
-						<Button type="button" variant="outline" onClick={closeDialog}>
+						<Button type="button" variant="outline" onClick={onClose}>
 							Cancel
 						</Button>
 						<Button form="plan-form" type="submit">

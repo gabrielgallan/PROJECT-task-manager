@@ -1,11 +1,7 @@
-import type { TPlanColor } from '@/features/calendar/types'
+export const PLAN_COLORS = ['blue', 'green', 'red', 'yellow', 'purple', 'orange', 'pink'] as const
 
-/**
- * Tailwind does not generate classes built at runtime (`bg-${color}-500`), so every
- * colour variant has to exist as a literal string somewhere. That is what this file is.
- */
+export type TPlanColor = (typeof PLAN_COLORS)[number]
 
-/** Filled block used on the time grid: tinted surface + coloured left accent. */
 export const PLAN_SURFACE: Record<TPlanColor, string> = {
 	blue: 'border-l-blue-500 bg-blue-50 text-blue-950 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-50 dark:hover:bg-blue-950',
 	green:
@@ -20,7 +16,6 @@ export const PLAN_SURFACE: Record<TPlanColor, string> = {
 	pink: 'border-l-rose-500 bg-rose-50 text-rose-950 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-50 dark:hover:bg-rose-950',
 }
 
-/** Solid swatch used for dots, pickers and filters. */
 export const PLAN_DOT: Record<TPlanColor, string> = {
 	blue: 'bg-blue-500',
 	green: 'bg-green-500',

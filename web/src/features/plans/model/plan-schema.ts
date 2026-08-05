@@ -1,6 +1,5 @@
 import { z } from 'zod/v4'
-import { PLAN_COLORS } from '@/features/calendar/constants'
-import type { TPlanColor } from '@/features/calendar/types'
+import { PLAN_COLORS } from '@/features/plans/model/plan-colors'
 
 export const planSchema = z
 	.object({
@@ -8,7 +7,7 @@ export const planSchema = z
 		description: z.string().optional(),
 		startDate: z.date('Start date is required'),
 		endDate: z.date('End date is required'),
-		color: z.enum(PLAN_COLORS as [TPlanColor, ...TPlanColor[]]),
+		color: z.enum(PLAN_COLORS),
 		taskId: z.string().nullable().optional(),
 	})
 	.refine((data) => data.endDate > data.startDate, {

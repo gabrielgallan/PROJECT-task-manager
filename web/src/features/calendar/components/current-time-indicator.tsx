@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useCalendar } from '@/features/calendar/calendar-provider'
 import { HOUR_HEIGHT } from '@/features/calendar/constants'
-import { useCalendar } from '@/features/calendar/contexts/calendar-context'
-import { formatTime, minutesSinceMidnight } from '@/features/calendar/helpers'
+import { formatTime } from '@/features/calendar/lib/formatting'
 import { cn } from '@/lib/utils'
 
 interface IProps {
-	/** Renders the time label in the gutter. Only the first column should do it. */
 	showLabel?: boolean
 }
 
@@ -18,7 +17,8 @@ export function CurrentTimeIndicator({ showLabel = false }: IProps) {
 		return () => window.clearInterval(timer)
 	}, [])
 
-	const top = (minutesSinceMidnight(now) / 60) * HOUR_HEIGHT
+	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes()
+	const top = (minutesSinceMidnight / 60) * HOUR_HEIGHT
 
 	return (
 		<div
