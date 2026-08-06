@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CircleCheck, Trash2 } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { DateTimePicker } from '@/components/date-time-picker'
@@ -21,53 +21,52 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { PLAN_COLORS, PLAN_DOT } from '@/features/plans/model/plan-colors'
-import { planSchema, type TPlanFormData } from '@/features/plans/model/plan-schema'
-import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
-import { cn } from '@/lib/utils'
+import type { ICalendarRange } from '@/features/calendar/types'
+import type { Task } from '@/features/tasks/model/task-types'
+import { type TWorkLogFormData, workLogSchema } from '@/features/work-logs/model/work-log-schema'
+import type { IWorkLog, TWorkLogDialogState } from '@/features/work-logs/model/work-log-types'
 
-const EMPTY_VALUES: TPlanFormData = {
+const NO_TASK_VALUE = 'none'
+
+const EMPTY_VALUES: TWorkLogFormData = {
 	title: '',
 	description: '',
 	startDate: new Date(),
 	endDate: new Date(),
-	color: 'blue',
 	taskId: null,
 }
 
-interface IPlanDialogProps {
-	state: TPlanDialogState
+interface IWorkLogDialogProps {
+	state: TWorkLogDialogState
+	tasks: Task[]
 	use24HourFormat: boolean
+	/** Returns why the range cannot be recorded, or null when it is valid. */
+	validateRange: (range: ICalendarRange, ignoreId?: string) => string | null
 	onClose: () => void
-	onCreate: (plan: IPlan) => void
-	onUpdate: (plan: IPlan) => void
-	onDelete: (plan: IPlan) => void
-	/** Optional: without it, plans work on their own with no work log in sight. */
-	onConfirm?: (plan: IPlan) => void
+	onSubmit: (values: TWorkLogFormData, current: IWorkLog | null) => void
+	onDelete: (workLog: IWorkLog) => void
 }
 
-export function PlanDialog({
+export function WorkLogDialog({
 	state,
+	tasks,
 	use24HourFormat,
+	validateRange,
 	onClose,
-	onCreate,
-	onUpdate,
+	onSubmit,
 	onDelete,
-	onConfirm,
-}: IPlanDialogProps) {
+}: IWorkLogDialogProps) {
 	const isOpen = state.mode !== 'closed'
 	const isEditing = state.mode === 'edit'
-	const isConfirmed = state.mode === 'edit' && !!state.plan.confirmedAt
-	// A plan that has not happened yet cannot be recorded as work already done.
-	const isUpcoming = state.mode === 'edit' && new Date(state.plan.endDate) > new Date()
 	const {
 		control,
 		register,
 		handleSubmit,
 		reset,
+		setError,
 		formState: { errors },
-	} = useForm<TPlanFormData>({
-		resolver: zodResolver(planSchema),
+	} = useForm<TWorkLogFormData>({
+		resolver: zodResolver(workLogSchema),
 		defaultValues: EMPTY_VALUES,
 	})
 
@@ -80,46 +79,45 @@ export function PlanDialog({
 			})
 		} else if (state.mode === 'edit') {
 			reset({
-				title: state.plan.title,
-				description: state.plan.description ?? '',
-				startDate: new Date(state.plan.startDate),
-				endDate: new Date(state.plan.endDate),
-				color: state.plan.color,
-				taskId: state.plan.taskId ?? null,
+				title: state.workLog.title,
+				description: state.workLog.description ?? '',
+				startDate: new Date(state.workLog.startDate),
+				endDate: new Date(state.workLog.endDate),
+				taskId: state.workLog.taskId ?? null,
 			})
 		}
 	}, [state, reset])
 
-	const onSubmit = (values: TPlanFormData) => {
-		const plan: IPlan = {
-			id: state.mode === 'edit' ? state.plan.id : crypto.randomUUID(),
-			title: values.title,
-			description: values.description?.trim() ? values.description : undefined,
-			startDate: values.startDate.toISOString(),
-			endDate: values.endDate.toISOString(),
-			color: values.color,
-			taskId: values.taskId ?? null,
-			confirmedAt: state.mode === 'edit' ? state.plan.confirmedAt : null,
+	const submit = (values: TWorkLogFormData) => {
+		const current = state.mode === 'edit' ? state.workLog : null
+		// Overlap needs the whole collection, so it is checked here and not in the schema.
+		const message = validateRange(
+			{ startDate: values.startDate, endDate: values.endDate },
+			current?.id,
+		)
+
+		if (message) {
+			setError('root', { message })
+			return
 		}
 
-		if (state.mode === 'edit') onUpdate(plan)
-		else onCreate(plan)
+		onSubmit(values, current)
 	}
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
-					<DialogTitle>{isEditing ? 'Edit plan' : 'New plan'}</DialogTitle>
+					<DialogTitle>{isEditing ? 'Edit work log' : 'New work log'}</DialogTitle>
 				</DialogHeader>
 
-				<form id="plan-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+				<form id="work-log-form" onSubmit={handleSubmit(submit)} noValidate>
 					<FieldGroup>
 						<Field data-invalid={!!errors.title}>
-							<FieldLabel htmlFor="plan-title">Title</FieldLabel>
+							<FieldLabel htmlFor="work-log-title">Title</FieldLabel>
 							<Input
-								id="plan-title"
-								placeholder="What are you going to work on?"
+								id="work-log-title"
+								placeholder="What did you work on?"
 								aria-invalid={!!errors.title}
 								{...register('title')}
 							/>
@@ -132,7 +130,7 @@ export function PlanDialog({
 								name="startDate"
 								render={({ field, fieldState }) => (
 									<DateTimePicker
-										id="plan-start"
+										id="work-log-start"
 										label="Start"
 										value={field.value}
 										use24HourFormat={use24HourFormat}
@@ -149,7 +147,7 @@ export function PlanDialog({
 								name="endDate"
 								render={({ field, fieldState }) => (
 									<DateTimePicker
-										id="plan-end"
+										id="work-log-end"
 										label="End"
 										value={field.value}
 										use24HourFormat={use24HourFormat}
@@ -164,29 +162,29 @@ export function PlanDialog({
 
 						<Controller
 							control={control}
-							name="color"
+							name="taskId"
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor="plan-color">Color</FieldLabel>
+									<FieldLabel htmlFor="work-log-task">Task</FieldLabel>
 									<Select
-										value={field.value}
-										onValueChange={(value) => value && field.onChange(value)}
+										value={field.value ?? NO_TASK_VALUE}
+										onValueChange={(value) =>
+											field.onChange(value === NO_TASK_VALUE ? null : value)
+										}
 									>
 										<SelectTrigger
-											id="plan-color"
-											className="w-full capitalize"
+											id="work-log-task"
+											className="w-full"
 											aria-invalid={fieldState.invalid}
 											onBlur={field.onBlur}
 										>
-											<SelectValue placeholder="Pick a color" />
+											<SelectValue placeholder="No task" />
 										</SelectTrigger>
 										<SelectContent>
-											{PLAN_COLORS.map((color) => (
-												<SelectItem key={color} value={color}>
-													<span className="flex items-center gap-2 capitalize">
-														<span className={cn('size-3 rounded-full', PLAN_DOT[color])} />
-														{color}
-													</span>
+											<SelectItem value={NO_TASK_VALUE}>No task</SelectItem>
+											{tasks.map((task) => (
+												<SelectItem key={task.id} value={task.id}>
+													{task.title}
 												</SelectItem>
 											))}
 										</SelectContent>
@@ -197,43 +195,24 @@ export function PlanDialog({
 						/>
 
 						<Field>
-							<FieldLabel htmlFor="plan-description">Description</FieldLabel>
+							<FieldLabel htmlFor="work-log-description">Description</FieldLabel>
 							<Textarea
-								id="plan-description"
+								id="work-log-description"
 								placeholder="Optional notes"
 								{...register('description')}
 							/>
 						</Field>
+
+						{errors.root?.message && <FieldError errors={[{ message: errors.root.message }]} />}
 					</FieldGroup>
 				</form>
 
 				<DialogFooter className="sm:justify-between">
 					{state.mode === 'edit' ? (
-						<div className="flex gap-2">
-							<Button type="button" variant="destructive" onClick={() => onDelete(state.plan)}>
-								<Trash2 />
-								Delete
-							</Button>
-
-							{onConfirm && (
-								<Button
-									type="button"
-									variant="outline"
-									disabled={isConfirmed || isUpcoming}
-									title={
-										isConfirmed
-											? 'Already recorded as a work log'
-											: isUpcoming
-												? 'Only past plans can be recorded'
-												: undefined
-									}
-									onClick={() => onConfirm(state.plan)}
-								>
-									<CircleCheck />
-									{isConfirmed ? 'Recorded' : 'Record as done'}
-								</Button>
-							)}
-						</div>
+						<Button type="button" variant="destructive" onClick={() => onDelete(state.workLog)}>
+							<Trash2 />
+							Delete
+						</Button>
 					) : (
 						<span />
 					)}
@@ -242,7 +221,7 @@ export function PlanDialog({
 						<Button type="button" variant="outline" onClick={onClose}>
 							Cancel
 						</Button>
-						<Button form="plan-form" type="submit">
+						<Button form="work-log-form" type="submit">
 							{isEditing ? 'Save' : 'Create'}
 						</Button>
 					</div>

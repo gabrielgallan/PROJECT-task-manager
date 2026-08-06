@@ -3,8 +3,10 @@ import { TASK_VIEWS } from '@/features/tasks/model/task-views'
 import type { IRouteHandle } from '@/hooks/use-route-handle'
 import { AuthLayout } from './app/layouts/auth'
 import { DefaultLayout } from './app/layouts/default'
+import { NotFoundPage } from './app/pages/404'
 import { SignInPage } from './app/pages/auth/sign-in'
 import { SignUpPage } from './app/pages/auth/sign-up'
+import { ErrorPage } from './app/pages/error'
 import { PlansPage } from './app/pages/registers/plans'
 import { TasksPage } from './app/pages/registers/tasks'
 import { WorkLogsPage } from './app/pages/registers/work-logs'
@@ -13,44 +15,41 @@ import { GanttTestPage } from './app/pages/test/gantt'
 export const router = createBrowserRouter([
 	{
 		path: '/',
-		element: <Navigate to="/registers/tasks" />,
-	},
-	{
-		path: '/',
-		element: <AuthLayout />,
+		errorElement: <ErrorPage />,
 		children: [
 			{
-				path: 'auth/sign-in',
-				element: <SignInPage />,
+				index: true,
+				element: <Navigate to="/registers/tasks" replace />,
 			},
 			{
-				path: 'auth/sign-up',
-				element: <SignUpPage />,
-			},
-		],
-	},
-	{
-		path: '/',
-		element: <DefaultLayout />,
-		children: [
-			{
-				path: 'registers/tasks',
-				element: <TasksPage />,
-				handle: { views: TASK_VIEWS } satisfies IRouteHandle,
+				path: 'auth',
+				element: <AuthLayout />,
+				children: [
+					{ path: 'sign-in', element: <SignInPage /> },
+					{ path: 'sign-up', element: <SignUpPage /> },
+				],
 			},
 			{
-				path: 'registers/plans',
-				element: <PlansPage />,
+				path: 'registers',
+				element: <DefaultLayout />,
+				children: [
+					{
+						path: 'tasks',
+						element: <TasksPage />,
+						handle: { views: TASK_VIEWS } satisfies IRouteHandle,
+					},
+					{ path: 'plans', element: <PlansPage /> },
+					{ path: 'work-logs', element: <WorkLogsPage /> },
+				],
 			},
 			{
-				path: 'registers/work-logs',
-				element: <WorkLogsPage />,
-			},
-			{
-				// Temporary playground route, intentionally out of the sidebar navigation.
 				path: 'test/gantt',
 				element: <GanttTestPage />,
 			},
 		],
+	},
+	{
+		path: '*',
+		element: <NotFoundPage />,
 	},
 ])

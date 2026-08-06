@@ -1,5 +1,7 @@
 import type { TaskPriority } from '@/features/tasks/model/task-types'
 
+export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical']
+
 export const TASK_PRIORITY_LABEL: Record<TaskPriority, string> = {
 	low: 'Low',
 	medium: 'Medium',

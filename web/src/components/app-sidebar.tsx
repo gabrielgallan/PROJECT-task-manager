@@ -1,4 +1,13 @@
-import { Calendar, ChartNoAxesGantt, Clock, Workflow } from 'lucide-react'
+import {
+	Calendar,
+	ChartBarIcon,
+	ChartNoAxesGantt,
+	Logs,
+	type LucideIcon,
+	Settings,
+	Table,
+	Workflow,
+} from 'lucide-react'
 import type * as React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
@@ -15,9 +24,17 @@ import {
 } from '@/components/ui/sidebar'
 import { NavUser } from './nav-user'
 
-const groups = [
+interface SidebarGroupItem {
+	label?: string
+	items: {
+		label: string
+		url: string
+		icon: LucideIcon
+	}[]
+}
+
+const sidebarGroups: SidebarGroupItem[] = [
 	{
-		label: 'Manage',
 		items: [
 			{
 				label: 'Tasks',
@@ -30,9 +47,36 @@ const groups = [
 				icon: Calendar,
 			},
 			{
-				label: 'Work Logs',
+				label: 'Work logs',
 				url: '/registers/work-logs',
-				icon: Clock,
+				icon: Logs,
+			},
+		],
+	},
+	{
+		label: 'Analytics',
+		items: [
+			{
+				label: 'Dashboard',
+				url: '/analytics/dashboard',
+				icon: ChartBarIcon,
+			},
+			{
+				label: 'Reports',
+				url: '/analytics/reports',
+				icon: Table,
+			},
+		],
+	},
+]
+
+const sidebarFooter: SidebarGroupItem[] = [
+	{
+		items: [
+			{
+				label: 'Settings',
+				url: '/settings',
+				icon: Settings,
 			},
 		],
 	},
@@ -54,18 +98,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarHeader>
 
 			<SidebarContent>
-				{groups.map((group) => (
+				{sidebarGroups.map((group) => (
 					<SidebarGroup key={group.label}>
-						<SidebarGroupLabel className="font-medium text-muted-foreground">
-							{group.label}
-						</SidebarGroupLabel>
+						{group.label && (
+							<SidebarGroupLabel className="font-medium text-muted-foreground">
+								{group.label}
+							</SidebarGroupLabel>
+						)}
 
 						<SidebarGroupContent>
 							<SidebarMenu className="space-y-1">
 								{group.items.map((item) => (
 									<SidebarMenuItem key={item.label}>
 										<SidebarMenuButton
-											className="py-5"
+											// The bar is always rendered and only changes colour, and being a pseudo
+											// element it stays square instead of following the button's rounding.
+											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
 											tooltip={item.label}
 											isActive={item.url === '/' ? pathname === '/' : pathname.startsWith(item.url)}
 										>
@@ -84,6 +132,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarContent>
 
 			<SidebarFooter>
+				{sidebarFooter.map((group) => (
+					<SidebarGroup key={group.label}>
+						{group.label && (
+							<SidebarGroupLabel className="font-medium text-muted-foreground">
+								{group.label}
+							</SidebarGroupLabel>
+						)}
+
+						<SidebarGroupContent>
+							<SidebarMenu className="space-y-1">
+								{group.items.map((item) => (
+									<SidebarMenuItem key={item.label}>
+										<SidebarMenuButton
+											// The bar is always rendered and only changes colour, and being a pseudo
+											// element it stays square instead of following the button's rounding.
+											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
+											tooltip={item.label}
+											isActive={item.url === '/' ? pathname === '/' : pathname.startsWith(item.url)}
+										>
+											<Link to={item.url} className="flex gap-2 items-center w-full">
+												{item.icon && <item.icon />}
+
+												<span>{item.label}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								))}
+							</SidebarMenu>
+						</SidebarGroupContent>
+					</SidebarGroup>
+				))}
+
 				<NavUser />
 			</SidebarFooter>
 		</Sidebar>

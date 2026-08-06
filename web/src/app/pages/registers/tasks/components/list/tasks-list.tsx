@@ -1,7 +1,7 @@
+import { TasksTableHeader } from '@/app/pages/registers/tasks/components/list/tasks-table-header'
+import { TasksTableRow } from '@/app/pages/registers/tasks/components/list/tasks-table-row'
 import { Pagination } from '@/components/pagination'
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { TasksTableHeader } from '@/features/tasks/list/tasks-table-header'
-import { TasksTableRow } from '@/features/tasks/list/tasks-table-row'
 import type { Task } from '@/features/tasks/model/task-types'
 
 interface ITasksListProps {
@@ -22,7 +22,7 @@ export function TasksList({ tasks }: ITasksListProps) {
 							<TableHead className="w-42">Priority</TableHead>
 							<TableHead className="text-right">Last modification</TableHead>
 							<TableHead className="text-right">Due date</TableHead>
-							<TableHead className="text-right w-12" />
+							<TableHead className="text-right" />
 						</TableRow>
 					</TableHeader>
 

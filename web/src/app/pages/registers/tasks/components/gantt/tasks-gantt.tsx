@@ -12,14 +12,14 @@ import {
 	GanttToday,
 	type Range,
 } from '@/components/kibo-ui/gantt'
-import { TaskGanttBar } from '@/features/tasks/gantt/task-gantt-bar'
+import { TaskGanttBar } from '@/app/pages/registers/tasks/components/gantt/task-gantt-bar'
 import {
 	DEFAULT_GANTT_RANGE,
 	DEFAULT_GANTT_ZOOM,
 	MAX_GANTT_ZOOM,
 	MIN_GANTT_ZOOM,
-} from '@/features/tasks/gantt/tasks-gantt-constants'
-import { TasksGanttToolbar } from '@/features/tasks/gantt/tasks-gantt-toolbar'
+} from '@/app/pages/registers/tasks/components/gantt/tasks-gantt-constants'
+import { TasksGanttToolbar } from '@/app/pages/registers/tasks/components/gantt/tasks-gantt-toolbar'
 import { buildTaskGanttData } from '@/features/tasks/model/task-gantt'
 import type { Task } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'

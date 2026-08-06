@@ -88,7 +88,7 @@ export function TasksTableRow({ task }: TasksTableRowProps) {
 							</Tooltip>
 						)}
 
-						<span>{format(task.dueDate, `PPP`)}</span>
+						<span className="w-22 text-right">{format(task.dueDate, `dd/MM/yy`)}</span>
 					</div>
 				) : (
 					'-'

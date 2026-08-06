@@ -1375,7 +1375,7 @@ export const GanttToday: FC<GanttTodayProps> = ({ className }) => {
 		>
 			<div
 				className={cn(
-					'group pointer-events-auto sticky top-0 flex select-auto flex-col flex-nowrap items-center justify-center whitespace-nowrap rounded-b-md bg-red-400 px-2 py-1 text-white text-xs',
+					'group pointer-events-auto sticky top-0 flex select-auto flex-col flex-nowrap items-center justify-center whitespace-nowrap rounded-b-md bg-red-500 text-white px-2 py-1 text-xs',
 					className,
 				)}
 			>
@@ -1384,7 +1384,7 @@ export const GanttToday: FC<GanttTodayProps> = ({ className }) => {
 					{formatDate(date, 'MMM dd, yyyy')}
 				</span>
 			</div>
-			<div className={cn('h-full w-px bg-red-400', className)} />
+			<div className={cn('h-full w-px bg-red-500', className)} />
 		</div>
 	)
 }

@@ -12,11 +12,16 @@ import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
 
 interface IPlansCalendarProps {
 	plans: IPlan[]
+	/**
+	 * Records the plan as work done elsewhere. Returns whether it was accepted,
+	 * so the plan is only marked when the record was actually created.
+	 */
+	onConfirmPlan?: (plan: IPlan) => boolean
 }
 
 const PLAN_CALENDAR_VIEWS = ['day', 'week'] as const
 
-export function PlansCalendar({ plans }: IPlansCalendarProps) {
+export function PlansCalendar({ plans, onConfirmPlan }: IPlansCalendarProps) {
 	const [allPlans, setAllPlans] = useState<IPlan[]>(plans)
 	const [dialog, setDialog] = useState<TPlanDialogState>({ mode: 'closed' })
 
@@ -39,6 +44,17 @@ export function PlansCalendar({ plans }: IPlansCalendarProps) {
 	const deletePlan = (plan: IPlan) => {
 		setAllPlans((previous) => previous.filter((item) => item.id !== plan.id))
 		toast.success('Plan deleted')
+		closeDialog()
+	}
+
+	const confirmPlan = (plan: IPlan) => {
+		if (!onConfirmPlan?.(plan)) return
+
+		setAllPlans((previous) =>
+			previous.map((item) =>
+				item.id === plan.id ? { ...item, confirmedAt: new Date().toISOString() } : item,
+			),
+		)
 		closeDialog()
 	}
 
@@ -96,6 +112,7 @@ export function PlansCalendar({ plans }: IPlansCalendarProps) {
 					onCreate={createPlan}
 					onUpdate={updatePlan}
 					onDelete={deletePlan}
+					onConfirm={onConfirmPlan ? confirmPlan : undefined}
 				/>
 			)}
 		/>

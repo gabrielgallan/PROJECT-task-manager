@@ -2,7 +2,7 @@ import { CalendarDays, CalendarFold, CalendarRange, Info, ZoomIn, ZoomOut } from
 import type { Range } from '@/components/kibo-ui/gantt'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { MAX_GANTT_ZOOM, MIN_GANTT_ZOOM } from '@/features/tasks/gantt/tasks-gantt-constants'
+import { MAX_GANTT_ZOOM, MIN_GANTT_ZOOM } from '@/app/pages/registers/tasks/components/gantt/tasks-gantt-constants'
 
 const RANGE_OPTIONS: Record<Range, { label: string; icon: typeof CalendarDays }> = {
 	daily: { label: 'Day', icon: CalendarDays },

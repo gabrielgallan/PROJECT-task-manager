@@ -1,6 +1,7 @@
 import { Plus, Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { NewTaskDialog } from './new-task-dialog'
 
 export function TasksTableHeader() {
 	return (
@@ -24,10 +25,12 @@ export function TasksTableHeader() {
 				</div>
 			</form>
 
-			<Button>
-				<Plus />
-				New task
-			</Button>
+			<NewTaskDialog>
+				<Button>
+					<Plus />
+					New task
+				</Button>
+			</NewTaskDialog>
 		</div>
 	)
 }

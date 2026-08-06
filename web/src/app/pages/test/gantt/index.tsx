@@ -1,5 +1,5 @@
 import { BrowserTitle } from '@/components/browser-title'
-import { TasksGantt } from '@/features/tasks/gantt/tasks-gantt'
+import { TasksGantt } from '@/app/pages/registers/tasks/components/gantt/tasks-gantt'
 import { TASKS_MOCK } from '@/features/tasks/mocks/tasks'
 
 export function GanttTestPage() {
