@@ -21,7 +21,7 @@ export function Pagination({ page, total, limit, onPageChange }: PaginationProps
 				</div>
 				<div className="flex items-center gap-2">
 					<Button
-						onClick={() => onPageChange(0)}
+						onClick={() => onPageChange(1)}
 						variant="outline"
 						className="h-4 w-4 p-4"
 						disabled={page === 1}
@@ -48,7 +48,7 @@ export function Pagination({ page, total, limit, onPageChange }: PaginationProps
 						<span className="sr-only">next page</span>
 					</Button>
 					<Button
-						onClick={() => onPageChange(pages - 1)}
+						onClick={() => onPageChange(pages)}
 						variant="outline"
 						className="h-4 w-4 p-4"
 						disabled={pages <= page}

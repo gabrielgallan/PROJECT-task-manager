@@ -1,7 +1,18 @@
 import { CircleCheck, CircleDashed, type LucideIcon, SquircleDashed } from 'lucide-react'
 import type { TaskStatus } from '@/features/tasks/model/task-types'
 
+/** Lifecycle order. Sorting relies on it, so it is not a free list. */
 export const TASK_STATUSES: TaskStatus[] = ['backlog', 'in_progress', 'done']
+
+/**
+ * Status is not alphabetical data, so ordering by it has to follow the lifecycle.
+ * Whenever the API takes over sorting it has to reproduce exactly this order.
+ */
+export const TASK_STATUS_RANK: Record<TaskStatus, number> = {
+	backlog: 0,
+	in_progress: 1,
+	done: 2,
+}
 
 export const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
 	backlog: 'Backlog',

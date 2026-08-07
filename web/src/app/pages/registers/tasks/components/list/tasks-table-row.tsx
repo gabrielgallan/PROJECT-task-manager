@@ -1,23 +1,20 @@
 import { differenceInCalendarDays, format, formatDistanceToNowStrict } from 'date-fns'
-import { Calendar, CircleCheck, EllipsisVertical, Info, TriangleAlert } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Info, TriangleAlert } from 'lucide-react'
+import { TaskActionsMenu } from '@/app/pages/registers/tasks/components/task-actions-menu'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import type { Task } from '@/features/tasks/model/task-types'
+import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
 import { TaskPriorityBadge } from './task-priority-badge'
 import { TaskStatusBadge } from './task-status-badge'
 
-interface TasksTableRowProps {
+interface ITasksTableRowProps {
 	task: Task
+	onStatusChange: (task: Task, status: TaskStatus) => void
+	onEdit: (task: Task) => void
+	onPlan: (task: Task) => void
+	onLogWork: (task: Task) => void
+	onDelete: (task: Task) => void
 }
 
 function isDueWithinOneWeek(dueDate: Date) {
@@ -26,27 +23,33 @@ function isDueWithinOneWeek(dueDate: Date) {
 	return daysUntilDue >= 0 && daysUntilDue <= 7
 }
 
-export function TasksTableRow({ task }: TasksTableRowProps) {
-	let rowClass: string = ''
-	let isLate: boolean = false
-	let isNearDueDate: boolean = false
-
-	if (task.status !== 'done' && task.dueDate) {
-		isNearDueDate = isDueWithinOneWeek(task.dueDate)
-	}
-
-	if (task.status === 'done') {
-		rowClass = 'opacity-35'
-	}
-
-	if (task.status !== 'done' && task.dueDate && task.dueDate < new Date()) {
-		isLate = true
-	}
+export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps) {
+	const isDone = task.status === 'done'
+	const isLate = !isDone && !!task.dueDate && task.dueDate < new Date()
+	const isNearDueDate = !isDone && !!task.dueDate && isDueWithinOneWeek(task.dueDate)
 
 	return (
-		<TableRow className={cn([rowClass])}>
+		<TableRow className={cn([isDone && 'text-muted-foreground'])}>
 			<TableCell>
-				<p className="max-w-66 truncate font-medium">{task.title}</p>
+				{/* The title is the way into the task, from the row and from the keyboard. */}
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<button
+								type="button"
+								onClick={() => onEdit(task)}
+								className={cn([
+									'max-w-66 truncate rounded-sm text-left font-medium outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50',
+									isDone && 'line-through',
+								])}
+							/>
+						}
+					>
+						{task.title}
+					</TooltipTrigger>
+
+					<TooltipContent>{task.title}</TooltipContent>
+				</Tooltip>
 			</TableCell>
 
 			<TableCell>
@@ -65,9 +68,9 @@ export function TasksTableRow({ task }: TasksTableRowProps) {
 				</span>
 			</TableCell>
 
-			<TableCell className="flex justify-end items-center">
+			<TableCell>
 				{task.dueDate ? (
-					<div className="flex gap-2 items-center">
+					<div className="flex items-center justify-end gap-2">
 						{isLate && (
 							<Tooltip>
 								<TooltipTrigger render={<TriangleAlert className="size-4 text-destructive" />} />
@@ -88,41 +91,18 @@ export function TasksTableRow({ task }: TasksTableRowProps) {
 							</Tooltip>
 						)}
 
-						<span className="w-22 text-right">{format(task.dueDate, `dd/MM/yy`)}</span>
+						{/* Overdue has to be readable while scanning the column, not only on hover. */}
+						<span className={cn(['w-22 text-right', isLate && 'font-medium text-destructive'])}>
+							{format(task.dueDate, 'dd/MM/yy')}
+						</span>
 					</div>
 				) : (
-					'-'
+					<p className="text-right text-muted-foreground">-</p>
 				)}
 			</TableCell>
 
 			<TableCell className="text-right">
-				<DropdownMenu>
-					<DropdownMenuTrigger>
-						<Button variant="ghost" size="icon-xs">
-							<EllipsisVertical className="size-3" />
-						</Button>
-					</DropdownMenuTrigger>
-
-					<DropdownMenuContent className="w-fit">
-						<DropdownMenuGroup>
-							<DropdownMenuLabel>Actions</DropdownMenuLabel>
-
-							<DropdownMenuItem>
-								<div className="flex gap-2 items-center">
-									<CircleCheck />
-									Mark as done
-								</div>
-							</DropdownMenuItem>
-
-							<DropdownMenuItem>
-								<div className="flex gap-2 items-center">
-									<Calendar />
-									Plan
-								</div>
-							</DropdownMenuItem>
-						</DropdownMenuGroup>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<TaskActionsMenu task={task} onEdit={onEdit} {...actions} />
 			</TableCell>
 		</TableRow>
 	)

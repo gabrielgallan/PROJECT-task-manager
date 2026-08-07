@@ -3,6 +3,7 @@ import type { Task, TaskPriority, TaskStatus } from '@/features/tasks/model/task
 
 interface ISeed {
 	title: string
+	description?: string
 	status: TaskStatus
 	priority: TaskPriority
 	/** Offsets in days relative to today, so the mock stays around the "Today" marker. */
@@ -15,6 +16,7 @@ interface ISeed {
 const SEEDS: ISeed[] = [
 	{
 		title: 'Integração DAHUA',
+		description: 'Mapear os eventos da SDK e cobrir o fluxo de reconexão da câmera.',
 		status: 'in_progress',
 		priority: 'critical',
 		startOffset: -12,
@@ -78,6 +80,7 @@ const SEEDS: ISeed[] = [
 	},
 	{
 		title: 'Documentação da API de eventos',
+		description: 'Sem prazo definido: fica fora da timeline até ganhar uma data.',
 		status: 'backlog',
 		priority: 'low',
 		createdOffset: -11,
@@ -124,6 +127,7 @@ const TODAY = startOfDay(new Date())
 export const TASKS_MOCK: Task[] = SEEDS.map((seed, index) => ({
 	id: `task-${index + 1}`,
 	title: seed.title,
+	description: seed.description,
 	status: seed.status,
 	priority: seed.priority,
 	startDate: seed.startOffset === undefined ? undefined : addDays(TODAY, seed.startOffset),
