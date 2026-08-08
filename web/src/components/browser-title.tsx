@@ -7,7 +7,7 @@ type BrowserTitleProps = {
 export function BrowserTitle({ title }: BrowserTitleProps) {
 	return (
 		<Helmet>
-			<title>{title ? `${title} - task_manager` : 'task_manager'}</title>
+			<title>{title ? `${title} | task_manager` : 'task_manager'}</title>
 		</Helmet>
 	)
 }

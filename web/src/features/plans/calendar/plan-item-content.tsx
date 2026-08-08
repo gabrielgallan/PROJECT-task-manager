@@ -9,14 +9,17 @@ import { cn } from '@/lib/utils'
 interface IPlanItemContentProps {
 	plan: IPlan
 	context: ICalendarItemRenderContext
+	taskTitle?: string
 }
 
 export function getPlanItemClassName(plan: IPlan, context: ICalendarItemRenderContext): string {
 	return context.variant === 'month' ? '' : PLAN_SURFACE[plan.color]
 }
 
-export function PlanItemContent({ plan, context }: IPlanItemContentProps) {
+export function PlanItemContent({ plan, context, taskTitle }: IPlanItemContentProps) {
 	const { use24HourFormat } = useCalendar()
+	// A plan often carries the task's own name; repeating it adds nothing.
+	const taskLabel = taskTitle && taskTitle !== plan.title ? taskTitle : undefined
 
 	switch (context.variant) {
 		case 'time':
@@ -32,6 +35,10 @@ export function PlanItemContent({ plan, context }: IPlanItemContentProps) {
 						{formatTime(context.startDate, use24HourFormat)}
 						{!context.isCompact && ` – ${formatTime(context.endDate, use24HourFormat)}`}
 					</span>
+
+					{taskLabel && !context.isCompact && (
+						<span className="truncate leading-tight opacity-60">{taskLabel}</span>
+					)}
 				</>
 			)
 		case 'month':
@@ -59,7 +66,7 @@ export function PlanItemContent({ plan, context }: IPlanItemContentProps) {
 					</div>
 
 					<div className="flex items-baseline justify-between gap-3">
-						<span className="truncate text-xs opacity-70">{plan.description}</span>
+						<span className="truncate text-xs opacity-70">{taskLabel ?? plan.description}</span>
 						<span className="shrink-0 text-xs opacity-60">
 							{formatDuration(context.startDate, context.endDate)}
 						</span>

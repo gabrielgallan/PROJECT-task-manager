@@ -1,11 +1,11 @@
 import {
 	Calendar,
-	ChartBarIcon,
-	ChartNoAxesGantt,
-	Logs,
+	ChartColumnBig,
+	FileChartLine,
+	ListOrdered,
 	type LucideIcon,
 	Settings,
-	Table,
+	SquareCheck,
 	Workflow,
 } from 'lucide-react'
 import type * as React from 'react'
@@ -39,7 +39,7 @@ const sidebarGroups: SidebarGroupItem[] = [
 			{
 				label: 'Tasks',
 				url: '/registers/tasks',
-				icon: ChartNoAxesGantt,
+				icon: ListOrdered,
 			},
 			{
 				label: 'Plans',
@@ -49,7 +49,7 @@ const sidebarGroups: SidebarGroupItem[] = [
 			{
 				label: 'Work logs',
 				url: '/registers/work-logs',
-				icon: Logs,
+				icon: SquareCheck,
 			},
 		],
 	},
@@ -59,12 +59,12 @@ const sidebarGroups: SidebarGroupItem[] = [
 			{
 				label: 'Dashboard',
 				url: '/analytics/dashboard',
-				icon: ChartBarIcon,
+				icon: ChartColumnBig,
 			},
 			{
 				label: 'Reports',
 				url: '/analytics/reports',
-				icon: Table,
+				icon: FileChartLine,
 			},
 		],
 	},
@@ -113,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 										<SidebarMenuButton
 											// The bar is always rendered and only changes colour, and being a pseudo
 											// element it stays square instead of following the button's rounding.
-											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
+											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded before:bg-transparent data-active:before:bg-primary"
 											tooltip={item.label}
 											isActive={item.url === '/' ? pathname === '/' : pathname.startsWith(item.url)}
 										>

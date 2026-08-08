@@ -1,6 +1,5 @@
-import { useDebounce } from '@uidotdev/usehooks'
 import { Plus, Search, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import {
 	type IFacetOption,
 	TaskFacetFilter,
@@ -17,7 +16,7 @@ import {
 	TASK_PRIORITY_COLOR,
 	TASK_PRIORITY_LABEL,
 } from '@/features/tasks/model/task-priority'
-import { hasActiveTaskFilters, type ITaskQuery } from '@/features/tasks/model/task-query'
+import type { ITaskFilters } from '@/features/tasks/model/task-query'
 import {
 	TASK_STATUS_ICON,
 	TASK_STATUS_ICON_COLOR,
@@ -26,9 +25,6 @@ import {
 } from '@/features/tasks/model/task-status'
 import type { TaskPriority, TaskStatus } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
-
-/** Long enough to swallow a burst of typing, short enough to feel live. */
-const SEARCH_DEBOUNCE_MS = 250
 
 const STATUS_OPTIONS: IFacetOption<TaskStatus>[] = TASK_STATUSES.map((status) => {
 	const Icon = TASK_STATUS_ICON[status]
@@ -47,51 +43,49 @@ const PRIORITY_OPTIONS: IFacetOption<TaskPriority>[] = TASK_PRIORITIES.map((prio
 }))
 
 interface ITasksToolbarProps {
-	query: ITaskQuery
-	statusCounts: Record<string, number>
-	priorityCounts: Record<string, number>
+	draft: ITaskFilters
+	isDirty: boolean
+	canClear: boolean
 	onSearchChange: (search: string) => void
 	onToggleStatus: (status: TaskStatus) => void
 	onTogglePriority: (priority: TaskPriority) => void
 	onClearStatus: () => void
 	onClearPriority: () => void
-	onClearFilters: () => void
+	onApply: () => void
+	onClearAll: () => void
 	onNewTask: () => void
 }
 
 export function TasksToolbar({
-	query,
-	statusCounts,
-	priorityCounts,
+	draft,
+	isDirty,
+	canClear,
 	onSearchChange,
 	onToggleStatus,
 	onTogglePriority,
 	onClearStatus,
 	onClearPriority,
-	onClearFilters,
+	onApply,
+	onClearAll,
 	onNewTask,
 }: ITasksToolbarProps) {
-	// The input stays instant while the URL only follows once typing settles.
-	const [term, setTerm] = useState(query.search)
-	const debouncedTerm = useDebounce(term, SEARCH_DEBOUNCE_MS)
+	const handleSubmit = (event: FormEvent) => {
+		event.preventDefault()
+		onApply()
+	}
 
-	useEffect(() => {
-		onSearchChange(debouncedTerm)
-	}, [debouncedTerm, onSearchChange])
-
-	// Clearing the filters elsewhere has to empty the box as well. It only runs
-	// when the URL term actually changes, so it never fights the typing above.
-	useEffect(() => {
-		if (query.search === '') {
-			setTerm('')
+	// The underlying input does not take part in implicit submission, so Enter is
+	// wired by hand — typing a term and pressing it has to search.
+	const handleSearchKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			onApply()
 		}
-	}, [query.search])
-
-	const hasFilters = hasActiveTaskFilters(query)
+	}
 
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-2">
-			<div className="flex flex-wrap items-center gap-2">
+			<form className="flex flex-wrap items-center gap-2" onSubmit={handleSubmit}>
 				<InputGroup className="w-full sm:w-64">
 					<InputGroupAddon>
 						<Search />
@@ -100,13 +94,19 @@ export function TasksToolbar({
 					<InputGroupInput
 						aria-label="Search tasks"
 						placeholder="Search tasks..."
-						value={term}
-						onChange={(event) => setTerm(event.target.value)}
+						value={draft.search}
+						onChange={(event) => onSearchChange(event.target.value)}
+						onKeyDown={handleSearchKeyDown}
 					/>
 
-					{term && (
+					{draft.search && (
 						<InputGroupAddon align="inline-end">
-							<InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => setTerm('')}>
+							<InputGroupButton
+								type="button"
+								size="icon-xs"
+								aria-label="Clear search"
+								onClick={() => onSearchChange('')}
+							>
 								<X />
 							</InputGroupButton>
 						</InputGroupAddon>
@@ -116,8 +116,7 @@ export function TasksToolbar({
 				<TaskFacetFilter
 					label="Status"
 					options={STATUS_OPTIONS}
-					selected={query.status}
-					counts={statusCounts}
+					selected={draft.status}
 					onToggle={onToggleStatus}
 					onClear={onClearStatus}
 				/>
@@ -125,20 +124,24 @@ export function TasksToolbar({
 				<TaskFacetFilter
 					label="Priority"
 					options={PRIORITY_OPTIONS}
-					selected={query.priority}
-					counts={priorityCounts}
+					selected={draft.priority}
 					onToggle={onTogglePriority}
 					onClear={onClearPriority}
 				/>
 
-				{/* Only offered when there is something to undo. */}
-				{hasFilters && (
-					<Button variant="ghost" size="sm" onClick={onClearFilters}>
-						<X />
-						Clear filters
-					</Button>
-				)}
-			</div>
+				{/* Filled while there is something pending, so an edited but unapplied
+				    filter never passes for an applied one. */}
+				<Button type="submit" size="sm" variant={isDirty ? 'default' : 'outline'}>
+					<Search />
+					Search
+				</Button>
+
+				{/* Kept in place rather than toggled, so the pair never shifts around. */}
+				<Button type="button" variant="ghost" size="sm" disabled={!canClear} onClick={onClearAll}>
+					<X />
+					Clear filters
+				</Button>
+			</form>
 
 			<Button onClick={onNewTask}>
 				<Plus />

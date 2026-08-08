@@ -4,13 +4,16 @@ import type { IRouteHandle } from '@/hooks/use-route-handle'
 import { AuthLayout } from './app/layouts/auth'
 import { DefaultLayout } from './app/layouts/default'
 import { NotFoundPage } from './app/pages/404'
+import { DashboardPage } from './app/pages/analytics/dashboard'
+import { ReportsPage } from './app/pages/analytics/reports'
+import { ForgotPasswordPage } from './app/pages/auth/forgot-password'
 import { SignInPage } from './app/pages/auth/sign-in'
 import { SignUpPage } from './app/pages/auth/sign-up'
 import { ErrorPage } from './app/pages/error'
 import { PlansPage } from './app/pages/registers/plans'
 import { TasksPage } from './app/pages/registers/tasks'
 import { WorkLogsPage } from './app/pages/registers/work-logs'
-import { GanttTestPage } from './app/pages/test/gantt'
+import { TestPage } from './app/pages/test'
 
 export const router = createBrowserRouter([
 	{
@@ -27,6 +30,7 @@ export const router = createBrowserRouter([
 				children: [
 					{ path: 'sign-in', element: <SignInPage /> },
 					{ path: 'sign-up', element: <SignUpPage /> },
+					{ path: 'forgot-password', element: <ForgotPasswordPage /> },
 				],
 			},
 			{
@@ -43,8 +47,19 @@ export const router = createBrowserRouter([
 				],
 			},
 			{
-				path: 'test/gantt',
-				element: <GanttTestPage />,
+				path: 'analytics',
+				element: <DefaultLayout />,
+				children: [
+					{
+						path: 'dashboard',
+						element: <DashboardPage />,
+					},
+					{ path: 'reports', element: <ReportsPage /> },
+				],
+			},
+			{
+				path: 'test',
+				element: <TestPage />,
 			},
 		],
 	},

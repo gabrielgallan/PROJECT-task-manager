@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleCheck, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { DateTimePicker } from '@/components/date-time-picker'
 import { Button } from '@/components/ui/button'
@@ -21,10 +21,14 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PLAN_COLORS, PLAN_DOT } from '@/features/plans/model/plan-colors'
 import { planSchema, type TPlanFormData } from '@/features/plans/model/plan-schema'
 import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
+import type { Task } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
+
+const NO_TASK_VALUE = 'none'
 
 const EMPTY_VALUES: TPlanFormData = {
 	title: '',
@@ -37,6 +41,7 @@ const EMPTY_VALUES: TPlanFormData = {
 
 interface IPlanDialogProps {
 	state: TPlanDialogState
+	tasks: Task[]
 	use24HourFormat: boolean
 	onClose: () => void
 	onCreate: (plan: IPlan) => void
@@ -48,6 +53,7 @@ interface IPlanDialogProps {
 
 export function PlanDialog({
 	state,
+	tasks,
 	use24HourFormat,
 	onClose,
 	onCreate,
@@ -57,9 +63,17 @@ export function PlanDialog({
 }: IPlanDialogProps) {
 	const isOpen = state.mode !== 'closed'
 	const isEditing = state.mode === 'edit'
-	const isConfirmed = state.mode === 'edit' && !!state.plan.confirmedAt
+	const editingPlan = state.mode === 'edit' ? state.plan : null
+
+	// The trigger renders the raw value, so the title has to be looked up.
+	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
+
 	// A plan that has not happened yet cannot be recorded as work already done.
-	const isUpcoming = state.mode === 'edit' && new Date(state.plan.endDate) > new Date()
+	const confirmBlockedReason = editingPlan?.confirmedAt
+		? 'Already recorded as a work log'
+		: editingPlan && new Date(editingPlan.endDate) > new Date()
+			? 'Only past plans can be recorded'
+			: null
 	const {
 		control,
 		register,
@@ -164,6 +178,40 @@ export function PlanDialog({
 
 						<Controller
 							control={control}
+							name="taskId"
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor="plan-task">Task</FieldLabel>
+									<Select
+										value={field.value ?? NO_TASK_VALUE}
+										onValueChange={(value) => field.onChange(value === NO_TASK_VALUE ? null : value)}
+									>
+										<SelectTrigger
+											id="plan-task"
+											className="w-full"
+											aria-invalid={fieldState.invalid}
+											onBlur={field.onBlur}
+										>
+											<SelectValue>
+												{(value: string) => taskTitles.get(value) ?? 'No task'}
+											</SelectValue>
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value={NO_TASK_VALUE}>No task</SelectItem>
+											{tasks.map((task) => (
+												<SelectItem key={task.id} value={task.id}>
+													{task.title}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+								</Field>
+							)}
+						/>
+
+						<Controller
+							control={control}
 							name="color"
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
@@ -208,30 +256,31 @@ export function PlanDialog({
 				</form>
 
 				<DialogFooter className="sm:justify-between">
-					{state.mode === 'edit' ? (
+					{editingPlan ? (
 						<div className="flex gap-2">
-							<Button type="button" variant="destructive" onClick={() => onDelete(state.plan)}>
+							<Button type="button" variant="destructive" onClick={() => onDelete(editingPlan)}>
 								<Trash2 />
 								Delete
 							</Button>
 
 							{onConfirm && (
-								<Button
-									type="button"
-									variant="outline"
-									disabled={isConfirmed || isUpcoming}
-									title={
-										isConfirmed
-											? 'Already recorded as a work log'
-											: isUpcoming
-												? 'Only past plans can be recorded'
-												: undefined
-									}
-									onClick={() => onConfirm(state.plan)}
-								>
-									<CircleCheck />
-									{isConfirmed ? 'Recorded' : 'Record as done'}
-								</Button>
+								<Tooltip>
+									{/* A disabled button emits no pointer events, so the wrapper is what
+									    the tooltip listens to — otherwise the reason never shows. */}
+									<TooltipTrigger render={<span tabIndex={confirmBlockedReason ? 0 : -1} />}>
+										<Button
+											type="button"
+											variant="outline"
+											disabled={!!confirmBlockedReason}
+											onClick={() => onConfirm(editingPlan)}
+										>
+											<CircleCheck />
+											{editingPlan.confirmedAt ? 'Recorded' : 'Record as done'}
+										</Button>
+									</TooltipTrigger>
+
+									{confirmBlockedReason && <TooltipContent>{confirmBlockedReason}</TooltipContent>}
+								</Tooltip>
 							)}
 						</div>
 					) : (

@@ -11,6 +11,7 @@ import { TaskStatusBadge } from './task-status-badge'
 interface ITasksTableRowProps {
 	task: Task
 	onStatusChange: (task: Task, status: TaskStatus) => void
+	onDetails: (task: Task) => void
 	onEdit: (task: Task) => void
 	onPlan: (task: Task) => void
 	onLogWork: (task: Task) => void

@@ -3,15 +3,23 @@ import { TASK_STATUS_RANK } from '@/features/tasks/model/task-status'
 import type { Task, TaskPriority, TaskStatus } from '@/features/tasks/model/task-types'
 
 /**
+ * The narrowing part of a listing request. It is split from the rest because the
+ * toolbar edits it as a draft and only commits it on demand, while sorting and
+ * paging keep taking effect immediately.
+ */
+export interface ITaskFilters {
+	search: string
+	status: TaskStatus[]
+	priority: TaskPriority[]
+}
+
+/**
  * The shape of a task listing request. It is deliberately modelled as if it were
  * already a server call: filtering, sorting and pagination travel together,
  * because sorting only a page of results would order the wrong set. Today the
  * functions below resolve it in memory; later they become a query string.
  */
-export interface ITaskQuery {
-	search: string
-	status: TaskStatus[]
-	priority: TaskPriority[]
+export interface ITaskQuery extends ITaskFilters {
 	sortBy: TTaskSortField
 	sortDir: TSortDirection
 	page: number
@@ -35,8 +43,27 @@ export const DEFAULT_TASK_QUERY: ITaskQuery = {
 	page: 1,
 }
 
-export function hasActiveTaskFilters(query: ITaskQuery): boolean {
-	return query.search.trim() !== '' || query.status.length > 0 || query.priority.length > 0
+export const EMPTY_TASK_FILTERS: ITaskFilters = { search: '', status: [], priority: [] }
+
+export function hasActiveTaskFilters(filters: ITaskFilters): boolean {
+	return filters.search.trim() !== '' || filters.status.length > 0 || filters.priority.length > 0
+}
+
+export function extractTaskFilters(query: ITaskQuery): ITaskFilters {
+	return { search: query.search, status: query.status, priority: query.priority }
+}
+
+/** Selection order is an artefact of clicking, so it must not count as a change. */
+function sameValues<TValue extends string>(a: TValue[], b: TValue[]): boolean {
+	return a.length === b.length && a.every((value) => b.includes(value))
+}
+
+export function isSameTaskFilters(a: ITaskFilters, b: ITaskFilters): boolean {
+	return (
+		a.search.trim() === b.search.trim() &&
+		sameValues(a.status, b.status) &&
+		sameValues(a.priority, b.priority)
+	)
 }
 
 export function filterTasks(tasks: Task[], query: ITaskQuery): Task[] {
@@ -125,23 +152,4 @@ export function applyTaskQuery(tasks: Task[], query: ITaskQuery): ITaskQueryResu
 		page,
 		pageCount,
 	}
-}
-
-/**
- * Counts shown next to each filter option. They follow the search term but
- * ignore both facet selections, so a value never reads as "0" only because it
- * is the one currently excluded.
- */
-export function countTasksBy<TKey extends 'status' | 'priority'>(
-	tasks: Task[],
-	query: ITaskQuery,
-	key: TKey,
-): Record<string, number> {
-	const scoped = filterTasks(tasks, { ...query, status: [], priority: [] })
-
-	return scoped.reduce<Record<string, number>>((counts, task) => {
-		counts[task[key]] = (counts[task[key]] ?? 0) + 1
-
-		return counts
-	}, {})
 }

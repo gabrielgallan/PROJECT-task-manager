@@ -34,6 +34,8 @@ import type { IWorkLog, TWorkLogDialogState } from '@/features/work-logs/model/w
 interface IWorkLogsCalendarProps {
 	workLogs: IWorkLog[]
 	tasks: Task[]
+	/** Which task the page was opened for, so a link from the task carries over. */
+	initialTaskIds?: string[]
 	onCreate: (workLog: IWorkLog) => void
 	onUpdate: (workLog: IWorkLog) => void
 	onDelete: (workLog: IWorkLog) => void
@@ -42,12 +44,13 @@ interface IWorkLogsCalendarProps {
 export function WorkLogsCalendar({
 	workLogs,
 	tasks,
+	initialTaskIds,
 	onCreate,
 	onUpdate,
 	onDelete,
 }: IWorkLogsCalendarProps) {
 	const [dialog, setDialog] = useState<TWorkLogDialogState>({ mode: 'closed' })
-	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
+	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
 
 	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
 

@@ -1,4 +1,4 @@
-import { CalendarPlus, Clock, EllipsisVertical, Pencil, Trash2 } from 'lucide-react'
+import { CalendarPlus, Clock, EllipsisVertical, PanelRight, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
@@ -19,6 +19,7 @@ import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 interface ITaskActionsMenuProps {
 	task: Task
 	onStatusChange: (task: Task, status: TaskStatus) => void
+	onDetails: (task: Task) => void
 	onEdit: (task: Task) => void
 	onPlan: (task: Task) => void
 	onLogWork: (task: Task) => void
@@ -28,11 +29,13 @@ interface ITaskActionsMenuProps {
 /**
  * Two blocks on purpose. The top one changes with the status and covers the
  * one-click case; the bottom one never moves, so "Edit" and "Delete" always sit
- * where the pointer expects them.
+ * where the pointer expects them. "Details" sits above both, since reading comes
+ * before acting and it must not push the rest around either.
  */
 export function TaskActionsMenu({
 	task,
 	onStatusChange,
+	onDetails,
 	onEdit,
 	onPlan,
 	onLogWork,
@@ -48,6 +51,13 @@ export function TaskActionsMenu({
 			</DropdownMenuTrigger>
 
 			<DropdownMenuContent align="end" className="w-44">
+				<DropdownMenuItem onClick={() => onDetails(task)}>
+					<PanelRight />
+					Details
+				</DropdownMenuItem>
+
+				<DropdownMenuSeparator />
+
 				<DropdownMenuGroup>
 					<DropdownMenuLabel>Status</DropdownMenuLabel>
 

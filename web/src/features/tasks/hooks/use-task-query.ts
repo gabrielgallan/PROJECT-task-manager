@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { TASK_PRIORITIES } from '@/features/tasks/model/task-priority'
 import {
 	DEFAULT_TASK_QUERY,
+	type ITaskFilters,
 	type ITaskQuery,
 	TASK_SORT_FIELDS,
 	type TSortDirection,
@@ -45,13 +46,18 @@ function readSort(params: URLSearchParams): Pick<ITaskQuery, 'sortBy' | 'sortDir
 	}
 }
 
+/** An absent parameter is how "no filter" is spelled, so blanks are dropped. */
+function writeParam(params: URLSearchParams, key: string, value: string) {
+	if (value) {
+		params.set(key, value)
+	} else {
+		params.delete(key)
+	}
+}
+
 export interface IUseTaskQuery {
 	query: ITaskQuery
-	setSearch: (search: string) => void
-	toggleStatus: (status: TaskStatus) => void
-	togglePriority: (priority: TaskPriority) => void
-	clearStatus: () => void
-	clearPriority: () => void
+	applyFilters: (filters: ITaskFilters) => void
 	toggleSort: (field: TTaskSortField) => void
 	setPage: (page: number) => void
 	clearFilters: () => void
@@ -61,6 +67,9 @@ export interface IUseTaskQuery {
  * Keeps search, filters, sorting and page in the URL, following the same idea as
  * `useViewParam`: the list and the timeline read one source instead of holding
  * separate state, and the whole listing stays shareable and reload-proof.
+ *
+ * Filters only reach the URL through `applyFilters`, so what is in the address
+ * bar is always what is on screen — never a half-typed intermediate state.
  */
 export function useTaskQuery(): IUseTaskQuery {
 	const [searchParams, setSearchParams] = useSearchParams()
@@ -103,37 +112,13 @@ export function useTaskQuery(): IUseTaskQuery {
 		[write],
 	)
 
-	const setSearch = useCallback(
-		(search: string) =>
+	const applyFilters = useCallback(
+		(filters: ITaskFilters) =>
 			writeAndResetPage((params) => {
-				if (search.trim()) {
-					params.set(SEARCH_PARAM, search)
-				} else {
-					params.delete(SEARCH_PARAM)
-				}
+				writeParam(params, SEARCH_PARAM, filters.search.trim())
+				writeParam(params, STATUS_PARAM, filters.status.join(','))
+				writeParam(params, PRIORITY_PARAM, filters.priority.join(','))
 			}),
-		[writeAndResetPage],
-	)
-
-	const toggleValue = useCallback(
-		(key: string, value: string) =>
-			writeAndResetPage((params) => {
-				const current = params.get(key)?.split(',').filter(Boolean) ?? []
-				const next = current.includes(value)
-					? current.filter((item) => item !== value)
-					: [...current, value]
-
-				if (next.length > 0) {
-					params.set(key, next.join(','))
-				} else {
-					params.delete(key)
-				}
-			}),
-		[writeAndResetPage],
-	)
-
-	const clearValues = useCallback(
-		(key: string) => writeAndResetPage((params) => params.delete(key)),
 		[writeAndResetPage],
 	)
 
@@ -175,21 +160,5 @@ export function useTaskQuery(): IUseTaskQuery {
 		[writeAndResetPage],
 	)
 
-	return {
-		query,
-		setSearch,
-		toggleStatus: useCallback(
-			(status: TaskStatus) => toggleValue(STATUS_PARAM, status),
-			[toggleValue],
-		),
-		togglePriority: useCallback(
-			(priority: TaskPriority) => toggleValue(PRIORITY_PARAM, priority),
-			[toggleValue],
-		),
-		clearStatus: useCallback(() => clearValues(STATUS_PARAM), [clearValues]),
-		clearPriority: useCallback(() => clearValues(PRIORITY_PARAM), [clearValues]),
-		toggleSort,
-		setPage,
-		clearFilters,
-	}
+	return { query, applyFilters, toggleSort, setPage, clearFilters }
 }

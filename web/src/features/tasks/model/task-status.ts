@@ -31,3 +31,13 @@ export const TASK_STATUS_ICON_COLOR: Record<TaskStatus, string> = {
 	in_progress: 'text-amber-500',
 	done: 'fill-emerald-500 stroke-emerald-500 [&>path]:stroke-background',
 }
+
+/**
+ * Same slate / amber / emerald of the badges above, as raw values for charts.
+ * Reading both from here is what keeps a chart from drifting from the table.
+ */
+export const TASK_STATUS_CHART_COLOR: Record<TaskStatus, string> = {
+	backlog: 'oklch(0.554 0.046 257.417)',
+	in_progress: 'oklch(0.769 0.188 70.08)',
+	done: 'oklch(0.723 0.219 149.579)',
+}

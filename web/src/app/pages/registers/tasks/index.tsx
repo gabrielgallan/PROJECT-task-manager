@@ -3,18 +3,16 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { DeleteTaskDialog } from '@/app/pages/registers/tasks/components/delete-task-dialog'
+import { useTaskActivity } from '@/app/pages/registers/tasks/components/details/task-activity'
+import { TaskDetailsSheet } from '@/app/pages/registers/tasks/components/details/task-details-sheet'
 import { TasksGantt } from '@/app/pages/registers/tasks/components/gantt/tasks-gantt'
 import { TasksList } from '@/app/pages/registers/tasks/components/list/tasks-list'
 import { TaskDialog } from '@/app/pages/registers/tasks/components/task-dialog'
 import { TasksToolbar } from '@/app/pages/registers/tasks/components/tasks-toolbar'
 import { BrowserTitle } from '@/components/browser-title'
+import { useTaskFilterDraft } from '@/features/tasks/hooks/use-task-filter-draft'
 import { useTaskQuery } from '@/features/tasks/hooks/use-task-query'
-import {
-	applyTaskQuery,
-	countTasksBy,
-	filterTasks,
-	hasActiveTaskFilters,
-} from '@/features/tasks/model/task-query'
+import { applyTaskQuery, filterTasks, hasActiveTaskFilters } from '@/features/tasks/model/task-query'
 import { TASK_STATUS_LABEL } from '@/features/tasks/model/task-status'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import { DEFAULT_TASK_VIEW, TASK_VIEW_VALUES } from '@/features/tasks/model/task-views'
@@ -29,28 +27,33 @@ export function TasksPage() {
 	const navigate = useNavigate()
 
 	const { tasks, changeTaskStatus, rescheduleTask, removeTask } = useTasks()
+	const { query, applyFilters, toggleSort, setPage, clearFilters } = useTaskQuery()
+
+	// The toolbar composes its filters here and only hands them to the query when
+	// the search is submitted.
 	const {
-		query,
-		setSearch,
-		toggleStatus,
-		togglePriority,
-		clearStatus,
-		clearPriority,
-		toggleSort,
-		setPage,
-		clearFilters,
-	} = useTaskQuery()
+		draft,
+		isDirty,
+		canClear,
+		setDraftSearch,
+		toggleDraftStatus,
+		toggleDraftPriority,
+		clearDraftStatus,
+		clearDraftPriority,
+		apply,
+		clearAll,
+	} = useTaskFilterDraft({ query, onApply: applyFilters, onClear: clearFilters })
 
 	const [editingTask, setEditingTask] = useState<TEditingTask>(undefined)
 	const [deletingTask, setDeletingTask] = useState<Task | null>(null)
+	const [detailedTask, setDetailedTask] = useState<Task | null>(null)
+
+	const activity = useTaskActivity(detailedTask?.id)
 
 	// The list pages the result; the timeline draws every match at once, since
 	// scrolling through time is already its own form of paging.
 	const result = useMemo(() => applyTaskQuery(tasks, query), [tasks, query])
 	const timelineTasks = useMemo(() => filterTasks(tasks, query), [tasks, query])
-
-	const statusCounts = useMemo(() => countTasksBy(tasks, query, 'status'), [tasks, query])
-	const priorityCounts = useMemo(() => countTasksBy(tasks, query, 'priority'), [tasks, query])
 
 	const handleStatusChange = (task: Task, status: TaskStatus) => {
 		changeTaskStatus(task.id, status)
@@ -85,15 +88,16 @@ export function TasksPage() {
 			<div className="flex min-h-0 flex-1 flex-col">
 				<div className="shrink-0 border-b px-4 py-3">
 					<TasksToolbar
-						query={query}
-						statusCounts={statusCounts}
-						priorityCounts={priorityCounts}
-						onSearchChange={setSearch}
-						onToggleStatus={toggleStatus}
-						onTogglePriority={togglePriority}
-						onClearStatus={clearStatus}
-						onClearPriority={clearPriority}
-						onClearFilters={clearFilters}
+						draft={draft}
+						isDirty={isDirty}
+						canClear={canClear}
+						onSearchChange={setDraftSearch}
+						onToggleStatus={toggleDraftStatus}
+						onTogglePriority={toggleDraftPriority}
+						onClearStatus={clearDraftStatus}
+						onClearPriority={clearDraftPriority}
+						onApply={apply}
+						onClearAll={clearAll}
 						onNewTask={() => setEditingTask(null)}
 					/>
 				</div>
@@ -104,7 +108,7 @@ export function TasksPage() {
 						isFiltered={hasActiveTaskFilters(query)}
 						onReschedule={handleReschedule}
 						onSelectTask={setEditingTask}
-						onClearFilters={clearFilters}
+						onClearFilters={clearAll}
 					/>
 				) : (
 					<TasksList
@@ -112,9 +116,10 @@ export function TasksPage() {
 						query={query}
 						onSort={toggleSort}
 						onPageChange={setPage}
-						onClearFilters={clearFilters}
+						onClearFilters={clearAll}
 						onNewTask={() => setEditingTask(null)}
 						onStatusChange={handleStatusChange}
+						onDetails={setDetailedTask}
 						onEdit={setEditingTask}
 						onPlan={handlePlan}
 						onLogWork={handleLogWork}
@@ -122,6 +127,18 @@ export function TasksPage() {
 					/>
 				)}
 			</div>
+
+			<TaskDetailsSheet
+				task={detailedTask}
+				entries={activity}
+				onOpenChange={(open) => {
+					if (!open) {
+						setDetailedTask(null)
+					}
+				}}
+				onOpenPlans={handlePlan}
+				onOpenWorkLogs={handleLogWork}
+			/>
 
 			<TaskDialog
 				task={editingTask ?? undefined}

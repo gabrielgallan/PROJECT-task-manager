@@ -10,17 +10,20 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PLAN_COLORS, PLAN_DOT, type TPlanColor } from '@/features/plans/model/plan-colors'
-import { cn } from '@/lib/utils'
+import type { Task } from '@/features/tasks/model/task-types'
+
+/** Sentinel for plans made without a task, which are a first-class case. */
+export const NO_TASK_FILTER = 'none'
 
 interface IPlanFilterProps {
-	selectedColors: TPlanColor[]
-	onToggle: (color: TPlanColor) => void
+	tasks: Task[]
+	selectedTaskIds: string[]
+	onToggle: (taskId: string) => void
 	onClear: () => void
 }
 
-export function PlanFilter({ selectedColors, onToggle, onClear }: IPlanFilterProps) {
-	const hasFilters = selectedColors.length > 0
+export function PlanFilter({ tasks, selectedTaskIds, onToggle, onClear }: IPlanFilterProps) {
+	const hasFilters = selectedTaskIds.length > 0
 
 	return (
 		<DropdownMenu>
@@ -29,27 +32,33 @@ export function PlanFilter({ selectedColors, onToggle, onClear }: IPlanFilterPro
 				<span className="max-md:sr-only">Filter</span>
 				{hasFilters && (
 					<Badge variant="secondary" className="ml-1">
-						{selectedColors.length}
+						{selectedTaskIds.length}
 					</Badge>
 				)}
 			</DropdownMenuTrigger>
 
-			<DropdownMenuContent align="end" className="w-44">
+			<DropdownMenuContent align="end" className="w-56">
 				<DropdownMenuGroup>
-					<DropdownMenuLabel>Color</DropdownMenuLabel>
+					<DropdownMenuLabel>Task</DropdownMenuLabel>
 
-					{PLAN_COLORS.map((color) => (
+					<DropdownMenuItem
+						closeOnClick={false}
+						onClick={() => onToggle(NO_TASK_FILTER)}
+						className="justify-between"
+					>
+						<span className="text-muted-foreground">No task</span>
+						{selectedTaskIds.includes(NO_TASK_FILTER) && <Check className="size-4" />}
+					</DropdownMenuItem>
+
+					{tasks.map((task) => (
 						<DropdownMenuItem
-							key={color}
+							key={task.id}
 							closeOnClick={false}
-							onClick={() => onToggle(color)}
-							className="justify-between capitalize"
+							onClick={() => onToggle(task.id)}
+							className="justify-between gap-2"
 						>
-							<span className="flex items-center gap-2">
-								<span className={cn('size-3 rounded-full', PLAN_DOT[color])} />
-								{color}
-							</span>
-							{selectedColors.includes(color) && <Check className="size-4" />}
+							<span className="truncate">{task.title}</span>
+							{selectedTaskIds.includes(task.id) && <Check className="size-4 shrink-0" />}
 						</DropdownMenuItem>
 					))}
 				</DropdownMenuGroup>

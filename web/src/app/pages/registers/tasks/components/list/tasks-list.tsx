@@ -29,6 +29,7 @@ interface ITasksListProps {
 	onClearFilters: () => void
 	onNewTask: () => void
 	onStatusChange: (task: Task, status: TaskStatus) => void
+	onDetails: (task: Task) => void
 	onEdit: (task: Task) => void
 	onPlan: (task: Task) => void
 	onLogWork: (task: Task) => void

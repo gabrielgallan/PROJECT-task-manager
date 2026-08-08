@@ -1,9 +1,9 @@
-import { ChartNoAxesGantt, List } from 'lucide-react'
+import { ChartNoAxesGantt, TableProperties } from 'lucide-react'
 import type { IViewOption } from '@/hooks/use-route-handle'
 
 /** The first view is the default one, and the one the header falls back to. */
 export const TASK_VIEWS = [
-	{ value: 'list', label: 'List', icon: List },
+	{ value: 'list', label: 'Table', icon: TableProperties },
 	{ value: 'timeline', label: 'Timeline', icon: ChartNoAxesGantt },
 ] as const satisfies readonly IViewOption[]
 

@@ -72,6 +72,22 @@
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
+
+    /*
+     * Charts speak with one accent plus the reserved status scale. The theme is
+     * neutral by design, so every hue that shows up has to mean something.
+     */
+    --chart-accent: oklch(0.488 0.243 264.376);
+    --chart-accent-soft: oklch(0.623 0.214 259.815);
+    --chart-warning: oklch(0.769 0.188 70.08);
+
+    /* Sequential ramp: one hue, light to dark. Level 0 is an empty cell. */
+    --contribution-0: oklch(0.97 0 0);
+    --contribution-1: oklch(0.932 0.032 255.585);
+    --contribution-2: oklch(0.809 0.105 251.813);
+    --contribution-3: oklch(0.623 0.214 259.815);
+    --contribution-4: oklch(0.488 0.243 264.376);
+
     --radius: 0.625rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
@@ -107,6 +123,18 @@
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
+
+    /* The dark steps are chosen against the dark surface, not flipped from light. */
+    --chart-accent: oklch(0.809 0.105 251.813);
+    --chart-accent-soft: oklch(0.623 0.214 259.815);
+    --chart-warning: oklch(0.769 0.188 70.08);
+
+    --contribution-0: oklch(0.269 0 0);
+    --contribution-1: oklch(0.379 0.146 265.522);
+    --contribution-2: oklch(0.488 0.243 264.376);
+    --contribution-3: oklch(0.623 0.214 259.815);
+    --contribution-4: oklch(0.809 0.105 251.813);
+
     --sidebar: oklch(0.205 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
