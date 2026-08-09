@@ -6,6 +6,7 @@ import { DefaultLayout } from './app/layouts/default'
 import { NotFoundPage } from './app/pages/404'
 import { DashboardPage } from './app/pages/analytics/dashboard'
 import { ReportsPage } from './app/pages/analytics/reports'
+import { REPORT_VIEWS } from './app/pages/analytics/reports/model/report-views'
 import { ForgotPasswordPage } from './app/pages/auth/forgot-password'
 import { SignInPage } from './app/pages/auth/sign-in'
 import { SignUpPage } from './app/pages/auth/sign-up'
@@ -54,7 +55,11 @@ export const router = createBrowserRouter([
 						path: 'dashboard',
 						element: <DashboardPage />,
 					},
-					{ path: 'reports', element: <ReportsPage /> },
+					{
+						path: 'reports',
+						element: <ReportsPage />,
+						handle: { views: REPORT_VIEWS } satisfies IRouteHandle,
+					},
 				],
 			},
 			{

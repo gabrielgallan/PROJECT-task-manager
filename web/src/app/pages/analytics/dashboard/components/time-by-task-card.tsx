@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatMinutes } from '@/features/work-logs/model/work-log-rules'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,6 @@ const TIME_BY_TASK_MOCK: ITaskShare[] = [
 	{ id: 'task-2', title: 'POC de reconhecimento de placas', minutes: 780 },
 	{ id: 'task-4', title: 'Revisão Auto Guide', minutes: 465 },
 	{ id: 'task-6', title: 'Migração do banco de imagens', minutes: 300 },
-	{ id: 'task-3', title: 'Correção de fuso horário nos logs', minutes: 180 },
 ]
 
 interface ITimeByTaskCardProps {
@@ -29,14 +28,13 @@ export function TimeByTaskCard({ className }: ITimeByTaskCardProps) {
 		<Card className={cn(['overflow-hidden', className])}>
 			<CardHeader>
 				<CardTitle>Where your time went</CardTitle>
-				<CardDescription>Top tasks by logged time this month</CardDescription>
 			</CardHeader>
 
-			<CardContent className="flex flex-col gap-3">
+			<CardContent className="flex flex-col h-full justify-between p-6 pt-2">
 				{TIME_BY_TASK_MOCK.map((task) => (
 					<div key={task.id} className="flex flex-col gap-1.5">
 						<div className="flex items-baseline justify-between gap-3">
-							<span className="truncate text-sm">{task.title}</span>
+							<span className="truncate text-xs text-foreground/80">{task.title}</span>
 
 							<span className="shrink-0 text-xs text-muted-foreground tabular-nums">
 								{formatMinutes(task.minutes)} · {Math.round((task.minutes / total) * 100)}%
@@ -44,9 +42,9 @@ export function TimeByTaskCard({ className }: ITimeByTaskCardProps) {
 						</div>
 
 						{/* The bar is a share, so it scales against the longest one. */}
-						<div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+						<div className="h-2 w-full rounded-full overflow-hidden bg-muted">
 							<div
-								className="h-full rounded-full bg-[var(--chart-accent)]"
+								className="h-full rounded-full bg-(--chart-accent)"
 								style={{ width: `${(task.minutes / longest) * 100}%` }}
 							/>
 						</div>

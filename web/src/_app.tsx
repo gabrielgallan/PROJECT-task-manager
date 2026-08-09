@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@/components/theme-provider'
 
 import './index.css'
+import './styles/data-visualization.css'
 import './styles/scrollbar.css'
 
 import { RouterProvider } from 'react-router-dom'

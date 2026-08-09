@@ -1,6 +1,6 @@
 'use client'
 
-import { CartesianGrid, Line, LineChart, XAxis } from 'recharts'
+import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -51,9 +51,9 @@ export function PlannedVsLoggedChart({ className }: PlannedVsLoggedChartProps) {
 				<CardDescription>Last 7 days</CardDescription>
 			</CardHeader>
 
-			<CardContent className="min-h-0 flex-1">
+			<CardContent className="min-h-0 h-fit">
 				<ChartContainer config={chartConfig} className="h-full min-h-0 w-full">
-					<LineChart accessibilityLayer data={chartData}>
+					<AreaChart accessibilityLayer data={chartData} margin={{ left: 6, right: 6 }}>
 						<CartesianGrid vertical={false} />
 
 						<XAxis
@@ -76,25 +76,35 @@ export function PlannedVsLoggedChart({ className }: PlannedVsLoggedChartProps) {
 							}
 						/>
 
-						<Line
+						<defs>
+							<linearGradient id="fillPlanned" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="5%" stopColor="var(--color-planned)" stopOpacity={0.8} />
+								<stop offset="95%" stopColor="var(--color-planned)" stopOpacity={0.1} />
+							</linearGradient>
+							<linearGradient id="fillLogged" x1="0" y1="0" x2="0" y2="1">
+								<stop offset="5%" stopColor="var(--color-logged)" stopOpacity={0.8} />
+								<stop offset="95%" stopColor="var(--color-logged)" stopOpacity={0.1} />
+							</linearGradient>
+						</defs>
+
+						<Area
 							dataKey="planned"
+							type="natural"
+							fill="url(#fillPlanned)"
+							fillOpacity={0.4}
 							stroke="var(--color-planned)"
-							strokeDasharray="4 4"
-							type="monotone"
-							strokeWidth={2}
-							dot={false}
 						/>
 
-						<Line
+						<Area
 							dataKey="logged"
+							type="natural"
+							fill="url(#fillLogged)"
+							fillOpacity={0.4}
 							stroke="var(--color-logged)"
-							type="monotone"
-							strokeWidth={2}
-							dot={false}
 						/>
 
 						<ChartLegend content={<ChartLegendContent />} className="flex justify-start" />
-					</LineChart>
+					</AreaChart>
 				</ChartContainer>
 			</CardContent>
 		</Card>

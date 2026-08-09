@@ -1,42 +1,41 @@
 'use client'
 
-import { useMemo } from 'react'
+import React from 'react'
 import { Label, Pie, PieChart } from 'recharts'
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	type ChartConfig,
 	ChartContainer,
-	ChartLegend,
-	ChartLegendContent,
 	ChartTooltip,
 	ChartTooltipContent,
 } from '@/components/ui/chart'
-import { TASK_STATUS_CHART_COLOR, TASK_STATUS_LABEL } from '@/features/tasks/model/task-status'
 import { cn } from '@/lib/utils'
 
 const chartData = [
-	{ status: 'in_progress', tasks: 275, fill: 'var(--color-in_progress)' },
+	{ status: 'done', tasks: 275, fill: 'var(--color-done)' },
 	{ status: 'backlog', tasks: 200, fill: 'var(--color-backlog)' },
-	{ status: 'done', tasks: 187, fill: 'var(--color-done)' },
+	{ status: 'in_process', tasks: 287, fill: 'var(--color-in_process)' },
+	{ status: 'overdue', tasks: 173, fill: 'var(--color-overdue)' },
 ]
-
-/** Labels and colours come from the task model, the same source as the badges. */
 const chartConfig = {
 	tasks: {
 		label: 'Tasks',
 	},
-	in_progress: {
-		label: TASK_STATUS_LABEL.in_progress,
-		color: TASK_STATUS_CHART_COLOR.in_progress,
+	done: {
+		label: 'Done',
+		color: 'oklch(69.6% 0.17 162.48)',
 	},
 	backlog: {
-		label: TASK_STATUS_LABEL.backlog,
-		color: TASK_STATUS_CHART_COLOR.backlog,
+		label: 'Backlog',
+		color: 'oklch(55.4% 0.046 257.417)',
 	},
-	done: {
-		label: TASK_STATUS_LABEL.done,
-		color: TASK_STATUS_CHART_COLOR.done,
+	in_process: {
+		label: 'In process',
+		color: 'oklch(76.9% 0.188 70.08)',
+	},
+	overdue: {
+		label: 'Overdue',
+		color: 'oklch(64.5% 0.246 16.439)',
 	},
 } satisfies ChartConfig
 
@@ -45,13 +44,14 @@ interface TasksByStatusChartProps {
 }
 
 export function TasksByStatusChart({ className }: TasksByStatusChartProps) {
-	const total = useMemo(() => chartData.reduce((sum, item) => sum + item.tasks, 0), [])
+	const totalTasks = React.useMemo(() => {
+		return chartData.reduce((acc, curr) => acc + curr.tasks, 0)
+	}, [])
 
 	return (
 		<Card className={cn(['overflow-hidden', className])}>
-			<CardHeader className="items-center pb-0">
+			<CardHeader>
 				<CardTitle>Tasks by status</CardTitle>
-				<CardDescription>All open and closed tasks</CardDescription>
 			</CardHeader>
 
 			<CardContent className="min-h-0 flex-1">
@@ -66,44 +66,38 @@ export function TasksByStatusChart({ className }: TasksByStatusChartProps) {
 							outerRadius="75%"
 							innerRadius="45%"
 							stroke="var(--card)"
-							strokeWidth={5}
-							cornerRadius={0}
+							strokeWidth={8}
 						>
 							<Label
 								content={({ viewBox }) => {
-									if (!viewBox || !('cx' in viewBox)) {
-										return null
-									}
-
-									return (
-										<text x={viewBox.cx} y={viewBox.cy} textAnchor="middle">
-											<tspan
+									if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+										return (
+											<text
 												x={viewBox.cx}
 												y={viewBox.cy}
-												className="fill-foreground text-xl font-semibold"
+												textAnchor="middle"
+												dominantBaseline="middle"
 											>
-												{total}
-											</tspan>
-											<tspan
-												x={viewBox.cx}
-												y={(viewBox.cy ?? 0) + 18}
-												className="fill-muted-foreground text-xs"
-											>
-												tasks
-											</tspan>
-										</text>
-									)
+												<tspan
+													x={viewBox.cx}
+													y={viewBox.cy}
+													className="fill-foreground text-2xl font-bold"
+												>
+													{totalTasks.toLocaleString()}
+												</tspan>
+												<tspan
+													x={viewBox.cx}
+													y={(viewBox.cy || 0) + 24}
+													className="fill-muted-foreground"
+												>
+													tasks
+												</tspan>
+											</text>
+										)
+									}
 								}}
 							/>
 						</Pie>
-
-						<ChartLegend
-							layout="vertical"
-							verticalAlign="bottom"
-							align="left"
-							content={<ChartLegendContent nameKey="status" />}
-							className="flex flex-col items-start gap-2"
-						/>
 					</PieChart>
 				</ChartContainer>
 			</CardContent>

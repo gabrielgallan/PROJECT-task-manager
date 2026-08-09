@@ -21,14 +21,15 @@ export function DashboardPage() {
 					<PlannedVsLoggedCard loggedMinutes={400} plannedMinutes={600} />
 				</div>
 
-				<div className="grid h-90 gap-4 lg:grid-cols-9">
-					<PlannedVsLoggedChart className="lg:col-span-5" />
-					<TasksByStatusChart className="lg:col-span-4" />
+				<div className="grid gap-4 lg:h-90 lg:grid-cols-9">
+					<PlannedVsLoggedChart className="h-80 lg:col-span-6 lg:h-auto" />
+					<TimeByTaskCard className="h-80 lg:col-span-3 lg:h-auto" />
 				</div>
 
-				<div className="grid gap-4 xl:grid-cols-3">
-					<WorkLogsContributionGraph className="xl:col-span-2" />
-					<TimeByTaskCard />
+				<div className="flex h-60 items-stretch gap-4">
+					<WorkLogsContributionGraph className="h-full" />
+
+					<TasksByStatusChart className="h-full min-h-0 min-w-0 flex-1" />
 				</div>
 			</div>
 		</>

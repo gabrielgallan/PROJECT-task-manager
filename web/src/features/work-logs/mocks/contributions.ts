@@ -5,6 +5,8 @@ export interface IWorkLogContribution {
 	/** Minutes logged on that day. */
 	count: number
 	level: number
+	workLogCount: number
+	isFuture: boolean
 }
 
 export const CONTRIBUTION_MAX_LEVEL = 4
@@ -31,11 +33,16 @@ function buildContributions(): IWorkLogContribution[] {
 		const isFuture = date > today
 		const idleChance = isWeekend(date) ? 0.75 : 0.15
 		const minutes = isFuture || noise < idleChance ? 0 : Math.round(noise * FULL_DAY_MINUTES)
+		const maxPlausibleLogs = Math.min(5, Math.max(1, Math.ceil(minutes / 90)))
+		const workLogCount =
+			minutes === 0 ? 0 : 1 + Math.floor(pseudoRandom(index + 401) * maxPlausibleLogs)
 
 		return {
 			date: formatISO(date, { representation: 'date' }),
 			count: minutes,
 			level: Math.ceil((Math.min(minutes, FULL_DAY_MINUTES) / FULL_DAY_MINUTES) * CONTRIBUTION_MAX_LEVEL),
+			workLogCount,
+			isFuture,
 		}
 	})
 }

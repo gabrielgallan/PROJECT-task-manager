@@ -17,18 +17,19 @@ type ForgotPasswordFormType = z.infer<typeof forgotPasswordFormSchema>
 export function ForgotPasswordPage() {
 	const [searchParams] = useSearchParams()
 
-	const email = searchParams.get('email') ?? ''
-
 	const {
+		watch,
 		register,
 		handleSubmit,
 		formState: { isSubmitting, errors },
 	} = useForm<ForgotPasswordFormType>({
 		resolver: zodResolver(forgotPasswordFormSchema),
 		defaultValues: {
-			email,
+			email: searchParams.get('email') ?? '',
 		},
 	})
+
+	const email = watch('email')
 
 	async function handleRequestPasswordRecover(data: ForgotPasswordFormType) {
 		console.log(data)
@@ -62,7 +63,10 @@ export function ForgotPasswordPage() {
 						{isSubmitting ? <Loader2 className="animate-spin" /> : 'Send'}
 					</Button>
 
-					<Link to="/auth/sign-in" className="font-medium text-sm underline hover:opacity-90">
+					<Link
+						to={`/auth/sign-in?email=${email}`}
+						className="font-medium text-sm underline hover:opacity-90"
+					>
 						Sign in instead
 					</Link>
 				</div>
