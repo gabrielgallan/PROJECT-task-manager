@@ -7,13 +7,12 @@ import {
 	ContributionGraphLegend,
 	ContributionGraphTotalCount,
 } from '@/components/kibo-ui/contribution-graph'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
 	CONTRIBUTION_MAX_LEVEL,
 	type IWorkLogContribution,
-	WORK_LOG_CONTRIBUTIONS_MOCK,
-} from '@/features/work-logs/mocks/contributions'
+} from '@/features/work-logs/model/work-log-contributions'
 import { formatMinutes } from '@/features/work-logs/model/work-log-rules'
 import { cn } from '@/lib/utils'
 
@@ -49,19 +48,22 @@ function getAccessibleLabel(activity: IWorkLogContribution) {
 }
 
 interface IWorkLogsContributionGraphProps {
+	contributions: IWorkLogContribution[]
 	className?: string
 }
 
-export function WorkLogsContributionGraph({ className }: IWorkLogsContributionGraphProps) {
-	const totalMinutes = WORK_LOG_CONTRIBUTIONS_MOCK.reduce((sum, day) => sum + day.count, 0)
+export function WorkLogsContributionGraph({
+	contributions,
+	className,
+}: IWorkLogsContributionGraphProps) {
+	const totalMinutes = contributions.reduce((sum, day) => sum + day.count, 0)
 	// The graph sums `count`, which here is minutes, so the footer gets days instead.
-	const activeDays = WORK_LOG_CONTRIBUTIONS_MOCK.filter((day) => day.count > 0).length
+	const activeDays = contributions.filter((day) => day.count > 0).length
 
 	return (
 		<Card className={cn('w-fit max-w-full shrink-0', className)}>
 			<CardHeader>
 				<CardTitle>Logged work</CardTitle>
-				<CardDescription>Year to date</CardDescription>
 			</CardHeader>
 
 			<CardContent>
@@ -69,7 +71,7 @@ export function WorkLogsContributionGraph({ className }: IWorkLogsContributionGr
 					blockMargin={4}
 					blockSize={10}
 					fontSize={10}
-					data={WORK_LOG_CONTRIBUTIONS_MOCK}
+					data={contributions}
 					maxLevel={CONTRIBUTION_MAX_LEVEL}
 					totalCount={activeDays}
 				>

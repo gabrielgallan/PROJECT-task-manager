@@ -87,6 +87,39 @@ const SEEDS: ISeed[] = [
 	},
 	{ day: 4, start: [16, 0], end: [17, 30], title: 'Tech debt cleanup', color: 'green' },
 	{ day: 5, start: [10, 0], end: [12, 0], title: 'Side project', color: 'orange' },
+	{
+		day: 6,
+		start: [9, 0],
+		end: [10, 0],
+		title: 'Weekly review',
+		description: 'Review the week and prepare the next priorities.',
+		color: 'purple',
+	},
+	{
+		day: 6,
+		start: [10, 30],
+		end: [12, 0],
+		title: 'Camera integration follow-up',
+		description: 'Review reconnection events and list the remaining edge cases.',
+		color: 'blue',
+		taskId: 'task-1',
+	},
+	{
+		day: 6,
+		start: [14, 0],
+		end: [15, 30],
+		title: 'Auto Guide review',
+		color: 'green',
+		taskId: 'task-4',
+	},
+	{
+		day: 6,
+		start: [16, 0],
+		end: [16, 30],
+		title: 'Prepare next week',
+		description: 'Reserve focus blocks and confirm the most important deliveries.',
+		color: 'yellow',
+	},
 ]
 
 function buildPlans(): IPlan[] {
