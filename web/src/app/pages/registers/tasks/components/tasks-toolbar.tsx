@@ -4,6 +4,7 @@ import {
 	type IFacetOption,
 	TaskFacetFilter,
 } from '@/app/pages/registers/tasks/components/task-facet-filter'
+import { PageViewTabs } from '@/components/page-view-tabs'
 import { Button } from '@/components/ui/button'
 import {
 	InputGroup,
@@ -24,6 +25,8 @@ import {
 	TASK_STATUSES,
 } from '@/features/tasks/model/task-status'
 import type { TaskPriority, TaskStatus } from '@/features/tasks/model/task-types'
+import { TASK_VIEWS, type TTaskView } from '@/features/tasks/model/task-views'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 
 const STATUS_OPTIONS: IFacetOption<TaskStatus>[] = TASK_STATUSES.map((status) => {
@@ -46,6 +49,8 @@ interface ITasksToolbarProps {
 	draft: ITaskFilters
 	isDirty: boolean
 	canClear: boolean
+	view: TTaskView
+	onViewChange: (view: TTaskView) => void
 	onSearchChange: (search: string) => void
 	onToggleStatus: (status: TaskStatus) => void
 	onTogglePriority: (priority: TaskPriority) => void
@@ -60,6 +65,8 @@ export function TasksToolbar({
 	draft,
 	isDirty,
 	canClear,
+	view,
+	onViewChange,
 	onSearchChange,
 	onToggleStatus,
 	onTogglePriority,
@@ -69,6 +76,8 @@ export function TasksToolbar({
 	onClearAll,
 	onNewTask,
 }: ITasksToolbarProps) {
+	const isMobile = useIsMobile()
+
 	const handleSubmit = (event: FormEvent) => {
 		event.preventDefault()
 		onApply()
@@ -131,22 +140,37 @@ export function TasksToolbar({
 
 				{/* Filled while there is something pending, so an edited but unapplied
 				    filter never passes for an applied one. */}
-				<Button type="submit" size="sm" variant={isDirty ? 'default' : 'outline'}>
+				<Button
+					type="submit"
+					size={isMobile ? 'icon' : 'sm'}
+					variant={isDirty ? 'default' : 'outline'}
+				>
 					<Search />
-					Search
+					{!isMobile && 'Search'}
 				</Button>
 
 				{/* Kept in place rather than toggled, so the pair never shifts around. */}
-				<Button type="button" variant="ghost" size="sm" disabled={!canClear} onClick={onClearAll}>
+				<Button
+					type="button"
+					variant="ghost"
+					size={isMobile ? 'icon' : 'sm'}
+					disabled={!canClear}
+					onClick={onClearAll}
+				>
 					<X />
-					Clear filters
+					{!isMobile && 'Clear filters'}
 				</Button>
 			</form>
 
-			<Button onClick={onNewTask}>
-				<Plus />
-				New task
-			</Button>
+			{/* Views and the main action share the right side, as in the calendar pages. */}
+			<div className="flex ml-auto items-center gap-2">
+				<PageViewTabs views={TASK_VIEWS} value={view} onChange={onViewChange} />
+
+				<Button onClick={onNewTask} size={isMobile ? 'icon' : 'sm'}>
+					<Plus />
+					{!isMobile && 'New task'}
+				</Button>
+			</div>
 		</div>
 	)
 }

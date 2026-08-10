@@ -98,3 +98,11 @@ export function useCalendar(): ICalendarContext {
 	if (!context) throw new Error('useCalendar must be used within a CalendarProvider.')
 	return context
 }
+
+/**
+ * For components that render calendar items outside the calendar itself, like a
+ * dashboard card. Returns null instead of throwing when there is no provider.
+ */
+export function useOptionalCalendar(): ICalendarContext | null {
+	return useContext(CalendarContext)
+}

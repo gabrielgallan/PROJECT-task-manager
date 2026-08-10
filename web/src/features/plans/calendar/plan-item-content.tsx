@@ -1,5 +1,5 @@
 import { CircleCheck } from 'lucide-react'
-import { useCalendar } from '@/features/calendar/calendar-provider'
+import { useOptionalCalendar } from '@/features/calendar/calendar-provider'
 import { formatDuration, formatTime } from '@/features/calendar/lib/formatting'
 import type { ICalendarItemRenderContext } from '@/features/calendar/types'
 import { PLAN_DOT, PLAN_SURFACE } from '@/features/plans/model/plan-colors'
@@ -10,14 +10,22 @@ interface IPlanItemContentProps {
 	plan: IPlan
 	context: ICalendarItemRenderContext
 	taskTitle?: string
+	/** Only needed outside the calendar, where there is no provider to read it from. */
+	use24HourFormat?: boolean
 }
 
 export function getPlanItemClassName(plan: IPlan, context: ICalendarItemRenderContext): string {
 	return context.variant === 'month' ? '' : PLAN_SURFACE[plan.color]
 }
 
-export function PlanItemContent({ plan, context, taskTitle }: IPlanItemContentProps) {
-	const { use24HourFormat } = useCalendar()
+export function PlanItemContent({
+	plan,
+	context,
+	taskTitle,
+	use24HourFormat: use24HourFormatProp,
+}: IPlanItemContentProps) {
+	const calendar = useOptionalCalendar()
+	const use24HourFormat = use24HourFormatProp ?? calendar?.use24HourFormat ?? true
 	// A plan often carries the task's own name; repeating it adds nothing.
 	const taskLabel = taskTitle && taskTitle !== plan.title ? taskTitle : undefined
 

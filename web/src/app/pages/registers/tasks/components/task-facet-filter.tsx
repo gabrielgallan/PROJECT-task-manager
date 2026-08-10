@@ -45,7 +45,7 @@ export function TaskFacetFilter<TValue extends string>({
 				{label}
 
 				{hasSelection && (
-					<Badge variant="secondary" className="ml-1">
+					<Badge variant="secondary" className="ml-1 rounded-md">
 						{selected.length}
 					</Badge>
 				)}

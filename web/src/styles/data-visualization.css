@@ -1,29 +1,29 @@
 :root {
-    /* Product charts use a restrained teal accent; status colours remain semantic. */
-    --chart-accent: var(--color-teal-800);
-    --chart-accent-soft: var(--color-teal-400);
+	/* Product charts use a restrained indigo accent; status colours remain semantic. */
+	--chart-accent: var(--color-indigo-800);
+	--chart-accent-soft: var(--color-indigo-400);
 
-    --chart-warning: var(--color-amber-500);
+	--chart-warning: var(--color-amber-500);
 
-    /* Sequential logged-time ramp. Level 0 is a past day without recorded work. */
-    --contribution-future: var(--card);
-    --contribution-0: var(--color-muted);
-    --contribution-1: var(--color-teal-200);
-    --contribution-2: var(--color-teal-400);
-    --contribution-3: var(--color-teal-600);
-    --contribution-4: var(--color-teal-800);
+	/* Sequential logged-time ramp. Level 0 is a past day without recorded work. */
+	--contribution-future: var(--card);
+	--contribution-0: var(--color-muted);
+	--contribution-1: var(--color-indigo-200);
+	--contribution-2: var(--color-indigo-400);
+	--contribution-3: var(--color-indigo-600);
+	--contribution-4: var(--color-indigo-800);
 }
 
 .dark {
-    --chart-accent: var(--color-teal-400);
-    --chart-accent-soft: var(--color-teal-800);
+	--chart-accent: var(--color-indigo-400);
+	--chart-accent-soft: var(--color-indigo-800);
 
-    --chart-warning: var(--color-amber-500);
+	--chart-warning: var(--color-amber-500);
 
-    --contribution-future: var(--card);
-    --contribution-0: var(--color-muted);
-    --contribution-1: var(--color-teal-950);
-    --contribution-2: var(--color-teal-800);
-    --contribution-3: var(--color-teal-600);
-    --contribution-4: var(--color-teal-400);
+	--contribution-future: var(--card);
+	--contribution-0: var(--color-muted);
+	--contribution-1: var(--color-indigo-950);
+	--contribution-2: var(--color-indigo-800);
+	--contribution-3: var(--color-indigo-600);
+	--contribution-4: var(--color-indigo-400);
 }

@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import { useMemo } from 'react'
 import { BrowserTitle } from '@/components/browser-title'
 import { usePlans } from '@/features/plans/store/plans-store'
@@ -27,10 +28,7 @@ export function DashboardPage() {
 	const deadlineMetrics = useMemo(() => getDashboardDeadlineMetrics(tasks), [tasks])
 	const weeklyWork = useMemo(() => buildDashboardWeeklyWork(plans, workLogs), [plans, workLogs])
 	const todayPlan = useMemo(() => buildTodayPlanInsight(plans, tasks), [plans, tasks])
-	const whereTimeWent = useMemo(
-		() => buildWhereTimeWentInsight(workLogs, tasks),
-		[workLogs, tasks],
-	)
+	const whereTimeWent = useMemo(() => buildWhereTimeWentInsight(workLogs, tasks), [workLogs, tasks])
 	const contributions = useMemo(() => buildWorkLogContributions(workLogs), [workLogs])
 
 	return (
@@ -38,6 +36,8 @@ export function DashboardPage() {
 			<BrowserTitle title="Dashboard" />
 
 			<div className="styled-scrollbar flex flex-col overflow-auto p-4 gap-4">
+				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, 2026')}</p>
+
 				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 					<OverdueTasksCard
 						overdueCount={deadlineMetrics.overdueCount}
@@ -57,17 +57,14 @@ export function DashboardPage() {
 					/>
 				</div>
 
-				<div className="grid gap-4 lg:h-90 lg:grid-cols-9">
+				<div className="grid gap-4 lg:h-90 lg:grid-cols-10">
 					<PlannedVsLoggedChart className="h-80 lg:col-span-6 lg:h-auto" />
-					<TodayPlanCard className="h-80 lg:col-span-3 lg:h-auto" insight={todayPlan} />
+					<TodayPlanCard className="h-80 lg:col-span-4 lg:h-auto" insight={todayPlan} />
 				</div>
 
 				<div className="flex flex-wrap items-stretch gap-4">
 					<WorkLogsContributionGraph contributions={contributions} />
-					<WhereTimeWentCard
-						className="min-w-60 flex-[1_1_15rem]"
-						insight={whereTimeWent}
-					/>
+					<WhereTimeWentCard className="min-w-60 flex-[1_1_15rem]" insight={whereTimeWent} />
 				</div>
 			</div>
 		</>

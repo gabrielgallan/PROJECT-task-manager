@@ -1,20 +1,14 @@
+import { TrendingDown } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 interface MetricCardProps {
 	title: string
 	count: number
-	description: string
 	icon: React.ElementType
 	iconClassName?: string
 }
 
-export function MetricCard({
-	title,
-	count,
-	description,
-	icon: Icon,
-	iconClassName,
-}: MetricCardProps) {
+export function MetricCard({ title, count, icon: Icon, iconClassName }: MetricCardProps) {
 	return (
 		<Card className="px-0 gap-0 justify-between">
 			<CardHeader className="flex items-start justify-between">
@@ -26,9 +20,15 @@ export function MetricCard({
 			</CardHeader>
 
 			<CardContent>
-				<div>
-					<dd className="text-2xl font-semibold">{count}</dd>
-					<p className="truncate text-xs text-muted-foreground">{description}</p>
+				<div className="flex gap-2 items-end">
+					<dd className="text-3xl font-semibold">{count}</dd>
+
+					<span className="flex gap-1 text-xs text-muted-foreground">
+						<span className="flex items-center gap-1 font-medium text-rose-500 dark:text-rose-400">
+							<TrendingDown className="size-3" /> -2%
+						</span>
+						than last week
+					</span>
 				</div>
 			</CardContent>
 		</Card>

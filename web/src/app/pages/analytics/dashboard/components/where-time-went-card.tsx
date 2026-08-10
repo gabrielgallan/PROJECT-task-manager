@@ -22,13 +22,13 @@ export function WhereTimeWentCard({ insight, className }: WhereTimeWentCardProps
 			<CardContent className="min-h-0 flex-1">
 				{insight.items.length > 0 ? (
 					<ListProvider>
-						<ListItems className="gap-1 p-0">
+						<ListItems className="gap-1 overflow-auto p-0">
 							{insight.items.map((item, index) => {
 								const statusLabel = item.status ? TASK_STATUS_LABEL[item.status] : 'Unknown status'
 
 								return (
 									<ListItem
-										className="min-w-0 border-border/70 px-2 py-1 shadow-none"
+										className="min-w-0 border-border/70 p-2 shadow-none"
 										draggable={false}
 										id={item.taskId}
 										index={index}
@@ -43,7 +43,7 @@ export function WhereTimeWentCard({ insight, className }: WhereTimeWentCardProps
 														<span
 															aria-label={statusLabel}
 															className={cn(
-																'size-2.5 shrink-0 rounded-full',
+																'size-1.5 shrink-0 rounded-full',
 																item.status === 'done' ? 'bg-emerald-500' : 'bg-amber-500',
 															)}
 															role="img"
@@ -61,7 +61,7 @@ export function WhereTimeWentCard({ insight, className }: WhereTimeWentCardProps
 											<TooltipContent>{item.title}</TooltipContent>
 										</Tooltip>
 
-										<span className="shrink-0 font-medium tabular-nums">
+										<span className="shrink-0 text-sm font-medium tabular-nums">
 											{formatMinutes(item.minutes)}
 										</span>
 									</ListItem>

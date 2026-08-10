@@ -68,8 +68,8 @@ export function WorkLogsContributionGraph({
 
 			<CardContent>
 				<ContributionGraph
-					blockMargin={4}
-					blockSize={10}
+					blockMargin={3}
+					blockSize={9}
 					fontSize={10}
 					data={contributions}
 					maxLevel={CONTRIBUTION_MAX_LEVEL}

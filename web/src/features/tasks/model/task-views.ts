@@ -1,7 +1,7 @@
 import { ChartNoAxesGantt, TableProperties } from 'lucide-react'
-import type { IViewOption } from '@/hooks/use-route-handle'
+import type { IViewOption } from '@/components/page-view-tabs'
 
-/** The first view is the default one, and the one the header falls back to. */
+/** The first view is the default one, and the one the toolbar falls back to. */
 export const TASK_VIEWS = [
 	{ value: 'list', label: 'Table', icon: TableProperties },
 	{ value: 'timeline', label: 'Timeline', icon: ChartNoAxesGantt },

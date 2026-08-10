@@ -1,14 +1,23 @@
 'use client'
 
 import { format } from 'date-fns'
+import React from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	type ChartConfig,
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
 } from '@/components/ui/chart'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
 const chartDataBase = [
@@ -141,10 +150,44 @@ interface PlannedVsLoggedChartProps {
 }
 
 export function PlannedVsLoggedChart({ className }: PlannedVsLoggedChartProps) {
+	const [timeRange, setTimeRange] = React.useState('90d')
+
 	return (
 		<Card className={cn(['overflow-hidden', className])}>
 			<CardHeader>
 				<CardTitle>Planned work - Logged work</CardTitle>
+
+				<CardAction>
+					<ToggleGroup
+						type="single"
+						value={timeRange}
+						onValueChange={setTimeRange}
+						variant="outline"
+						className="hidden md:flex"
+					>
+						<ToggleGroupItem value="90d">Last 3 months</ToggleGroupItem>
+						<ToggleGroupItem value="30d">Last 30 days</ToggleGroupItem>
+						<ToggleGroupItem value="7d">Last 7 days</ToggleGroupItem>
+					</ToggleGroup>
+
+					<Select value={timeRange} onValueChange={setTimeRange}>
+						<SelectTrigger className="flex md:hidden">
+							<SelectValue placeholder="Last 3 months" />
+						</SelectTrigger>
+
+						<SelectContent align="end">
+							<SelectItem value="90d" className="rounded-lg">
+								Last 3 months
+							</SelectItem>
+							<SelectItem value="30d" className="rounded-lg">
+								Last 30 days
+							</SelectItem>
+							<SelectItem value="7d" className="rounded-lg">
+								Last 7 days
+							</SelectItem>
+						</SelectContent>
+					</Select>
+				</CardAction>
 			</CardHeader>
 
 			<CardContent className="min-h-0 h-fit">

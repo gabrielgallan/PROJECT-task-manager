@@ -23,7 +23,7 @@ import { useViewParam } from '@/hooks/use-view-param'
 type TEditingTask = Task | null | undefined
 
 export function TasksPage() {
-	const [view] = useViewParam(TASK_VIEW_VALUES, DEFAULT_TASK_VIEW)
+	const [view, setView] = useViewParam(TASK_VIEW_VALUES, DEFAULT_TASK_VIEW)
 	const navigate = useNavigate()
 
 	const { tasks, changeTaskStatus, rescheduleTask, removeTask } = useTasks()
@@ -91,6 +91,8 @@ export function TasksPage() {
 						draft={draft}
 						isDirty={isDirty}
 						canClear={canClear}
+						view={view}
+						onViewChange={setView}
 						onSearchChange={setDraftSearch}
 						onToggleStatus={toggleDraftStatus}
 						onTogglePriority={toggleDraftPriority}

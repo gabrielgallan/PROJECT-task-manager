@@ -1,11 +1,11 @@
 import {
 	Calendar,
 	ChartColumnBig,
+	ChartNoAxesGantt,
 	FileChartLine,
-	ListOrdered,
+	FileClock,
 	type LucideIcon,
 	Settings,
-	SquareCheck,
 	Workflow,
 } from 'lucide-react'
 import type * as React from 'react'
@@ -39,7 +39,7 @@ const sidebarGroups: SidebarGroupItem[] = [
 			{
 				label: 'Tasks',
 				url: '/registers/tasks',
-				icon: ListOrdered,
+				icon: ChartNoAxesGantt,
 			},
 			{
 				label: 'Plans',
@@ -49,7 +49,7 @@ const sidebarGroups: SidebarGroupItem[] = [
 			{
 				label: 'Work logs',
 				url: '/registers/work-logs',
-				icon: SquareCheck,
+				icon: FileClock,
 			},
 		],
 	},

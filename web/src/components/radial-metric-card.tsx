@@ -51,7 +51,7 @@ export function RadialMetricCard({
 	}
 
 	return (
-		<Card className="px-4 py-4">
+		<Card className="px-4 py-2">
 			<CardContent className="p-0 flex items-center space-x-4">
 				<div role="img" className="relative flex items-center justify-center">
 					<ChartContainer config={chartConfig} className="h-24 w-22">
@@ -86,10 +86,10 @@ export function RadialMetricCard({
 				</div>
 
 				<div>
-					<dt className="text-sm font-medium text-foreground">{title}</dt>
-					<dd className="text-sm text-muted-foreground">
-						{description(formatDuration(currentMinutes), formatDuration(totalMinutes))}
-					</dd>
+					<dt className="text-sm font-medium text-foreground">
+						{`${formatDuration(currentMinutes)} / ${formatDuration(totalMinutes)}`}
+					</dt>
+					<dd className="text-sm text-muted-foreground">{title}</dd>
 				</div>
 			</CardContent>
 		</Card>

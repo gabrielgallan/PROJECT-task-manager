@@ -1,25 +1,18 @@
-import { format } from 'date-fns'
-import { CheckCircle2, Circle, Clock3, CalendarOff } from 'lucide-react'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card'
-import { PLAN_DOT } from '@/features/plans/model/plan-colors'
+import { CalendarOff } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { ICalendarItemRenderContext } from '@/features/calendar/types'
+import { getPlanItemClassName, PlanItemContent } from '@/features/plans/calendar/plan-item-content'
 import { formatMinutes } from '@/features/work-logs/model/work-log-rules'
 import { cn } from '@/lib/utils'
-import type { ITodayPlanInsight, TTodayPlanState } from '../model/dashboard-insights'
+import type { ITodayPlanInsight, ITodayPlanItem } from '../model/dashboard-insights'
 
-const STATE_META: Record<
-	TTodayPlanState,
-	{ label: string; icon: typeof Circle; className: string }
-> = {
-	recorded: { label: 'Recorded', icon: CheckCircle2, className: 'text-emerald-600 dark:text-emerald-400' },
-	now: { label: 'Now', icon: Clock3, className: 'text-emerald-600 dark:text-emerald-400' },
-	upcoming: { label: 'Upcoming', icon: Circle, className: 'text-blue-600 dark:text-blue-400' },
-	past: { label: 'Past', icon: Circle, className: 'text-muted-foreground' },
+function getRenderContext(item: ITodayPlanItem): ICalendarItemRenderContext {
+	return {
+		variant: 'agenda',
+		startDate: item.startDate,
+		endDate: item.endDate,
+		isCompact: false,
+	}
 }
 
 interface TodayPlanCardProps {
@@ -40,31 +33,22 @@ export function TodayPlanCard({ insight, className }: TodayPlanCardProps) {
 
 			<CardContent className="styled-scrollbar min-h-0 flex-1 overflow-y-auto">
 				{insight.items.length > 0 ? (
-					<div className="divide-y divide-border/70">
+					<div className="flex flex-col gap-1.5">
 						{insight.items.map((item) => {
-							const state = STATE_META[item.state]
-							const StateIcon = state.icon
+							const context = getRenderContext(item)
 
 							return (
-								<div className="flex min-w-0 items-start gap-3 py-3 first:pt-0 last:pb-0" key={item.plan.id}>
-									<span className={cn('mt-1.5 size-2 shrink-0 rounded-full', PLAN_DOT[item.plan.color])} />
-
-									<div className="w-21 shrink-0 text-xs tabular-nums text-muted-foreground">
-										<div className="text-foreground">{format(item.startDate, 'p')}</div>
-										<div>{format(item.endDate, 'p')}</div>
-									</div>
-
-									<div className="min-w-0 flex-1">
-										<p className="truncate font-medium">{item.plan.title}</p>
-										<p className="truncate text-xs text-muted-foreground">
-											{item.taskTitle ?? formatMinutes(item.durationMinutes)}
-										</p>
-									</div>
-
-									<span className={cn('flex shrink-0 items-center gap-1 text-xs', state.className)}>
-										<StateIcon className="size-3" />
-										{state.label}
-									</span>
+								<div
+									className={cn(
+										// Same anatomy as an agenda row, so the two screens read alike.
+										'flex flex-col gap-0.5 rounded-xs border border-l-4 border-transparent px-3 py-2',
+										getPlanItemClassName(item.plan, context),
+										// A finished block steps back; the running one is the only one emphasised.
+										item.state === 'past' && 'opacity-60',
+									)}
+									key={item.plan.id}
+								>
+									<PlanItemContent plan={item.plan} context={context} taskTitle={item.taskTitle} />
 								</div>
 							)
 						})}
