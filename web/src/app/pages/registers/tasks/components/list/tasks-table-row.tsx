@@ -1,8 +1,9 @@
-import { differenceInCalendarDays, format, formatDistanceToNowStrict } from 'date-fns'
+import { format, formatDistanceToNowStrict } from 'date-fns'
 import { Info, TriangleAlert } from 'lucide-react'
 import { TaskActionsMenu } from '@/app/pages/registers/tasks/components/task-actions-menu'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { isTaskDueSoon, isTaskLate } from '@/features/tasks/model/task-due-date'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
 import { TaskPriorityBadge } from './task-priority-badge'
@@ -18,16 +19,10 @@ interface ITasksTableRowProps {
 	onDelete: (task: Task) => void
 }
 
-function isDueWithinOneWeek(dueDate: Date) {
-	const daysUntilDue = differenceInCalendarDays(dueDate, new Date())
-
-	return daysUntilDue >= 0 && daysUntilDue <= 7
-}
-
 export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps) {
 	const isDone = task.status === 'done'
-	const isLate = !isDone && !!task.dueDate && task.dueDate < new Date()
-	const isNearDueDate = !isDone && !!task.dueDate && isDueWithinOneWeek(task.dueDate)
+	const isLate = isTaskLate(task)
+	const isNearDueDate = isTaskDueSoon(task)
 
 	return (
 		<TableRow className={cn([isDone && 'text-muted-foreground'])}>

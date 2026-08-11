@@ -3,7 +3,6 @@ import { MetricCard } from '@/components/metric-card'
 
 interface OverdueTasksCardProps {
 	overdueCount: number
-	overdueForMoreThan7DaysCount: number
 }
 
 export function OverdueTasksCard({ overdueCount }: OverdueTasksCardProps) {

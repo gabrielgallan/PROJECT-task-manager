@@ -25,6 +25,20 @@ export const TASK_TRANSITIONS: Record<TaskStatus, ITaskTransition[]> = {
 	done: [{ to: 'in_progress', label: 'Reopen', icon: RotateCcw }],
 }
 
+/**
+ * The list above doubles as the movement rule: a status change that is not
+ * offered there is not legal anywhere, including a drag on the board. Landing a
+ * card back on its own column is a no-op, so it always passes.
+ */
+export function canTransitionTask(from: TaskStatus, to: TaskStatus): boolean {
+	return from === to || TASK_TRANSITIONS[from].some((transition) => transition.to === to)
+}
+
+/** Reads as "Done or In progress", for messages explaining a refused move. */
+export function describeTaskTransitions(from: TaskStatus, labels: Record<TaskStatus, string>): string {
+	return TASK_TRANSITIONS[from].map((transition) => labels[transition.to]).join(' or ')
+}
+
 /** Planning is about work still ahead, so it stops making sense once done. */
 export function canPlanTask(status: TaskStatus): boolean {
 	return status !== 'done'

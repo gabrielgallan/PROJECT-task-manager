@@ -59,11 +59,12 @@ export function WorkLogsContributionGraph({
 	const totalMinutes = contributions.reduce((sum, day) => sum + day.count, 0)
 	// The graph sums `count`, which here is minutes, so the footer gets days instead.
 	const activeDays = contributions.filter((day) => day.count > 0).length
+	const year = contributions[0]?.date.slice(0, 4) ?? String(new Date().getFullYear())
 
 	return (
 		<Card className={cn('w-fit max-w-full shrink-0', className)}>
 			<CardHeader>
-				<CardTitle>Logged work</CardTitle>
+				<CardTitle>Logged work · {year}</CardTitle>
 			</CardHeader>
 
 			<CardContent>

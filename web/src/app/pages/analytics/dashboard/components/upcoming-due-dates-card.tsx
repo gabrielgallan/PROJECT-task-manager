@@ -12,16 +12,10 @@ export function UpcomingDueDatesCard({
 }: UpcomingDueDatesCardProps) {
 	const total = dueTodayCount + dueNext7DaysCount
 
-	const description =
-		total === 0
-			? 'No upcoming due dates'
-			: `${dueTodayCount} due today · ${dueNext7DaysCount} due in the next 7 days`
-
 	return (
 		<MetricCard
 			title="Upcoming due dates"
 			count={total}
-			description={description}
 			icon={CalendarClock}
 			iconClassName="text-primary"
 		/>

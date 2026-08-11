@@ -1,4 +1,4 @@
-import { set, subDays } from 'date-fns'
+import { addDays, addMinutes, eachWeekOfInterval, set, startOfDay, startOfYear, subDays } from 'date-fns'
 import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
 
 interface ISeed {
@@ -113,10 +113,72 @@ const SEEDS: ISeed[] = [
 	},
 ]
 
+const HISTORICAL_DURATIONS = [90, 210, 330, 450] as const
+
+const HISTORICAL_PROFILES = [
+	{ title: 'Integração DAHUA', taskId: 'task-1' },
+	{ title: 'POC de reconhecimento de placas', taskId: 'task-2' },
+	{ title: 'Correção de fuso horário nos logs', taskId: 'task-3' },
+	{ title: 'Revisão Auto Guide', taskId: 'task-4' },
+	{ title: 'Relatório mensal de horas', taskId: 'task-5' },
+	{ title: 'Migração do banco de imagens', taskId: 'task-6' },
+	{ title: 'Documentação da API de eventos', taskId: 'task-8' },
+	{ title: 'Meetings and follow-ups' },
+] as const
+
+/**
+ * A light, deterministic history makes the annual contribution graph useful as
+ * a visual prototype. Durations rotate through every graph level and the second
+ * day on alternating weeks avoids an artificial once-a-week pattern.
+ */
+function buildHistoricalWorkLogs(today: Date): IWorkLog[] {
+	const yearStart = startOfYear(today)
+	const historyEnd = subDays(startOfDay(today), 10)
+
+	if (historyEnd < yearStart) return []
+
+	const weeks = eachWeekOfInterval(
+		{ start: yearStart, end: historyEnd },
+		{ weekStartsOn: 1 },
+	)
+
+	return weeks.flatMap((weekStart, weekIndex) => {
+		const dates = [addDays(weekStart, 1 + (weekIndex % 3))]
+
+		if (weekIndex % 2 === 0) {
+			dates.push(addDays(weekStart, 4))
+		}
+
+		return dates
+			.filter((date) => date >= yearStart && date <= historyEnd)
+			.map((date, dayIndex) => {
+				const profile = HISTORICAL_PROFILES[(weekIndex * 2 + dayIndex) % HISTORICAL_PROFILES.length]
+				const duration = HISTORICAL_DURATIONS[(weekIndex + dayIndex) % HISTORICAL_DURATIONS.length]
+				const startDate = set(date, {
+					hours: 8 + ((weekIndex + dayIndex) % 2),
+					minutes: 30,
+					seconds: 0,
+					milliseconds: 0,
+				})
+				const endDate = addMinutes(startDate, duration)
+
+				return {
+					id: `historical-work-log-${weekIndex + 1}-${dayIndex + 1}`,
+					title: profile.title,
+					startDate: startDate.toISOString(),
+					endDate: endDate.toISOString(),
+					taskId: 'taskId' in profile ? profile.taskId : null,
+					createdAt: endDate.toISOString(),
+					updatedAt: endDate.toISOString(),
+				}
+			})
+	})
+}
+
 function buildWorkLogs(): IWorkLog[] {
 	const today = new Date()
 
-	return SEEDS.map((seed, index) => {
+	const recentLogs = SEEDS.map((seed, index) => {
 		const day = subDays(today, seed.daysAgo)
 		const startDate = set(day, {
 			hours: seed.start[0],
@@ -142,6 +204,8 @@ function buildWorkLogs(): IWorkLog[] {
 			updatedAt: endDate.toISOString(),
 		}
 	}).filter((workLog) => new Date(workLog.endDate) <= today)
+
+	return [...buildHistoricalWorkLogs(today), ...recentLogs]
 }
 
 export const WORK_LOGS_MOCK: IWorkLog[] = buildWorkLogs()

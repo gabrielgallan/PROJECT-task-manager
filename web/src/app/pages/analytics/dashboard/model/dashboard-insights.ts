@@ -69,6 +69,7 @@ export interface ITaskWorkShare {
 }
 
 export interface IWhereTimeWentInsight {
+	year: number
 	items: ITaskWorkShare[]
 	totalMinutes: number
 	shownMinutes: number
@@ -230,7 +231,7 @@ export function buildWhereTimeWentInsight(
 		}
 
 		const task = taskMap.get(workLog.taskId)
-		if (!task || task.status === 'backlog') continue
+		if (!task) continue
 
 		const current = grouped.get(workLog.taskId)
 
@@ -258,6 +259,7 @@ export function buildWhereTimeWentInsight(
 	const shownMinutes = items.reduce((total, item) => total + item.minutes, 0)
 
 	return {
+		year: today.getFullYear(),
 		items,
 		totalMinutes,
 		shownMinutes,

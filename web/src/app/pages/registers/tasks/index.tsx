@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { TasksBoard } from '@/app/pages/registers/tasks/components/board/tasks-board'
 import { DeleteTaskDialog } from '@/app/pages/registers/tasks/components/delete-task-dialog'
 import { useTaskActivity } from '@/app/pages/registers/tasks/components/details/task-activity'
 import { TaskDetailsSheet } from '@/app/pages/registers/tasks/components/details/task-details-sheet'
@@ -50,10 +51,10 @@ export function TasksPage() {
 
 	const activity = useTaskActivity(detailedTask?.id)
 
-	// The list pages the result; the timeline draws every match at once, since
-	// scrolling through time is already its own form of paging.
+	// Only the list pages the result. The timeline and the board draw every match
+	// at once: scrolling through time, or down a column, is already their paging.
 	const result = useMemo(() => applyTaskQuery(tasks, query), [tasks, query])
-	const timelineTasks = useMemo(() => filterTasks(tasks, query), [tasks, query])
+	const filteredTasks = useMemo(() => filterTasks(tasks, query), [tasks, query])
 
 	const handleStatusChange = (task: Task, status: TaskStatus) => {
 		changeTaskStatus(task.id, status)
@@ -104,15 +105,33 @@ export function TasksPage() {
 					/>
 				</div>
 
-				{view === 'timeline' ? (
+				{view === 'timeline' && (
 					<TasksGantt
-						tasks={timelineTasks}
+						tasks={filteredTasks}
 						isFiltered={hasActiveTaskFilters(query)}
 						onReschedule={handleReschedule}
 						onSelectTask={setEditingTask}
 						onClearFilters={clearAll}
 					/>
-				) : (
+				)}
+
+				{view === 'board' && (
+					<TasksBoard
+						tasks={filteredTasks}
+						statusFilter={query.status}
+						isFiltered={hasActiveTaskFilters(query)}
+						onClearFilters={clearAll}
+						onNewTask={() => setEditingTask(null)}
+						onStatusChange={handleStatusChange}
+						onDetails={setDetailedTask}
+						onEdit={setEditingTask}
+						onPlan={handlePlan}
+						onLogWork={handleLogWork}
+						onDelete={setDeletingTask}
+					/>
+				)}
+
+				{view === 'list' && (
 					<TasksList
 						result={result}
 						query={query}
@@ -129,6 +148,7 @@ export function TasksPage() {
 					/>
 				)}
 			</div>
+
 
 			<TaskDetailsSheet
 				task={detailedTask}

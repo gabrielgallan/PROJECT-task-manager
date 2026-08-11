@@ -36,7 +36,7 @@ export function DashboardPage() {
 			<BrowserTitle title="Dashboard" />
 
 			<div className="styled-scrollbar flex flex-col overflow-auto p-4 gap-4">
-				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, 2026')}</p>
+				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, yyyy')}</p>
 
 				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 					<OverdueTasksCard
