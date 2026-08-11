@@ -16,7 +16,9 @@ export function AuthLayout() {
 
 				<ProductShowcase />
 
-				<footer className="text-sm">task_manager &copy; {new Date().getFullYear()}</footer>
+				<footer className="text-sm">
+					&copy; {new Date().getFullYear()} task_manager.com. All rights reserved.
+				</footer>
 			</div>
 
 			<div className="relative flex flex-col justify-center items-center">

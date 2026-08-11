@@ -248,7 +248,7 @@ export function PlannedVsLoggedChart({ className }: PlannedVsLoggedChartProps) {
 
 						<Area
 							dataKey="planned"
-							type="natural"
+							type="linear"
 							fill="url(#fillPlanned)"
 							fillOpacity={0.4}
 							stroke="var(--color-planned)"
@@ -256,7 +256,7 @@ export function PlannedVsLoggedChart({ className }: PlannedVsLoggedChartProps) {
 
 						<Area
 							dataKey="logged"
-							type="natural"
+							type="linear"
 							fill="url(#fillLogged)"
 							fillOpacity={0.4}
 							stroke="var(--color-logged)"

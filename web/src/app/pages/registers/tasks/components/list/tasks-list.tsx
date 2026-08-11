@@ -49,7 +49,7 @@ export function TasksList({
 		<div className="flex min-h-0 flex-1 flex-col gap-4 p-4">
 			{/* The table body is what scrolls, so the header can stick and the
 			    pagination stays reachable without scrolling to the bottom. */}
-			<div className="border rounded-md overflow-hidden">
+			<div className="border rounded-md overflow-auto">
 				<Table>
 					<TableHeader className="sticky top-0 z-10 bg-muted">
 						<TableRow>

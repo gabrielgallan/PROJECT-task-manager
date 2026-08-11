@@ -113,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 										<SidebarMenuButton
 											// The bar is always rendered and only changes colour, and being a pseudo
 											// element it stays square instead of following the button's rounding.
-											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded before:bg-transparent data-active:before:bg-primary"
+											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
 											tooltip={item.label}
 											isActive={item.url === '/' ? pathname === '/' : pathname.startsWith(item.url)}
 										>

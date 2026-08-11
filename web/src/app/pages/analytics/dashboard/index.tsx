@@ -39,14 +39,13 @@ export function DashboardPage() {
 				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, yyyy')}</p>
 
 				<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-					<OverdueTasksCard
-						overdueCount={deadlineMetrics.overdueCount}
-						overdueForMoreThan7DaysCount={deadlineMetrics.overdueForMoreThan7DaysCount}
-					/>
+					<OverdueTasksCard overdueCount={deadlineMetrics.overdueCount} />
+
 					<UpcomingDueDatesCard
 						dueTodayCount={deadlineMetrics.dueTodayCount}
 						dueNext7DaysCount={deadlineMetrics.dueNext7DaysCount}
 					/>
+
 					<CapacityCard
 						plannedMinutes={weeklyWork.plannedMinutes}
 						weeklyCapacityMinutes={WEEKLY_CAPACITY_MINUTES}

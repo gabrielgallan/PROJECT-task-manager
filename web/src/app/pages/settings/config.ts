@@ -1,4 +1,4 @@
-import { Bell, Clock3, Languages, ShieldCheck, UserRound } from 'lucide-react'
+import { Bell, Settings2, Shield, UserRound } from 'lucide-react'
 
 export const SETTINGS_TABS = [
 	{
@@ -7,24 +7,19 @@ export const SETTINGS_TABS = [
 		icon: UserRound,
 	},
 	{
-		value: 'security',
-		label: 'Security',
-		icon: ShieldCheck,
-	},
-	{
-		value: 'work-preferences',
-		label: 'Work preferences',
-		icon: Clock3,
-	},
-	{
 		value: 'notifications',
 		label: 'Notifications',
 		icon: Bell,
 	},
 	{
-		value: 'appearance-language',
-		label: 'Appearance & language',
-		icon: Languages,
+		value: 'security',
+		label: 'Security',
+		icon: Shield,
+	},
+	{
+		value: 'system',
+		label: 'System',
+		icon: Settings2,
 	},
 ] as const
 

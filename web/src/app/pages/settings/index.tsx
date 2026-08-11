@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { ProfileSettings } from '@/app/pages/settings/components/profile-settings'
 import { SETTINGS_TAB_VALUES, SETTINGS_TABS, type TSettingsTab } from '@/app/pages/settings/config'
 import { BrowserTitle } from '@/components/browser-title'
+import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
 	Select,
 	SelectContent,
@@ -11,6 +12,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { NotificationsSettings } from './components/notifications-settings'
+import { SystemSettings } from './components/system-settings'
 
 const TAB_SEARCH_PARAM = 'tab'
 
@@ -63,14 +66,6 @@ export function SettingsPage() {
 
 			<div className="styled-scrollbar min-h-0 flex-1 overflow-auto">
 				<div className="mx-auto flex w-full max-w-5xl flex-col gap-5 p-4 md:p-6">
-					<header className="space-y-1">
-						<h1 className="text-xl font-semibold tracking-tight">Settings</h1>
-
-						<p className="text-sm text-muted-foreground">
-							Manage your account and personalize how the application works for you.
-						</p>
-					</header>
-
 					<div className="md:hidden">
 						<Select value={activeTab} onValueChange={handleTabChange}>
 							<SelectTrigger className="w-full" aria-label="Settings section">
@@ -105,27 +100,48 @@ export function SettingsPage() {
 						</Select>
 					</div>
 
-					<Tabs
-						value={activeTab}
-						onValueChange={handleTabChange}
-						orientation="vertical"
-						className="w-full items-start gap-6"
-					>
-						<TabsList>
-							{SETTINGS_TABS.map((tab) => {
-								const Icon = tab.icon
+					<Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical">
+						<aside className="flex flex-col gap-4 w-60">
+							<div className="flex min-w-0 items-center gap-4">
+								<Avatar size="lg">
+									<AvatarImage src="https://github.com/gabrielgallan.png" alt="" />
+									<AvatarFallback className="text-base">GG</AvatarFallback>
 
-								return (
-									<TabsTrigger className="min-h-9 px-2.5 py-2" key={tab.value} value={tab.value}>
-										<Icon />
-										{tab.label}
-									</TabsTrigger>
-								)
-							})}
-						</TabsList>
+									<AvatarBadge className="bg-emerald-400 dark:bg-emerald-500" />
+								</Avatar>
+
+								<div className="min-w-0">
+									<p className="truncate font-medium">Gabriel Gallan</p>
+									<p className="truncate text-xs text-muted-foreground">
+										@gabrielgallan / Developer
+									</p>
+								</div>
+							</div>
+
+							<TabsList className="hidden md:flex w-60">
+								{SETTINGS_TABS.map((tab) => {
+									const Icon = tab.icon
+
+									return (
+										<TabsTrigger className="px-2 py-1.5" key={tab.value} value={tab.value}>
+											<Icon />
+											{tab.label}
+										</TabsTrigger>
+									)
+								})}
+							</TabsList>
+						</aside>
 
 						<TabsContent className="min-w-0 w-full" value="profile">
 							<ProfileSettings />
+						</TabsContent>
+
+						<TabsContent className="min-w-0 w-full" value="notifications">
+							<NotificationsSettings />
+						</TabsContent>
+
+						<TabsContent className="min-w-0 w-full" value="system">
+							<SystemSettings />
 						</TabsContent>
 					</Tabs>
 				</div>
