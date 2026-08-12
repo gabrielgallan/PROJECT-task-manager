@@ -14,7 +14,7 @@ export function AuthLayout() {
 				])}
 				style={{
 					backgroundImage:
-						'radial-gradient(circle, color-mix(in srgb, var(--background) 10%, transparent) 1px, transparent 1px)',
+						'radial-gradient(circle, color-mix(in srgb, var(--background) 3%, transparent) 1px, transparent 1px)',
 					backgroundSize: '20px 20px',
 				}}
 			>

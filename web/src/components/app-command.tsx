@@ -126,7 +126,7 @@ export function AppCommand({ children }: IAppCommandProps) {
 				onOpenChange={handleOpenChange}
 				title="Command menu"
 				description="Search pages, settings, and quick actions."
-				className="w-[calc(100%-2rem)] sm:max-w-sm"
+				className="sm:max-w-sm"
 			>
 				<Command loop>
 					<CommandInput

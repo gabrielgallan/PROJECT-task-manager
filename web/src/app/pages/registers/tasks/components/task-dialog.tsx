@@ -90,11 +90,7 @@ function TaskForm({ task }: ITaskFormProps) {
 			<FieldGroup>
 				<Field>
 					<FieldLabel htmlFor="task-title">Title</FieldLabel>
-					<Input
-						id="task-title"
-						placeholder="What needs to be done?"
-						defaultValue={task?.title}
-					/>
+					<Input id="task-title" placeholder="What needs to be done?" defaultValue={task?.title} />
 				</Field>
 
 				<div className="grid gap-4 sm:grid-cols-2">
@@ -154,10 +150,7 @@ function TaskForm({ task }: ITaskFormProps) {
 									<SelectItem key={priority} value={priority}>
 										<span className="flex items-center gap-2">
 											<span
-												className={cn([
-													'block size-1.5 rounded-xs',
-													TASK_PRIORITY_COLOR[priority],
-												])}
+												className={cn(['block size-1.5 rounded-xs', TASK_PRIORITY_COLOR[priority]])}
 											/>
 											{TASK_PRIORITY_LABEL[priority]}
 										</span>

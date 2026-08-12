@@ -1,4 +1,4 @@
-import { ChartNoAxesGantt, Kanban, TableProperties } from 'lucide-react'
+import { GanttChartSquare, KanbanSquare, TableProperties } from 'lucide-react'
 import type { IViewOption } from '@/components/page-view-tabs'
 
 /**
@@ -8,8 +8,8 @@ import type { IViewOption } from '@/components/page-view-tabs'
  */
 export const TASK_VIEWS = [
 	{ value: 'list', label: 'Table', icon: TableProperties },
-	{ value: 'timeline', label: 'Timeline', icon: ChartNoAxesGantt },
-	{ value: 'board', label: 'Board', icon: Kanban },
+	{ value: 'timeline', label: 'Timeline', icon: GanttChartSquare },
+	{ value: 'board', label: 'Board', icon: KanbanSquare },
 ] as const satisfies readonly IViewOption[]
 
 export type TTaskView = (typeof TASK_VIEWS)[number]['value']

@@ -9,7 +9,7 @@ interface GridFrameProps {
 }
 
 export function GridFrame({ children, className, lineClassName, offset = 24 }: GridFrameProps) {
-	const rule = cn('pointer-events-none absolute border-primary-foreground/50', lineClassName)
+	const rule = cn('pointer-events-none absolute border-primary-foreground/20', lineClassName)
 
 	return (
 		<div

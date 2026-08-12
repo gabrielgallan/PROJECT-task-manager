@@ -47,7 +47,7 @@ export function ProductShowcase() {
 
 	return (
 		<div className="mx-auto max-w-xl">
-			<GridFrame offset={34}>
+			<GridFrame offset={34} lineClassName="border-primary-foreground/10">
 				<div>
 					<KanbanProvider columns={SHOWCASE_COLUMNS} data={cards} onDataChange={setCards}>
 						{(column) => {
