@@ -10,6 +10,8 @@ import {
 
 type SupportedLanguages = 'pt-BR' | 'en-US'
 
+const LANGUAGE_LOCAL_STORAGE_KEY = 'task_manager.language'
+
 const languages: Record<SupportedLanguages, { label: string }> = {
 	'pt-BR': { label: 'Português BR' },
 	'en-US': { label: 'English' },
@@ -23,7 +25,7 @@ type LanguageSelectProps = {
 
 export function LanguageSelect({ compact = false }: LanguageSelectProps) {
 	function handleChangeLanguage(language: Language) {
-		localStorage.setItem('language', language)
+		localStorage.setItem(LANGUAGE_LOCAL_STORAGE_KEY, language)
 	}
 
 	const currentLanguage = 'en-US'

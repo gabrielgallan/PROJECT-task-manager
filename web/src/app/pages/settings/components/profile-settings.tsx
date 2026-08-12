@@ -1,13 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Lock } from 'lucide-react'
-import { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import type { IUserProfileSettings } from '@/app/pages/settings/model/profile-settings'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	Field,
+	FieldDescription,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
@@ -23,23 +24,21 @@ import {
 } from '@/components/ui/input-group'
 import { Separator } from '@/components/ui/separator'
 
-const PROFILE_MOCK = {
-	name: 'Gabriel Gallan',
-	email: 'gabriel31.gal@gmail.com',
-	username: 'gabrielgallan',
-	avatarUrl: 'https://github.com/gabrielgallan.png',
-}
-
 const userProfileSchema = z.object({
 	name: z.string().trim().min(1, 'Enter a display name'),
+	email: z.email('Enter a valid email address'),
 	username: z.string().trim().min(1, 'Enter a username'),
+	jobTitle: z.string().trim().max(60, 'Keep the job title under 60 characters'),
 })
 
 type UserProfileType = z.infer<typeof userProfileSchema>
 
-export function ProfileSettings() {
-	const [profile, setProfile] = useState(PROFILE_MOCK)
+interface IProfileSettingsProps {
+	profile: IUserProfileSettings
+	onProfileChange: (profile: IUserProfileSettings) => void
+}
 
+export function ProfileSettings({ profile, onProfileChange }: IProfileSettingsProps) {
 	const {
 		register,
 		handleSubmit,
@@ -48,15 +47,17 @@ export function ProfileSettings() {
 	} = useForm<UserProfileType>({
 		resolver: zodResolver(userProfileSchema),
 		defaultValues: {
-			name: PROFILE_MOCK.name,
-			username: PROFILE_MOCK.username,
+			name: profile.name,
+			email: profile.email,
+			username: profile.username,
+			jobTitle: profile.jobTitle,
 		},
 	})
 
 	const handleSave = (values: UserProfileType) => {
 		const nextProfile = { ...profile, ...values }
 
-		setProfile(nextProfile)
+		onProfileChange(nextProfile)
 
 		reset(values)
 
@@ -69,7 +70,7 @@ export function ProfileSettings() {
 				<CardTitle className="text-lg">Profile</CardTitle>
 			</CardHeader>
 
-			<CardContent className="space-y-5">
+			<CardContent className="space-y-4">
 				<form id="profile-settings-form" onSubmit={handleSubmit(handleSave)}>
 					<div className="flex flex-col gap-4">
 						<FieldGroup className="grid gap-4 md:grid-cols-2">
@@ -84,7 +85,7 @@ export function ProfileSettings() {
 							</Field>
 
 							<Field data-invalid={errors.username !== undefined}>
-								<FieldLabel htmlFor="profile-email">Username</FieldLabel>
+								<FieldLabel htmlFor="profile-username">Username</FieldLabel>
 								<InputGroup>
 									<InputGroupAddon>
 										<InputGroupText>@</InputGroupText>
@@ -98,6 +99,28 @@ export function ProfileSettings() {
 								</InputGroup>
 								<FieldError errors={[errors.username]} />
 							</Field>
+
+							<Field data-invalid={errors.email !== undefined}>
+								<FieldLabel htmlFor="profile-email">Email</FieldLabel>
+								<Input
+									id="profile-email"
+									type="email"
+									aria-invalid={errors.email !== undefined}
+									{...register('email')}
+								/>
+								<FieldError errors={[errors.email]} />
+							</Field>
+
+							<Field data-invalid={errors.jobTitle !== undefined}>
+								<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
+								<Input
+									id="profile-job-title"
+									placeholder="e.g. Developer"
+									aria-invalid={errors.jobTitle !== undefined}
+									{...register('jobTitle')}
+								/>
+								<FieldError errors={[errors.jobTitle]} />
+							</Field>
 						</FieldGroup>
 
 						<Button type="submit" disabled={!isDirty || isSubmitting} className="ml-auto">
@@ -108,43 +131,26 @@ export function ProfileSettings() {
 
 				<Separator />
 
-				<form>
-					<div className="flex flex-col gap-2">
-						<FieldSet>
-							<FieldLegend>Change Password</FieldLegend>
+				<FieldSet>
+					<FieldLegend variant="legend">Danger zone</FieldLegend>
+					<FieldDescription>Irreversible account actions</FieldDescription>
 
-							<FieldGroup className="grid gap-4 md:grid-cols-2">
-								<Field>
-									<FieldLabel htmlFor="current-password">Current password</FieldLabel>
-									<InputGroup>
-										<InputGroupAddon>
-											<InputGroupText>
-												<Lock className="size-3 text-muted-foreground" />
-											</InputGroupText>
-										</InputGroupAddon>
-										<InputGroupInput id="current-password" type="password" />
-									</InputGroup>
-								</Field>
+					<FieldGroup>
+						<Field>
+							<div className="flex items-center justify-between">
+								<div>
+									<FieldLabel>Delete account</FieldLabel>
+									<FieldDescription>Permanently remove your account and all data</FieldDescription>
+								</div>
 
-								<Field>
-									<FieldLabel>New password</FieldLabel>
-									<InputGroup>
-										<InputGroupAddon>
-											<InputGroupText>
-												<Lock className="size-3 text-muted-foreground" />
-											</InputGroupText>
-										</InputGroupAddon>
-										<InputGroupInput id="new-password" type="password" />
-									</InputGroup>
-								</Field>
-							</FieldGroup>
-						</FieldSet>
-
-						<Button type="submit" className="ml-auto">
-							Save
-						</Button>
-					</div>
-				</form>
+								<Button variant="destructive">
+									<Trash2 />
+									Delete
+								</Button>
+							</div>
+						</Field>
+					</FieldGroup>
+				</FieldSet>
 			</CardContent>
 		</Card>
 	)

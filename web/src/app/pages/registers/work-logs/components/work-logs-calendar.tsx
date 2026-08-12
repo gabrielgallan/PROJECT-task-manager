@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { WorkLogSummary } from '@/app/pages/registers/work-logs/components/work-log-day-summary'
 import { WorkLogDialog } from '@/app/pages/registers/work-logs/components/work-log-dialog'
@@ -41,14 +41,15 @@ interface IWorkLogsCalendarProps {
 	onDelete: (workLog: IWorkLog) => void
 }
 
-export function WorkLogsCalendar({
-	workLogs,
-	tasks,
-	initialTaskIds,
-	onCreate,
-	onUpdate,
-	onDelete,
-}: IWorkLogsCalendarProps) {
+export interface WorkLogsCalendarHandle {
+	openCreate: () => void
+}
+
+export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCalendarProps>(
+	function WorkLogsCalendar(
+		{ workLogs, tasks, initialTaskIds, onCreate, onUpdate, onDelete },
+		ref,
+	) {
 	const [dialog, setDialog] = useState<TWorkLogDialogState>({ mode: 'closed' })
 	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
 
@@ -78,6 +79,10 @@ export function WorkLogsCalendar({
 
 		setDialog({ mode: 'create', range })
 	}
+
+	useImperativeHandle(ref, () => ({
+		openCreate: () => openCreateDialog(getLogNowRange(workLogs)),
+	}))
 
 	const applyRangeChange = (workLog: IWorkLog, range: ICalendarRange) => {
 		const message = validate(range, workLog.id)
@@ -185,4 +190,5 @@ export function WorkLogsCalendar({
 			)}
 		/>
 	)
-}
+	},
+)

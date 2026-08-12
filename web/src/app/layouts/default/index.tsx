@@ -1,14 +1,12 @@
 import {
 	Bot,
-	Calendar,
-	ChartColumnBig,
-	ChartNoAxesGantt,
-	FileChartLine,
-	FileClock,
+	Search,
 	Settings,
 } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { APP_NAVIGATION_ITEMS } from '@/app/navigation'
+import { AppCommand, useAppCommand } from '@/components/app-command'
 import { AppSidebar } from '@/components/app-sidebar'
 import { MobileBottomNav } from '@/components/mobile-botton-nav'
 import { Button } from '@/components/ui/button'
@@ -17,35 +15,24 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { AiChat } from './components/ai-chat'
 
 const mobileNavItems = [
-	{
-		title: 'Tasks',
-		url: '/registers/tasks',
-		icon: ChartNoAxesGantt,
-	},
-	{
-		title: 'Plans',
-		url: '/registers/plans',
-		icon: Calendar,
-	},
-	{
-		title: 'Work logs',
-		url: '/registers/work-logs',
-		icon: FileClock,
-	},
-	{
-		title: 'Stats',
-		url: '/analytics/dashboard',
-		icon: ChartColumnBig,
-	},
-	{
-		title: 'Reports',
-		url: '/analytics/reports',
-		icon: FileChartLine,
-	},
+	...APP_NAVIGATION_ITEMS.map((item) => ({
+		title: item.mobileLabel,
+		url: item.path,
+		icon: item.icon,
+	})),
 ]
 
 export function DefaultLayout() {
+	return (
+		<AppCommand>
+			<DefaultLayoutContent />
+		</AppCommand>
+	)
+}
+
+function DefaultLayoutContent() {
 	const navigate = useNavigate()
+	const { openCommand } = useAppCommand()
 	const [aiChatIsOpen, setAiChatIsOpen] = useState<boolean>(false)
 
 	return (
@@ -80,9 +67,19 @@ export function DefaultLayout() {
 					</header>
 
 					{/* Mobile */}
-					<header className="md:hidden shrink-0 items-center border-b p-2">
+					<header className="md:hidden flex shrink-0 items-center justify-between border-b p-2">
 						<Button size="icon" variant="ghost" onClick={() => navigate('/settings')}>
 							<Settings />
+						</Button>
+
+						<Button
+							size="icon"
+							variant="ghost"
+							onClick={openCommand}
+							aria-label="Open command menu"
+							aria-keyshortcuts="Control+K Meta+K"
+						>
+							<Search />
 						</Button>
 					</header>
 

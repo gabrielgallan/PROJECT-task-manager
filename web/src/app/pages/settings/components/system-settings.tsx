@@ -11,8 +11,6 @@ import {
 	FieldSeparator,
 	FieldSet,
 } from '@/components/ui/field'
-import { WorkingHoursInput } from './working-hours-input'
-import { Brush, Settings } from 'lucide-react'
 
 export function SystemSettings() {
 	return (
@@ -25,6 +23,7 @@ export function SystemSettings() {
 				<div className="flex flex-col gap-4">
 					<FieldSet>
 						<FieldGroup>
+							<FieldLegend variant="legend">Appearance</FieldLegend>
 							<Field>
 								<div className="flex items-center justify-between">
 									<div>
@@ -41,6 +40,7 @@ export function SystemSettings() {
 						<FieldSeparator />
 
 						<FieldGroup>
+							<FieldLegend variant="legend">Timezone & Preferences</FieldLegend>
 							<Field>
 								<div className="flex items-center justify-between">
 									<div>
@@ -56,11 +56,11 @@ export function SystemSettings() {
 							<FieldSeparator />
 
 							<Field>
-								<div className="flex items-center justify-between">
-									<div>
+								<div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+									<div className="min-w-0">
 										<FieldLabel>Timezone</FieldLabel>
 
-										<FieldDescription>Let us know your timezone</FieldDescription>
+										<FieldDescription>Set your preferred timezone.</FieldDescription>
 									</div>
 
 									<TimezonePicker />

@@ -3,11 +3,7 @@ import { CalendarProvider, useCalendar } from '@/features/calendar/calendar-prov
 import { CalendarHeader } from '@/features/calendar/components/calendar-header'
 import { DragDropProvider } from '@/features/calendar/interactions/drag-drop-context'
 import '@/features/calendar/styles/calendar-scrollbar.css'
-import {
-	CALENDAR_VIEWS,
-	type ICalendarItem,
-	type ICalendarProps,
-} from '@/features/calendar/types'
+import { CALENDAR_VIEWS, type ICalendarItem, type ICalendarProps } from '@/features/calendar/types'
 import { cn } from '@/lib/utils'
 
 function CalendarContent<TItem extends ICalendarItem>({
@@ -62,18 +58,14 @@ function CalendarContent<TItem extends ICalendarItem>({
 export function Calendar<TItem extends ICalendarItem>({
 	defaultView = 'week',
 	availableViews = CALENDAR_VIEWS,
-	storageKey = 'calendar-settings',
+	storageKey = 'task_manager.calendar-settings',
 	...props
 }: ICalendarProps<TItem>) {
 	const views = availableViews.length > 0 ? availableViews : CALENDAR_VIEWS
 	const initialView = views.includes(defaultView) ? defaultView : (views[0] ?? 'week')
 
 	return (
-		<CalendarProvider
-			defaultView={initialView}
-			availableViews={views}
-			storageKey={storageKey}
-		>
+		<CalendarProvider defaultView={initialView} availableViews={views} storageKey={storageKey}>
 			<DragDropProvider>
 				<CalendarContent
 					defaultView={initialView}

@@ -6,6 +6,7 @@ import {
 	NOTIFICATION_LEAD_MINUTES,
 	type TNotificationLeadMinutes,
 } from '@/app/pages/settings/model/notification-settings'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -34,27 +35,36 @@ function readPermission(): TPermission {
 		: 'unsupported'
 }
 
-const PERMISSION_DESCRIPTION: Record<TPermission, string> = {
-	granted: 'Alerts and reminders about your plans and deadlines.',
-	default: 'The browser has not been asked for permission yet.',
-	denied: 'The browser is blocking notifications for this site.',
-	unsupported: 'This browser does not support notifications.',
+const BROWSER_CHANNEL_DESCRIPTION: Record<TPermission, string> = {
+	granted: 'Receive reminders even when another tab is active.',
+	default: 'Receive reminders even when another tab is active.',
+	denied: "Blocked by the browser. Update this site's permissions to enable it.",
+	unsupported: 'This browser does not support system notifications.',
 }
 
 export function NotificationsSettings() {
 	const [permission, setPermission] = useState<TPermission>(readPermission)
 	const [settings, setSettings] = useState<INotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
 
-	// Without permission the switches would promise something that never arrives.
-	const isBlocked = permission !== 'granted'
-	const isDisabled = isBlocked || !settings.enabled
-
 	const requestPermission = async () => {
-		setPermission(await Notification.requestPermission())
+		if (permission === 'unsupported') return
+
+		const nextPermission = await Notification.requestPermission()
+		setPermission(nextPermission)
+
+		if (nextPermission === 'granted') {
+			setSettings((current) => ({
+				...current,
+				channels: { ...current.channels, browser: true },
+			}))
+		}
 	}
 
-	const update = (partial: Partial<INotificationSettings>) =>
-		setSettings((current) => ({ ...current, ...partial }))
+	const updateChannels = (partial: Partial<INotificationSettings['channels']>) =>
+		setSettings((current) => ({
+			...current,
+			channels: { ...current.channels, ...partial },
+		}))
 
 	return (
 		<Card>
@@ -65,26 +75,49 @@ export function NotificationsSettings() {
 			<CardContent className="space-y-5">
 				<div className="flex flex-col gap-4">
 					<FieldSet>
+						<FieldLegend variant="legend">Channels</FieldLegend>
+
 						<FieldGroup>
 							<Field>
 								<div className="flex items-center justify-between gap-4">
 									<div>
-										<FieldLabel htmlFor="notifications-enabled">Enable notifications</FieldLabel>
+										<FieldLabel htmlFor="in-app-notifications">In-app notifications</FieldLabel>
 
-										<FieldDescription>{PERMISSION_DESCRIPTION[permission]}</FieldDescription>
+										<FieldDescription>Show alerts while the application is open.</FieldDescription>
+									</div>
+
+									<Switch
+										id="in-app-notifications"
+										checked={settings.channels.inApp}
+										onCheckedChange={(inApp) => updateChannels({ inApp })}
+									/>
+								</div>
+							</Field>
+
+							<FieldSeparator />
+
+							<Field>
+								<div className="flex items-center justify-between gap-4">
+									<div>
+										<FieldLabel htmlFor="browser-notifications">Browser notifications</FieldLabel>
+
+										<FieldDescription>{BROWSER_CHANNEL_DESCRIPTION[permission]}</FieldDescription>
 									</div>
 
 									{permission === 'default' ? (
 										<Button type="button" variant="outline" size="sm" onClick={requestPermission}>
 											Allow
 										</Button>
-									) : (
+									) : permission === 'granted' ? (
 										<Switch
-											id="notifications-enabled"
-											checked={settings.enabled && !isBlocked}
-											disabled={isBlocked}
-											onCheckedChange={(enabled) => update({ enabled })}
+											id="browser-notifications"
+											checked={settings.channels.browser}
+											onCheckedChange={(browser) => updateChannels({ browser })}
 										/>
+									) : (
+										<Badge variant="secondary">
+											{permission === 'denied' ? 'Blocked' : 'Unavailable'}
+										</Badge>
 									)}
 								</div>
 							</Field>
@@ -94,29 +127,35 @@ export function NotificationsSettings() {
 					<FieldSeparator />
 
 					<FieldSet>
-						<FieldLegend variant="label">Alerts</FieldLegend>
+						<FieldLegend variant="legend">Events</FieldLegend>
 
 						<FieldGroup>
 							<Field>
 								<div className="flex items-center justify-between gap-4">
 									<div>
-										<FieldLabel htmlFor="plan-start">Plan is about to start</FieldLabel>
+										<FieldLabel htmlFor="plan-reminder">Plan reminder</FieldLabel>
 
-										<FieldDescription>Announces the block before it begins</FieldDescription>
+										<FieldDescription>Notify me before a Plan starts.</FieldDescription>
 									</div>
 
 									<div className="flex items-center gap-2">
 										<Select
-											value={String(settings.planStart.leadMinutes)}
-											disabled={isDisabled || !settings.planStart.enabled}
-											onValueChange={(value) =>
-												update({
-													planStart: {
-														...settings.planStart,
-														leadMinutes: Number(value) as TNotificationLeadMinutes,
+											value={String(settings.events.planReminder.leadMinutes)}
+											disabled={!settings.events.planReminder.enabled}
+											onValueChange={(value) => {
+												if (!value) return
+
+												const leadMinutes = Number(value) as TNotificationLeadMinutes
+												if (!NOTIFICATION_LEAD_MINUTES.includes(leadMinutes)) return
+
+												setSettings((current) => ({
+													...current,
+													events: {
+														...current.events,
+														planReminder: { ...current.events.planReminder, leadMinutes },
 													},
-												})
-											}
+												}))
+											}}
 										>
 											<SelectTrigger aria-label="Lead time" className="w-fit">
 												<SelectValue>{(value: string) => `${value} min before`}</SelectValue>
@@ -132,11 +171,16 @@ export function NotificationsSettings() {
 										</Select>
 
 										<Switch
-											id="plan-start"
-											checked={settings.planStart.enabled}
-											disabled={isDisabled}
+											id="plan-reminder"
+											checked={settings.events.planReminder.enabled}
 											onCheckedChange={(enabled) =>
-												update({ planStart: { ...settings.planStart, enabled } })
+												setSettings((current) => ({
+													...current,
+													events: {
+														...current.events,
+														planReminder: { ...current.events.planReminder, enabled },
+													},
+												}))
 											}
 										/>
 									</div>
@@ -148,143 +192,44 @@ export function NotificationsSettings() {
 							<Field>
 								<div className="flex items-center justify-between gap-4">
 									<div>
-										<FieldLabel htmlFor="plan-end">Plan has ended</FieldLabel>
+										<FieldLabel>Daily summary</FieldLabel>
 
 										<FieldDescription>
-											Offers to record the block as work while it is still fresh
-										</FieldDescription>
-									</div>
-
-									<Switch
-										id="plan-end"
-										checked={settings.planEnd.enabled}
-										disabled={isDisabled}
-										onCheckedChange={(enabled) => update({ planEnd: { enabled } })}
-									/>
-								</div>
-							</Field>
-						</FieldGroup>
-					</FieldSet>
-
-					<FieldSeparator />
-
-					<FieldSet>
-						<FieldLegend variant="label">Daily summaries</FieldLegend>
-
-						<FieldGroup>
-							<Field>
-								<div className="flex items-center justify-between gap-4">
-									<div>
-										<FieldLabel>Morning briefing</FieldLabel>
-
-										<FieldDescription>
-											Tasks due today, overdue ones and hours planned
+											Tasks due today, overdue Tasks and today's planned hours.
 										</FieldDescription>
 									</div>
 
 									<div className="flex items-center gap-2">
 										<TimeOfDayInput
-											id="morning-briefing"
-											label="Morning briefing"
-											value={settings.morningBriefing.time}
-											disabled={isDisabled || !settings.morningBriefing.enabled}
+											id="daily-summary"
+											label="Daily summary"
+											value={settings.events.dailySummary.time}
+											disabled={!settings.events.dailySummary.enabled}
 											onChange={(time) =>
-												update({ morningBriefing: { ...settings.morningBriefing, time } })
+												setSettings((current) => ({
+													...current,
+													events: {
+														...current.events,
+														dailySummary: { ...current.events.dailySummary, time },
+													},
+												}))
 											}
 										/>
 
 										<Switch
-											aria-label="Morning briefing"
-											checked={settings.morningBriefing.enabled}
-											disabled={isDisabled}
+											aria-label="Daily summary"
+											checked={settings.events.dailySummary.enabled}
 											onCheckedChange={(enabled) =>
-												update({ morningBriefing: { ...settings.morningBriefing, enabled } })
+												setSettings((current) => ({
+													...current,
+													events: {
+														...current.events,
+														dailySummary: { ...current.events.dailySummary, enabled },
+													},
+												}))
 											}
 										/>
 									</div>
-								</div>
-							</Field>
-
-							<FieldSeparator />
-
-							<Field>
-								<div className="flex items-center justify-between gap-4">
-									<div>
-										<FieldLabel>Logging reminder</FieldLabel>
-
-										<FieldDescription>
-											Points out time left unrecorded before the day ends
-										</FieldDescription>
-									</div>
-
-									<div className="flex items-center gap-2">
-										<TimeOfDayInput
-											id="logging-reminder"
-											label="Logging reminder"
-											value={settings.loggingReminder.time}
-											disabled={isDisabled || !settings.loggingReminder.enabled}
-											onChange={(time) =>
-												update({ loggingReminder: { ...settings.loggingReminder, time } })
-											}
-										/>
-
-										<Switch
-											aria-label="Logging reminder"
-											checked={settings.loggingReminder.enabled}
-											disabled={isDisabled}
-											onCheckedChange={(enabled) =>
-												update({ loggingReminder: { ...settings.loggingReminder, enabled } })
-											}
-										/>
-									</div>
-								</div>
-							</Field>
-						</FieldGroup>
-					</FieldSet>
-
-					<FieldSeparator />
-
-					<FieldSet>
-						<FieldLegend variant="label">Delivery</FieldLegend>
-
-						<FieldGroup>
-							<Field>
-								<div className="flex items-center justify-between gap-4">
-									<div>
-										<FieldLabel htmlFor="working-hours-only">Only during working hours</FieldLabel>
-
-										<FieldDescription>Working hours are set in the System tab</FieldDescription>
-									</div>
-
-									<Switch
-										id="working-hours-only"
-										checked={settings.respectWorkingHours}
-										disabled={isDisabled}
-										onCheckedChange={(respectWorkingHours) => update({ respectWorkingHours })}
-									/>
-								</div>
-							</Field>
-
-							<FieldSeparator />
-
-							<Field>
-								<div className="flex items-center justify-between gap-4">
-									<div>
-										<FieldLabel htmlFor="system-notifications">
-											System notifications in the background
-										</FieldLabel>
-
-										<FieldDescription>
-											While the app is in focus, alerts show inside it instead
-										</FieldDescription>
-									</div>
-
-									<Switch
-										id="system-notifications"
-										checked={settings.systemWhenInBackground}
-										disabled={isDisabled}
-										onCheckedChange={(systemWhenInBackground) => update({ systemWhenInBackground })}
-									/>
 								</div>
 							</Field>
 						</FieldGroup>

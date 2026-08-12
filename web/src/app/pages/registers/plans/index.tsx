@@ -1,23 +1,28 @@
 import { parseISO } from 'date-fns'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BrowserTitle } from '@/components/browser-title'
-import { PlansCalendar } from '@/features/plans/calendar/plans-calendar'
+import { PlansCalendar, type PlansCalendarHandle } from '@/features/plans/calendar/plans-calendar'
 import type { IPlan } from '@/features/plans/model/plan-types'
 import { usePlans } from '@/features/plans/store/plans-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { createWorkLog, validateRange } from '@/features/work-logs/model/work-log-rules'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { useCreateAction } from '@/hooks/use-create-action'
 
 /** How the tasks page hands a task over when opening this one. */
 const TASK_PARAM = 'task'
 
 export function PlansPage() {
 	const [searchParams] = useSearchParams()
+	const calendarRef = useRef<PlansCalendarHandle>(null)
 	const { plans, addPlan, updatePlan, removePlan } = usePlans()
 	const { tasks } = useTasks()
 	const { workLogs, addWorkLog } = useWorkLogs()
+	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
+
+	useCreateAction(openCreateDialog)
 
 	// An unknown id would filter every plan out and read as an empty calendar,
 	// so the link only takes effect for a task that is actually there.
@@ -62,6 +67,7 @@ export function PlansPage() {
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<PlansCalendar
+					ref={calendarRef}
 					plans={plans}
 					tasks={tasks}
 					initialTaskIds={initialTaskIds}

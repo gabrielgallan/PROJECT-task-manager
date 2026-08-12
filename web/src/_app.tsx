@@ -11,7 +11,7 @@ import { router } from './router'
 
 export function App() {
 	return (
-		<ThemeProvider>
+		<ThemeProvider storageKey="task_manager.theme" defaultTheme="light">
 			<TooltipProvider>
 				<Toaster />
 

@@ -1,9 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ProfileSettings } from '@/app/pages/settings/components/profile-settings'
+import { SecuritySettings } from '@/app/pages/settings/components/security-settings'
 import { SETTINGS_TAB_VALUES, SETTINGS_TABS, type TSettingsTab } from '@/app/pages/settings/config'
+import { PROFILE_MOCK } from '@/app/pages/settings/model/profile-settings'
 import { BrowserTitle } from '@/components/browser-title'
 import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Card, CardContent } from '@/components/ui/card'
 import {
 	Select,
 	SelectContent,
@@ -23,6 +26,7 @@ function isSettingsTab(value: string | null): value is TSettingsTab {
 
 export function SettingsPage() {
 	const [searchParams, setSearchParams] = useSearchParams()
+	const [profile, setProfile] = useState(PROFILE_MOCK)
 
 	const tabParam = searchParams.get(TAB_SEARCH_PARAM)
 
@@ -64,8 +68,13 @@ export function SettingsPage() {
 		<>
 			<BrowserTitle title="Settings" />
 
-			<div className="styled-scrollbar min-h-0 flex-1 overflow-auto">
-				<div className="mx-auto flex w-full max-w-5xl flex-col gap-5 p-4 md:p-6">
+			<div className="styled-scrollbar mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-4 overflow-y-auto px-4 pt-4 pb-20 md:pb-4">
+				<Tabs
+					value={activeTab}
+					onValueChange={handleTabChange}
+					orientation="vertical"
+					className="grid gap-4 md:grid-cols-[16rem_1fr]"
+				>
 					<div className="md:hidden">
 						<Select value={activeTab} onValueChange={handleTabChange}>
 							<SelectTrigger className="w-full" aria-label="Settings section">
@@ -100,51 +109,56 @@ export function SettingsPage() {
 						</Select>
 					</div>
 
-					<Tabs value={activeTab} onValueChange={handleTabChange} orientation="vertical">
-						<aside className="flex flex-col gap-4 w-60">
-							<div className="flex min-w-0 items-center gap-4">
+					<aside className="md:space-y-4">
+						<Card className="">
+							<CardContent className="flex flex-col items-center gap-2 py-4">
 								<Avatar size="lg">
-									<AvatarImage src="https://github.com/gabrielgallan.png" alt="" />
+									<AvatarImage src={profile.avatarUrl} alt={profile.name} />
 									<AvatarFallback className="text-base">GG</AvatarFallback>
 
 									<AvatarBadge className="bg-emerald-400 dark:bg-emerald-500" />
 								</Avatar>
 
-								<div className="min-w-0">
-									<p className="truncate font-medium">Gabriel Gallan</p>
+								<div className="flex flex-col items-center">
+									<p className="truncate font-medium">{profile.name}</p>
 									<p className="truncate text-xs text-muted-foreground">
-										@gabrielgallan / Developer
+										@{profile.username}
+										{profile.jobTitle ? ` / ${profile.jobTitle}` : ''}
 									</p>
 								</div>
-							</div>
+							</CardContent>
+						</Card>
 
-							<TabsList className="hidden md:flex w-60">
-								{SETTINGS_TABS.map((tab) => {
-									const Icon = tab.icon
+						<TabsList className="hidden md:flex w-full">
+							{SETTINGS_TABS.map((tab) => {
+								const Icon = tab.icon
 
-									return (
-										<TabsTrigger className="px-2 py-1.5" key={tab.value} value={tab.value}>
-											<Icon />
-											{tab.label}
-										</TabsTrigger>
-									)
-								})}
-							</TabsList>
-						</aside>
+								return (
+									<TabsTrigger className="px-2 py-1.5" key={tab.value} value={tab.value}>
+										<Icon />
+										{tab.label}
+									</TabsTrigger>
+								)
+							})}
+						</TabsList>
+					</aside>
 
-						<TabsContent className="min-w-0 w-full" value="profile">
-							<ProfileSettings />
-						</TabsContent>
+					<TabsContent className="min-w-0 w-full" value="profile">
+						<ProfileSettings profile={profile} onProfileChange={setProfile} />
+					</TabsContent>
 
-						<TabsContent className="min-w-0 w-full" value="notifications">
-							<NotificationsSettings />
-						</TabsContent>
+					<TabsContent className="min-w-0 w-full" value="notifications">
+						<NotificationsSettings />
+					</TabsContent>
 
-						<TabsContent className="min-w-0 w-full" value="system">
-							<SystemSettings />
-						</TabsContent>
-					</Tabs>
-				</div>
+					<TabsContent className="min-w-0 w-full" value="security">
+						<SecuritySettings />
+					</TabsContent>
+
+					<TabsContent className="min-w-0 w-full" value="system">
+						<SystemSettings />
+					</TabsContent>
+				</Tabs>
 			</div>
 		</>
 	)

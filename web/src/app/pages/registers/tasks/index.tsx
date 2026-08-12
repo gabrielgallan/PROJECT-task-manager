@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { TasksBoard } from '@/app/pages/registers/tasks/components/board/tasks-board'
@@ -19,6 +19,7 @@ import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import { DEFAULT_TASK_VIEW, TASK_VIEW_VALUES } from '@/features/tasks/model/task-views'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { useViewParam } from '@/hooks/use-view-param'
+import { useCreateAction } from '@/hooks/use-create-action'
 
 /** Marks which task the dialog is about; `null` means creating a new one. */
 type TEditingTask = Task | null | undefined
@@ -48,6 +49,9 @@ export function TasksPage() {
 	const [editingTask, setEditingTask] = useState<TEditingTask>(undefined)
 	const [deletingTask, setDeletingTask] = useState<Task | null>(null)
 	const [detailedTask, setDetailedTask] = useState<Task | null>(null)
+	const openCreateDialog = useCallback(() => setEditingTask(null), [])
+
+	useCreateAction(openCreateDialog)
 
 	const activity = useTaskActivity(detailedTask?.id)
 
@@ -101,7 +105,7 @@ export function TasksPage() {
 						onClearPriority={clearDraftPriority}
 						onApply={apply}
 						onClearAll={clearAll}
-						onNewTask={() => setEditingTask(null)}
+						onNewTask={openCreateDialog}
 					/>
 				</div>
 
@@ -121,7 +125,7 @@ export function TasksPage() {
 						statusFilter={query.status}
 						isFiltered={hasActiveTaskFilters(query)}
 						onClearFilters={clearAll}
-						onNewTask={() => setEditingTask(null)}
+						onNewTask={openCreateDialog}
 						onStatusChange={handleStatusChange}
 						onDetails={setDetailedTask}
 						onEdit={setEditingTask}
@@ -138,7 +142,7 @@ export function TasksPage() {
 						onSort={toggleSort}
 						onPageChange={setPage}
 						onClearFilters={clearAll}
-						onNewTask={() => setEditingTask(null)}
+						onNewTask={openCreateDialog}
 						onStatusChange={handleStatusChange}
 						onDetails={setDetailedTask}
 						onEdit={setEditingTask}

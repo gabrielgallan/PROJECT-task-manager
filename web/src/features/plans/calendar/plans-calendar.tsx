@@ -1,9 +1,9 @@
 import { Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/features/calendar/calendar'
-import { WORK_DAY_START_HOUR } from '@/features/calendar/constants'
+import { SLOT_MINUTES, WORK_DAY_START_HOUR } from '@/features/calendar/constants'
 import type { ICalendarRange } from '@/features/calendar/types'
 import { PlanDialog } from '@/features/plans/calendar/plan-dialog'
 import { NO_TASK_FILTER, PlanFilter } from '@/features/plans/calendar/plan-filter'
@@ -32,15 +32,28 @@ interface IPlansCalendarProps {
 	onConfirmPlan?: (plan: IPlan) => boolean
 }
 
-export function PlansCalendar({
-	plans,
-	tasks,
-	initialTaskIds,
-	onCreate,
-	onUpdate,
-	onDelete,
-	onConfirmPlan,
-}: IPlansCalendarProps) {
+export interface PlansCalendarHandle {
+	openCreate: () => void
+}
+
+function getCommandCreateRange(now = new Date()): ICalendarRange {
+	const startDate = new Date(now)
+	const roundedMinutes = Math.ceil(startDate.getMinutes() / SLOT_MINUTES) * SLOT_MINUTES
+
+	startDate.setSeconds(0, 0)
+	startDate.setMinutes(roundedMinutes)
+
+	return {
+		startDate,
+		endDate: new Date(startDate.getTime() + DEFAULT_PLAN_DURATION * 60_000),
+	}
+}
+
+export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps>(
+	function PlansCalendar(
+		{ plans, tasks, initialTaskIds, onCreate, onUpdate, onDelete, onConfirmPlan },
+		ref,
+	) {
 	const [dialog, setDialog] = useState<TPlanDialogState>({ mode: 'closed' })
 	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
 
@@ -56,6 +69,10 @@ export function PlansCalendar({
 
 	const closeDialog = () => setDialog({ mode: 'closed' })
 	const openCreateDialog = (range: ICalendarRange) => setDialog({ mode: 'create', range })
+
+	useImperativeHandle(ref, () => ({
+		openCreate: () => openCreateDialog(getCommandCreateRange()),
+	}))
 
 	const createPlan = (plan: IPlan) => {
 		onCreate(plan)
@@ -156,4 +173,5 @@ export function PlansCalendar({
 			)}
 		/>
 	)
-}
+	},
+)

@@ -1,4 +1,5 @@
 import { EllipsisVertical, LogOut } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,6 +11,12 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { Button } from './ui/button'
 
 export function NavUser() {
+	const navigate = useNavigate()
+
+	function handleSignOut() {
+		navigate('/auth/sign-in')
+	}
+
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
@@ -36,7 +43,7 @@ export function NavUser() {
 					</DropdownMenuTrigger>
 
 					<DropdownMenuContent side="right" align="end">
-						<DropdownMenuItem>
+						<DropdownMenuItem onClick={handleSignOut}>
 							<LogOut />
 							Log out
 						</DropdownMenuItem>

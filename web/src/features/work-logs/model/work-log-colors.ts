@@ -3,6 +3,6 @@
  * palette, so a glance at the screen is enough to tell the two calendars apart.
  */
 export const WORK_LOG_SURFACE =
-	'border-l-cyan-500 bg-cyan-100 text-cyan-950 hover:bg-cyan-200 dark:bg-cyan-800/70 dark:text-cyan-50 dark:hover:bg-cyan-800'
+	'border-l-indigo-500 bg-indigo-100 text-indigo-950 hover:bg-indigo-200 dark:bg-indigo-800/70 dark:text-indigo-50 dark:hover:bg-indigo-800'
 
-export const WORK_LOG_DOT = 'bg-cyan-500'
+export const WORK_LOG_DOT = 'bg-indigo-500'
