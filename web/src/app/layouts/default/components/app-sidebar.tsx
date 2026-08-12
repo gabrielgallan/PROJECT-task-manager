@@ -1,8 +1,8 @@
 import { Search, Settings, Workflow } from 'lucide-react'
 import type * as React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useAppCommand } from '@/app/layouts/default/components/app-command'
 import { APP_NAVIGATION_GROUPS, APP_NAVIGATION_ITEMS } from '@/app/navigation'
-import { useAppCommand } from '@/components/app-command'
 import {
 	Sidebar,
 	SidebarContent,

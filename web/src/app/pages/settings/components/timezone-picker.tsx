@@ -9,7 +9,7 @@ import {
 	CommandItem,
 	CommandList,
 } from '@/components/ui/command'
-import { Dialog, DialogContent, DialogTrigger } from './ui/dialog'
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 
 const TIMEZONE_STORAGE_KEY = 'task_manager.timezone'
 const UTC_TIMEZONE = 'UTC'

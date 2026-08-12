@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CircleCheck, Trash2 } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { DateTimePicker } from '@/components/date-time-picker'
 import { Button } from '@/components/ui/button'
@@ -25,10 +25,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { PLAN_COLORS, PLAN_DOT } from '@/features/plans/model/plan-colors'
 import { planSchema, type TPlanFormData } from '@/features/plans/model/plan-schema'
 import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
+import { TaskCombobox } from '@/features/tasks/components/task-combobox'
 import type { Task } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
-
-const NO_TASK_VALUE = 'none'
 
 const EMPTY_VALUES: TPlanFormData = {
 	title: '',
@@ -64,9 +63,6 @@ export function PlanDialog({
 	const isOpen = state.mode !== 'closed'
 	const isEditing = state.mode === 'edit'
 	const editingPlan = state.mode === 'edit' ? state.plan : null
-
-	// The trigger renders the raw value, so the title has to be looked up.
-	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
 
 	// A plan that has not happened yet cannot be recorded as work already done.
 	const confirmBlockedReason = editingPlan?.confirmedAt
@@ -182,29 +178,14 @@ export function PlanDialog({
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel htmlFor="plan-task">Task</FieldLabel>
-									<Select
-										value={field.value ?? NO_TASK_VALUE}
-										onValueChange={(value) => field.onChange(value === NO_TASK_VALUE ? null : value)}
-									>
-										<SelectTrigger
-											id="plan-task"
-											className="w-full"
-											aria-invalid={fieldState.invalid}
-											onBlur={field.onBlur}
-										>
-											<SelectValue>
-												{(value: string) => taskTitles.get(value) ?? 'No task'}
-											</SelectValue>
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={NO_TASK_VALUE}>No task</SelectItem>
-											{tasks.map((task) => (
-												<SelectItem key={task.id} value={task.id}>
-													{task.title}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+									<TaskCombobox
+										id="plan-task"
+										tasks={tasks}
+										value={field.value ?? null}
+										onChange={field.onChange}
+										onBlur={field.onBlur}
+										invalid={fieldState.invalid}
+									/>
 									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
 								</Field>
 							)}

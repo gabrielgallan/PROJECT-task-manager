@@ -1,28 +1,24 @@
 {
-  "compilerOptions": {
-    "baseUrl": "./",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"]
+		},
 
-    "paths": {
-      "@/*": ["./src/*"],
-    },
+		"module": "ESNext",
+		"target": "ES2020",
+		"moduleResolution": "Node",
 
-    "module": "ESNext",
-    "target": "ES2020",
-    "moduleResolution": "Node",
+		"strict": true,
 
-    "strict": true,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
 
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
+		"skipLibCheck": true,
 
-    "skipLibCheck": true,
+		"noEmit": true,
+		"allowImportingTsExtensions": true,
 
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-
-    "types": [
-      "node"
-    ]
-  },
-  "exclude": ["dist", "node_modules"]
+		"types": ["node"]
+	},
+	"exclude": ["dist", "node_modules"]
 }

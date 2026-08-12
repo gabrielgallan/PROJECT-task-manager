@@ -67,7 +67,7 @@ export function NotificationsSettings() {
 		}))
 
 	return (
-		<Card>
+		<Card className="bg-transparent ring-transparent">
 			<CardHeader>
 				<CardTitle className="text-lg">Notifications</CardTitle>
 			</CardHeader>
@@ -87,6 +87,7 @@ export function NotificationsSettings() {
 									</div>
 
 									<Switch
+										className="rounded-xs [&_span]:rounded-xs"
 										id="in-app-notifications"
 										checked={settings.channels.inApp}
 										onCheckedChange={(inApp) => updateChannels({ inApp })}
@@ -110,6 +111,7 @@ export function NotificationsSettings() {
 										</Button>
 									) : permission === 'granted' ? (
 										<Switch
+											className="rounded-xs [&_span]:rounded-xs"
 											id="browser-notifications"
 											checked={settings.channels.browser}
 											onCheckedChange={(browser) => updateChannels({ browser })}
@@ -171,6 +173,7 @@ export function NotificationsSettings() {
 										</Select>
 
 										<Switch
+											className="rounded-xs [&_span]:rounded-xs"
 											id="plan-reminder"
 											checked={settings.events.planReminder.enabled}
 											onCheckedChange={(enabled) =>
@@ -217,6 +220,7 @@ export function NotificationsSettings() {
 										/>
 
 										<Switch
+											className="rounded-xs [&_span]:rounded-xs"
 											aria-label="Daily summary"
 											checked={settings.events.dailySummary.enabled}
 											onCheckedChange={(enabled) =>

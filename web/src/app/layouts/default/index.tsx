@@ -1,18 +1,15 @@
-import {
-	Bot,
-	Search,
-	Settings,
-} from 'lucide-react'
+import { Bot, Search, Settings, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { AppCommand, useAppCommand } from '@/app/layouts/default/components/app-command'
+import { MobileBottomNav } from '@/app/layouts/default/components/mobile-botton-nav'
 import { APP_NAVIGATION_ITEMS } from '@/app/navigation'
-import { AppCommand, useAppCommand } from '@/components/app-command'
-import { AppSidebar } from '@/components/app-sidebar'
-import { MobileBottomNav } from '@/components/mobile-botton-nav'
 import { Button } from '@/components/ui/button'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AiChat } from './components/ai-chat'
+import { AppSidebar } from './components/app-sidebar'
+import { MobileNavUser } from './components/mobile-nav-user'
 
 const mobileNavItems = [
 	...APP_NAVIGATION_ITEMS.map((item) => ({
@@ -68,19 +65,27 @@ function DefaultLayoutContent() {
 
 					{/* Mobile */}
 					<header className="md:hidden flex shrink-0 items-center justify-between border-b p-2">
-						<Button size="icon" variant="ghost" onClick={() => navigate('/settings')}>
-							<Settings />
-						</Button>
+						<div className="flex items-center">
+							<div className="p-2 bg-primary rounded-lg">
+								<Workflow className="text-primary-foreground size-4" />
+							</div>
 
-						<Button
-							size="icon"
-							variant="ghost"
-							onClick={openCommand}
-							aria-label="Open command menu"
-							aria-keyshortcuts="Control+K Meta+K"
-						>
-							<Search />
-						</Button>
+							<Button size="icon" variant="ghost" onClick={() => navigate('/settings')}>
+								<Settings />
+							</Button>
+
+							<Button
+								size="icon"
+								variant="ghost"
+								onClick={openCommand}
+								aria-label="Open command menu"
+								aria-keyshortcuts="Control+K Meta+K"
+							>
+								<Search />
+							</Button>
+						</div>
+
+						<MobileNavUser />
 					</header>
 
 					<div className="styled-scrollbar flex min-h-0 flex-1 flex-col">
@@ -92,7 +97,7 @@ function DefaultLayoutContent() {
 
 								<ResizableHandle withHandle />
 
-								<ResizablePanel defaultSize="40%" maxSize="40%">
+								<ResizablePanel defaultSize="40%" maxSize="40%" minSize="20%">
 									<AiChat />
 								</ResizablePanel>
 							</ResizablePanelGroup>

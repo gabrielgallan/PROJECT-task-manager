@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ProfileSettings } from '@/app/pages/settings/components/profile-settings'
+import { AccountSettings } from '@/app/pages/settings/components/account-settings'
 import { SecuritySettings } from '@/app/pages/settings/components/security-settings'
 import { SETTINGS_TAB_VALUES, SETTINGS_TABS, type TSettingsTab } from '@/app/pages/settings/config'
 import { PROFILE_MOCK } from '@/app/pages/settings/model/profile-settings'
 import { BrowserTitle } from '@/components/browser-title'
 import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Card, CardContent } from '@/components/ui/card'
+import { Item } from '@/components/ui/item'
 import {
 	Select,
 	SelectContent,
@@ -73,78 +73,76 @@ export function SettingsPage() {
 					value={activeTab}
 					onValueChange={handleTabChange}
 					orientation="vertical"
-					className="grid gap-4 md:grid-cols-[16rem_1fr]"
+					className="grid md:gap-4 md:grid-cols-[14rem_1fr]"
 				>
-					<div className="md:hidden">
-						<Select value={activeTab} onValueChange={handleTabChange}>
-							<SelectTrigger className="w-full" aria-label="Settings section">
-								<SelectValue>
-									{(value: TSettingsTab) => {
-										const selected =
-											SETTINGS_TABS.find((tab) => tab.value === value) ?? SETTINGS_TABS[0]
-										const Icon = selected.icon
+					<aside className="space-y-2">
+						<Item className="flex items-center gap-2 bg-muted">
+							<Avatar size="lg">
+								<AvatarImage src={profile.avatarUrl} alt={profile.name} />
+								<AvatarFallback className="text-base">GG</AvatarFallback>
 
-										return (
-											<span className="flex items-center gap-2">
-												<Icon className="size-4" />
-												{selected.label}
-											</span>
-										)
-									}}
-								</SelectValue>
-							</SelectTrigger>
+								<AvatarBadge className="bg-teal-400 dark:bg-teal-500" />
+							</Avatar>
 
-							<SelectContent align="start">
-								{SETTINGS_TABS.map((tab) => {
-									const Icon = tab.icon
+							<div className="flex flex-col">
+								<p className="truncate font-medium">{profile.name}</p>
+								<p className="truncate text-xs text-muted-foreground">
+									@{profile.username}
+									{profile.jobTitle ? ` / ${profile.jobTitle}` : ''}
+								</p>
+							</div>
+						</Item>
 
-									return (
-										<SelectItem key={tab.value} value={tab.value}>
-											<Icon className="size-4" />
-											{tab.label}
-										</SelectItem>
-									)
-								})}
-							</SelectContent>
-						</Select>
-					</div>
-
-					<aside className="md:space-y-4">
-						<Card className="">
-							<CardContent className="flex flex-col items-center gap-2 py-4">
-								<Avatar size="lg">
-									<AvatarImage src={profile.avatarUrl} alt={profile.name} />
-									<AvatarFallback className="text-base">GG</AvatarFallback>
-
-									<AvatarBadge className="bg-emerald-400 dark:bg-emerald-500" />
-								</Avatar>
-
-								<div className="flex flex-col items-center">
-									<p className="truncate font-medium">{profile.name}</p>
-									<p className="truncate text-xs text-muted-foreground">
-										@{profile.username}
-										{profile.jobTitle ? ` / ${profile.jobTitle}` : ''}
-									</p>
-								</div>
-							</CardContent>
-						</Card>
-
-						<TabsList className="hidden md:flex w-full">
+						<TabsList className="hidden md:flex w-full" variant="default">
 							{SETTINGS_TABS.map((tab) => {
 								const Icon = tab.icon
 
 								return (
-									<TabsTrigger className="px-2 py-1.5" key={tab.value} value={tab.value}>
+									<TabsTrigger className="px-2 py-1" key={tab.value} value={tab.value}>
 										<Icon />
 										{tab.label}
 									</TabsTrigger>
 								)
 							})}
 						</TabsList>
+
+						<div className="md:hidden">
+							<Select value={activeTab} onValueChange={handleTabChange}>
+								<SelectTrigger className="w-full" aria-label="Settings section">
+									<SelectValue>
+										{(value: TSettingsTab) => {
+											const selected =
+												SETTINGS_TABS.find((tab) => tab.value === value) ?? SETTINGS_TABS[0]
+											const Icon = selected.icon
+
+											return (
+												<span className="flex items-center gap-2">
+													<Icon className="size-4" />
+													{selected.label}
+												</span>
+											)
+										}}
+									</SelectValue>
+								</SelectTrigger>
+
+								<SelectContent align="start">
+									{SETTINGS_TABS.map((tab) => {
+										const Icon = tab.icon
+
+										return (
+											<SelectItem key={tab.value} value={tab.value}>
+												<Icon className="size-4" />
+												{tab.label}
+											</SelectItem>
+										)
+									})}
+								</SelectContent>
+							</Select>
+						</div>
 					</aside>
 
 					<TabsContent className="min-w-0 w-full" value="profile">
-						<ProfileSettings profile={profile} onProfileChange={setProfile} />
+						<AccountSettings profile={profile} onProfileChange={setProfile} />
 					</TabsContent>
 
 					<TabsContent className="min-w-0 w-full" value="notifications">

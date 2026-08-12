@@ -1,5 +1,7 @@
 import { EllipsisVertical, LogOut } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -7,8 +9,6 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
-import { Button } from './ui/button'
 
 export function NavUser() {
 	const navigate = useNavigate()
@@ -31,9 +31,7 @@ export function NavUser() {
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">Gabriel Gallan</span>
 
-								<span className="truncate text-xs text-muted-foreground">
-									gabriel31.gal@gmail.com
-								</span>
+								<span className="truncate text-xs text-muted-foreground">Developer</span>
 							</div>
 
 							<Button size="icon" className="ml-auto" variant="ghost">

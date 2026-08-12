@@ -91,7 +91,7 @@ export function SecuritySettings() {
 	}
 
 	return (
-		<Card>
+		<Card className="bg-transparent ring-transparent">
 			<CardHeader>
 				<CardTitle className="text-lg">Security</CardTitle>
 			</CardHeader>

@@ -45,14 +45,22 @@ export function CalendarSettings({
 					{showTimeFormat && (
 						<DropdownMenuItem closeOnClick={false} className="justify-between">
 							24-hour clock
-							<Switch checked={use24HourFormat} onCheckedChange={toggleTimeFormat} />
+							<Switch
+								checked={use24HourFormat}
+								onCheckedChange={toggleTimeFormat}
+								className="rounded-xs [&_span]:rounded-xs"
+							/>
 						</DropdownMenuItem>
 					)}
 
 					{showWeekends && (
 						<DropdownMenuItem closeOnClick={false} className="justify-between">
 							Show weekends
-							<Switch checked={weekendsEnabled} onCheckedChange={toggleWeekends} />
+							<Switch
+								checked={weekendsEnabled}
+								onCheckedChange={toggleWeekends}
+								className="rounded-xs [&_span]:rounded-xs"
+							/>
 						</DropdownMenuItem>
 					)}
 				</DropdownMenuGroup>

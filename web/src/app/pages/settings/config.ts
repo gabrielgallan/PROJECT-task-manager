@@ -3,7 +3,7 @@ import { Bell, Settings2, Shield, UserRound } from 'lucide-react'
 export const SETTINGS_TABS = [
 	{
 		value: 'profile',
-		label: 'Profile',
+		label: 'Account',
 		icon: UserRound,
 		keywords: ['account', 'user', 'name', 'email', 'avatar'],
 	},

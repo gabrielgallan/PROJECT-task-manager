@@ -33,12 +33,12 @@ const userProfileSchema = z.object({
 
 type UserProfileType = z.infer<typeof userProfileSchema>
 
-interface IProfileSettingsProps {
+interface AccountSettingsProps {
 	profile: IUserProfileSettings
 	onProfileChange: (profile: IUserProfileSettings) => void
 }
 
-export function ProfileSettings({ profile, onProfileChange }: IProfileSettingsProps) {
+export function AccountSettings({ profile, onProfileChange }: AccountSettingsProps) {
 	const {
 		register,
 		handleSubmit,
@@ -65,63 +65,66 @@ export function ProfileSettings({ profile, onProfileChange }: IProfileSettingsPr
 	}
 
 	return (
-		<Card>
+		<Card className="bg-transparent ring-transparent">
 			<CardHeader>
-				<CardTitle className="text-lg">Profile</CardTitle>
+				<CardTitle className="text-lg">Account</CardTitle>
 			</CardHeader>
 
 			<CardContent className="space-y-4">
 				<form id="profile-settings-form" onSubmit={handleSubmit(handleSave)}>
 					<div className="flex flex-col gap-4">
-						<FieldGroup className="grid gap-4 md:grid-cols-2">
-							<Field data-invalid={errors.name !== undefined}>
-								<FieldLabel htmlFor="profile-name">Display Name</FieldLabel>
-								<Input
-									id="profile-name"
-									aria-invalid={errors.name !== undefined}
-									{...register('name')}
-								/>
-								<FieldError errors={[errors.name]} />
-							</Field>
-
-							<Field data-invalid={errors.username !== undefined}>
-								<FieldLabel htmlFor="profile-username">Username</FieldLabel>
-								<InputGroup>
-									<InputGroupAddon>
-										<InputGroupText>@</InputGroupText>
-									</InputGroupAddon>
-									<InputGroupInput
-										id="profile-username"
-										type="text"
-										aria-invalid={errors.username !== undefined}
-										{...register('username')}
+						<FieldSet>
+							<FieldLegend variant="legend">Profile</FieldLegend>
+							<FieldGroup className="grid gap-4 md:grid-cols-2">
+								<Field data-invalid={errors.name !== undefined}>
+									<FieldLabel htmlFor="profile-name">Display Name</FieldLabel>
+									<Input
+										id="profile-name"
+										aria-invalid={errors.name !== undefined}
+										{...register('name')}
 									/>
-								</InputGroup>
-								<FieldError errors={[errors.username]} />
-							</Field>
+									<FieldError errors={[errors.name]} />
+								</Field>
 
-							<Field data-invalid={errors.email !== undefined}>
-								<FieldLabel htmlFor="profile-email">Email</FieldLabel>
-								<Input
-									id="profile-email"
-									type="email"
-									aria-invalid={errors.email !== undefined}
-									{...register('email')}
-								/>
-								<FieldError errors={[errors.email]} />
-							</Field>
+								<Field data-invalid={errors.username !== undefined}>
+									<FieldLabel htmlFor="profile-username">Username</FieldLabel>
+									<InputGroup>
+										<InputGroupAddon>
+											<InputGroupText>@</InputGroupText>
+										</InputGroupAddon>
+										<InputGroupInput
+											id="profile-username"
+											type="text"
+											aria-invalid={errors.username !== undefined}
+											{...register('username')}
+										/>
+									</InputGroup>
+									<FieldError errors={[errors.username]} />
+								</Field>
 
-							<Field data-invalid={errors.jobTitle !== undefined}>
-								<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
-								<Input
-									id="profile-job-title"
-									placeholder="e.g. Developer"
-									aria-invalid={errors.jobTitle !== undefined}
-									{...register('jobTitle')}
-								/>
-								<FieldError errors={[errors.jobTitle]} />
-							</Field>
-						</FieldGroup>
+								<Field data-invalid={errors.email !== undefined}>
+									<FieldLabel htmlFor="profile-email">Email</FieldLabel>
+									<Input
+										id="profile-email"
+										type="email"
+										aria-invalid={errors.email !== undefined}
+										{...register('email')}
+									/>
+									<FieldError errors={[errors.email]} />
+								</Field>
+
+								<Field data-invalid={errors.jobTitle !== undefined}>
+									<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
+									<Input
+										id="profile-job-title"
+										placeholder="e.g. Developer"
+										aria-invalid={errors.jobTitle !== undefined}
+										{...register('jobTitle')}
+									/>
+									<FieldError errors={[errors.jobTitle]} />
+								</Field>
+							</FieldGroup>
+						</FieldSet>
 
 						<Button type="submit" disabled={!isDirty || isSubmitting} className="ml-auto">
 							Save

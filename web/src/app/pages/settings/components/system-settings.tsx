@@ -1,6 +1,5 @@
 import { LanguageSelect } from '@/components/language-select'
 import { ThemeSelect } from '@/components/theme-select'
-import { TimezonePicker } from '@/components/timezone-picker'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
 	Field,
@@ -11,10 +10,11 @@ import {
 	FieldSeparator,
 	FieldSet,
 } from '@/components/ui/field'
+import { TimezonePicker } from './timezone-picker'
 
 export function SystemSettings() {
 	return (
-		<Card>
+		<Card className="bg-transparent ring-transparent">
 			<CardHeader>
 				<CardTitle className="text-lg">System</CardTitle>
 			</CardHeader>

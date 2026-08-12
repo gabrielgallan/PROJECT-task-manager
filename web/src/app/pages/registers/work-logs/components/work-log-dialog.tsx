@@ -13,20 +13,12 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { ICalendarRange } from '@/features/calendar/types'
+import { TaskCombobox } from '@/features/tasks/components/task-combobox'
 import type { Task } from '@/features/tasks/model/task-types'
 import { type TWorkLogFormData, workLogSchema } from '@/features/work-logs/model/work-log-schema'
 import type { IWorkLog, TWorkLogDialogState } from '@/features/work-logs/model/work-log-types'
-
-const NO_TASK_VALUE = 'none'
 
 const EMPTY_VALUES: TWorkLogFormData = {
 	title: '',
@@ -166,29 +158,14 @@ export function WorkLogDialog({
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
 									<FieldLabel htmlFor="work-log-task">Task</FieldLabel>
-									<Select
-										value={field.value ?? NO_TASK_VALUE}
-										onValueChange={(value) =>
-											field.onChange(value === NO_TASK_VALUE ? null : value)
-										}
-									>
-										<SelectTrigger
-											id="work-log-task"
-											className="w-full"
-											aria-invalid={fieldState.invalid}
-											onBlur={field.onBlur}
-										>
-											<SelectValue placeholder="No task" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={NO_TASK_VALUE}>No task</SelectItem>
-											{tasks.map((task) => (
-												<SelectItem key={task.id} value={task.id}>
-													{task.title}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+									<TaskCombobox
+										id="work-log-task"
+										tasks={tasks}
+										value={field.value ?? null}
+										onChange={field.onChange}
+										onBlur={field.onBlur}
+										invalid={fieldState.invalid}
+									/>
 									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
 								</Field>
 							)}

@@ -36,7 +36,6 @@ export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps)
 								onClick={() => onEdit(task)}
 								className={cn([
 									'max-w-66 truncate rounded-sm text-left font-medium outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50',
-									isDone && 'line-through',
 								])}
 							/>
 						}
@@ -66,7 +65,7 @@ export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps)
 
 			<TableCell>
 				{task.dueDate ? (
-					<div className="flex items-center justify-end gap-2">
+					<div className="flex items-center justify-end">
 						{isLate && (
 							<Tooltip>
 								<TooltipTrigger render={<TriangleAlert className="size-4 text-destructive" />} />
@@ -88,9 +87,7 @@ export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps)
 						)}
 
 						{/* Overdue has to be readable while scanning the column, not only on hover. */}
-						<span className={cn(['w-22 text-right', isLate && 'font-medium text-destructive'])}>
-							{format(task.dueDate, 'dd/MM/yy')}
-						</span>
+						<span className={cn(['ml-2 text-right'])}>{format(task.dueDate, 'dd/MM/yy')}</span>
 					</div>
 				) : (
 					<p className="text-right text-muted-foreground">-</p>
