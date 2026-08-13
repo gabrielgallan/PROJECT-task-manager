@@ -12,6 +12,13 @@ import {
 	WorkLogItemContent,
 } from '@/app/pages/registers/work-logs/components/work-log-item-content'
 import { Button } from '@/components/ui/button'
+import { CategoryFilter } from '@/features/categories/components/category-filter'
+import type { TCategoryColor } from '@/features/categories/model/category-colors'
+import {
+	NO_CATEGORY_FILTER,
+	resolveCategoryColor,
+} from '@/features/categories/model/category-rules'
+import type { ICategory } from '@/features/categories/model/category-types'
 import { Calendar } from '@/features/calendar/calendar'
 import type { ICalendarRange } from '@/features/calendar/types'
 import type { Task } from '@/features/tasks/model/task-types'
@@ -34,6 +41,8 @@ import type { IWorkLog, TWorkLogDialogState } from '@/features/work-logs/model/w
 interface IWorkLogsCalendarProps {
 	workLogs: IWorkLog[]
 	tasks: Task[]
+	categories: ICategory[]
+	uncategorizedColor: TCategoryColor
 	/** Which task the page was opened for, so a link from the task carries over. */
 	initialTaskIds?: string[]
 	onCreate: (workLog: IWorkLog) => void
@@ -47,21 +56,42 @@ export interface WorkLogsCalendarHandle {
 
 export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCalendarProps>(
 	function WorkLogsCalendar(
-		{ workLogs, tasks, initialTaskIds, onCreate, onUpdate, onDelete },
+		{
+			workLogs,
+			tasks,
+			categories,
+			uncategorizedColor,
+			initialTaskIds,
+			onCreate,
+			onUpdate,
+			onDelete,
+		},
 		ref,
 	) {
 	const [dialog, setDialog] = useState<TWorkLogDialogState>({ mode: 'closed' })
 	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
+	const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
 
 	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
+	const categoriesById = useMemo(
+		() => new Map(categories.map((category) => [category.id, category])),
+		[categories],
+	)
+	const getWorkLogColor = (workLog: IWorkLog) =>
+		resolveCategoryColor(workLog.categoryId, categoriesById, uncategorizedColor)
 
 	const visibleWorkLogs = useMemo(() => {
-		if (selectedTaskIds.length === 0) {
-			return workLogs
-		}
+		return workLogs.filter((workLog) => {
+			const matchesTask =
+				selectedTaskIds.length === 0 ||
+				selectedTaskIds.includes(workLog.taskId ?? NO_TASK_FILTER)
+			const matchesCategory =
+				selectedCategoryIds.length === 0 ||
+				selectedCategoryIds.includes(workLog.categoryId ?? NO_CATEGORY_FILTER)
 
-		return workLogs.filter((workLog) => selectedTaskIds.includes(workLog.taskId ?? NO_TASK_FILTER))
-	}, [workLogs, selectedTaskIds])
+			return matchesTask && matchesCategory
+		})
+	}, [workLogs, selectedTaskIds, selectedCategoryIds])
 
 	const closeDialog = () => setDialog({ mode: 'closed' })
 
@@ -109,6 +139,7 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCale
 				startDate: values.startDate.toISOString(),
 				endDate: values.endDate.toISOString(),
 				taskId: values.taskId ?? null,
+				categoryId: values.categoryId ?? null,
 			})
 			toast.success('Work log updated')
 		} else {
@@ -129,6 +160,12 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCale
 		setSelectedTaskIds((previous) =>
 			previous.includes(taskId) ? previous.filter((id) => id !== taskId) : [...previous, taskId],
 		)
+	const toggleCategoryFilter = (categoryId: string) =>
+		setSelectedCategoryIds((previous) =>
+			previous.includes(categoryId)
+				? previous.filter((id) => id !== categoryId)
+				: [...previous, categoryId],
+		)
 
 	return (
 		<Calendar
@@ -144,11 +181,14 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCale
 			renderItem={(workLog, context) => (
 				<WorkLogItemContent
 					workLog={workLog}
+					color={getWorkLogColor(workLog)}
 					context={context}
 					taskTitle={workLog.taskId ? taskTitles.get(workLog.taskId) : undefined}
 				/>
 			)}
-			getItemClassName={getWorkLogItemClassName}
+			getItemClassName={(workLog, context) =>
+				getWorkLogItemClassName(getWorkLogColor(workLog), context)
+			}
 			getAgendaEmptyText={() => 'No work logged in this month.'}
 			renderToolbarActions={({ selectedDate, view }) => {
 				const logsInView = getLogsForView(visibleWorkLogs, selectedDate, view)
@@ -167,6 +207,13 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCale
 								onToggle={toggleTaskFilter}
 								onClear={() => setSelectedTaskIds([])}
 							/>
+							<CategoryFilter
+								categories={categories}
+								selectedCategoryIds={selectedCategoryIds}
+								onToggle={toggleCategoryFilter}
+								onClear={() => setSelectedCategoryIds([])}
+								compactOnMobile
+							/>
 						</div>
 					),
 					afterSettings: (
@@ -181,6 +228,7 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, IWorkLogsCale
 				<WorkLogDialog
 					state={dialog}
 					tasks={tasks}
+					categories={categories}
 					use24HourFormat={use24HourFormat}
 					validateRange={validate}
 					onClose={closeDialog}

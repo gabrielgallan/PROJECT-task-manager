@@ -29,5 +29,15 @@ export function usePlans() {
 		[setPlans],
 	)
 
-	return { plans, addPlan, updatePlan, removePlan }
+	const clearCategory = useCallback(
+		(categoryId: string) =>
+			setPlans((previous) =>
+				previous.map((plan) =>
+					plan.categoryId === categoryId ? { ...plan, categoryId: null } : plan,
+				),
+			),
+		[setPlans],
+	)
+
+	return { plans, addPlan, updatePlan, removePlan, clearCategory }
 }

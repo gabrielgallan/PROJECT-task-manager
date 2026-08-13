@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BrowserTitle } from '@/components/browser-title'
+import { useCategories } from '@/features/categories/store/categories-store'
 import { PlansCalendar, type PlansCalendarHandle } from '@/features/plans/calendar/plans-calendar'
 import type { IPlan } from '@/features/plans/model/plan-types'
 import { usePlans } from '@/features/plans/store/plans-store'
@@ -18,6 +19,7 @@ export function PlansPage() {
 	const [searchParams] = useSearchParams()
 	const calendarRef = useRef<PlansCalendarHandle>(null)
 	const { plans, addPlan, updatePlan, removePlan } = usePlans()
+	const { categories, uncategorizedColor } = useCategories()
 	const { tasks } = useTasks()
 	const { workLogs, addWorkLog } = useWorkLogs()
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
@@ -54,6 +56,7 @@ export function PlansPage() {
 				startDate: range.startDate,
 				endDate: range.endDate,
 				taskId: plan.taskId,
+				categoryId: plan.categoryId,
 			}),
 		)
 		toast.success('Work log recorded')
@@ -70,6 +73,8 @@ export function PlansPage() {
 					ref={calendarRef}
 					plans={plans}
 					tasks={tasks}
+					categories={categories}
+					uncategorizedColor={uncategorizedColor}
 					initialTaskIds={initialTaskIds}
 					onCreate={addPlan}
 					onUpdate={updatePlan}

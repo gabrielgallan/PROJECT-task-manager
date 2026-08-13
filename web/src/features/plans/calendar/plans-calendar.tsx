@@ -2,6 +2,13 @@ import { Plus } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { CategoryFilter } from '@/features/categories/components/category-filter'
+import type { TCategoryColor } from '@/features/categories/model/category-colors'
+import {
+	NO_CATEGORY_FILTER,
+	resolveCategoryColor,
+} from '@/features/categories/model/category-rules'
+import type { ICategory } from '@/features/categories/model/category-types'
 import { Calendar } from '@/features/calendar/calendar'
 import { SLOT_MINUTES, WORK_DAY_START_HOUR } from '@/features/calendar/constants'
 import type { ICalendarRange } from '@/features/calendar/types'
@@ -20,6 +27,8 @@ import type { Task } from '@/features/tasks/model/task-types'
 interface IPlansCalendarProps {
 	plans: IPlan[]
 	tasks: Task[]
+	categories: ICategory[]
+	uncategorizedColor: TCategoryColor
 	/** Which task the page was opened for, so a link from the task carries over. */
 	initialTaskIds?: string[]
 	onCreate: (plan: IPlan) => void
@@ -51,21 +60,43 @@ function getCommandCreateRange(now = new Date()): ICalendarRange {
 
 export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps>(
 	function PlansCalendar(
-		{ plans, tasks, initialTaskIds, onCreate, onUpdate, onDelete, onConfirmPlan },
+		{
+			plans,
+			tasks,
+			categories,
+			uncategorizedColor,
+			initialTaskIds,
+			onCreate,
+			onUpdate,
+			onDelete,
+			onConfirmPlan,
+		},
 		ref,
 	) {
 	const [dialog, setDialog] = useState<TPlanDialogState>({ mode: 'closed' })
 	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
+	const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
 
 	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
+	const categoriesById = useMemo(
+		() => new Map(categories.map((category) => [category.id, category])),
+		[categories],
+	)
+	const getPlanColor = (plan: IPlan) =>
+		resolveCategoryColor(plan.categoryId, categoriesById, uncategorizedColor)
 
 	const visiblePlans = useMemo(() => {
-		if (selectedTaskIds.length === 0) {
-			return plans
-		}
+		return plans.filter((plan) => {
+			const matchesTask =
+				selectedTaskIds.length === 0 ||
+				selectedTaskIds.includes(plan.taskId ?? NO_TASK_FILTER)
+			const matchesCategory =
+				selectedCategoryIds.length === 0 ||
+				selectedCategoryIds.includes(plan.categoryId ?? NO_CATEGORY_FILTER)
 
-		return plans.filter((plan) => selectedTaskIds.includes(plan.taskId ?? NO_TASK_FILTER))
-	}, [plans, selectedTaskIds])
+			return matchesTask && matchesCategory
+		})
+	}, [plans, selectedTaskIds, selectedCategoryIds])
 
 	const closeDialog = () => setDialog({ mode: 'closed' })
 	const openCreateDialog = (range: ICalendarRange) => setDialog({ mode: 'create', range })
@@ -111,6 +142,12 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps
 		setSelectedTaskIds((previous) =>
 			previous.includes(taskId) ? previous.filter((id) => id !== taskId) : [...previous, taskId],
 		)
+	const toggleCategoryFilter = (categoryId: string) =>
+		setSelectedCategoryIds((previous) =>
+			previous.includes(categoryId)
+				? previous.filter((id) => id !== categoryId)
+				: [...previous, categoryId],
+		)
 
 	return (
 		<Calendar
@@ -126,19 +163,29 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps
 			renderItem={(plan, context) => (
 				<PlanItemContent
 					plan={plan}
+					color={getPlanColor(plan)}
 					context={context}
 					taskTitle={plan.taskId ? taskTitles.get(plan.taskId) : undefined}
 				/>
 			)}
-			getItemClassName={getPlanItemClassName}
+			getItemClassName={(plan, context) => getPlanItemClassName(getPlanColor(plan), context)}
 			renderToolbarActions={({ selectedDate }) => ({
 				beforeViews: (
-					<PlanFilter
-						tasks={tasks}
-						selectedTaskIds={selectedTaskIds}
-						onToggle={toggleTaskFilter}
-						onClear={() => setSelectedTaskIds([])}
-					/>
+					<div className="flex items-center gap-2">
+						<PlanFilter
+							tasks={tasks}
+							selectedTaskIds={selectedTaskIds}
+							onToggle={toggleTaskFilter}
+							onClear={() => setSelectedTaskIds([])}
+						/>
+						<CategoryFilter
+							categories={categories}
+							selectedCategoryIds={selectedCategoryIds}
+							onToggle={toggleCategoryFilter}
+							onClear={() => setSelectedCategoryIds([])}
+							compactOnMobile
+						/>
+					</div>
 				),
 				afterSettings: (
 					<Button
@@ -163,6 +210,7 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps
 				<PlanDialog
 					state={dialog}
 					tasks={tasks}
+					categories={categories}
 					use24HourFormat={use24HourFormat}
 					onClose={closeDialog}
 					onCreate={createPlan}

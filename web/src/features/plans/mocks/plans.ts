@@ -1,6 +1,7 @@
 import { addDays, set, startOfWeek } from 'date-fns'
+import { CATEGORY_ID_BY_COLOR } from '@/features/categories/mocks/categories'
+import type { TCategoryColor } from '@/features/categories/model/category-colors'
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { TPlanColor } from '@/features/plans/model/plan-colors'
 import type { IPlan } from '@/features/plans/model/plan-types'
 
 interface ISeed {
@@ -9,7 +10,7 @@ interface ISeed {
 	end: [hour: number, minute: number]
 	title: string
 	description?: string
-	color: TPlanColor
+	color: TCategoryColor
 	taskId?: string
 }
 
@@ -146,7 +147,8 @@ function buildPlans(): IPlan[] {
 			description: seed.description,
 			startDate: startDate.toISOString(),
 			endDate: endDate.toISOString(),
-			color: seed.color,
+			categoryId:
+				seed.title === 'Side project' ? null : (CATEGORY_ID_BY_COLOR.get(seed.color) ?? null),
 			taskId: seed.taskId ?? null,
 		}
 	})

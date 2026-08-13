@@ -1,247 +1,188 @@
 # Backend — use cases exigidos pelo frontend
 
-Resumo das funcionalidades que a API deverá disponibilizar para substituir os mocks e stores locais do frontend. Os nomes abaixo representam use cases e não precisam corresponder individualmente a endpoints HTTP.
+Mapa resumido dos casos de uso e consultas necessários para substituir os mocks e stores locais. As rotas são referências de contrato; a implementação pode agrupá-las de outra forma desde que preserve os comportamentos descritos.
 
-## Convenções
+## Convenções gerais
 
 - Todos os recursos pertencem ao usuário autenticado.
 - IDs e timestamps são gerados pelo backend.
-- Datas são transmitidas em ISO 8601, preferencialmente em UTC.
-- Plans e Work Logs podem existir sem Task.
-- Excluir uma Task não deve excluir seus Plans ou Work Logs.
-- Validações do frontend também devem existir no backend.
-
-```ts
-type Page<T> = {
-  items: T[]
-  page: number
-  pageSize: number
-  total: number
-  pageCount: number
-}
-
-type DeleteResult = { deletedId: string }
-```
+- Datas trafegam em ISO 8601, preferencialmente UTC; consultas dependentes do dia recebem `timezone` quando necessário.
+- Task, Category, Plan e Work Log são recursos independentes.
+- `taskId` e `categoryId` são opcionais em Plans e Work Logs.
+- Excluir uma Task ou Category mantém os registros relacionados e define a respectiva referência como `null`.
+- Em filtros com múltiplos valores, os valores da mesma faceta usam OR; facetas diferentes usam AND.
+- As validações existentes no frontend também devem ser aplicadas no backend.
 
 ## Autenticação
 
-### Sign In
+- `POST /auth/sign-in` — email e senha.
+- `POST /auth/sign-up` — nome, email e senha.
+- `POST /auth/oauth/:provider/start` — iniciar Google ou GitHub.
+- `GET /auth/oauth/:provider/callback` — concluir autenticação OAuth.
+- `GET /auth/session` — sessão atual.
+- `DELETE /auth/session` — encerrar sessão atual.
+- `POST /auth/password-recovery` — solicitar recuperação de senha.
 
-- `AuthenticateWithPassword({ email, password }) -> AuthSessionDto`
-- `BeginOAuthAuthentication({ provider: 'google' | 'github' }) -> { authorizationUrl }`
-- `CompleteOAuthAuthentication({ provider, code, state }) -> AuthSessionDto`
-- `GetCurrentSession() -> AuthSessionDto | null`
-- `SignOut() -> { success: true }`
-
-### Sign Up
-
-- `RegisterUser({ name?, email, password }) -> AuthSessionDto`
-
-### Forgot Password
-
-- `RequestPasswordRecovery({ email }) -> { accepted: true }`
-
-O fluxo atual ainda não possui páginas para validar o código/link de recuperação e cadastrar a nova senha.
+O fluxo para validar o link de recuperação e cadastrar uma nova senha ainda não possui interface no frontend.
 
 ## Tasks
 
-```ts
-type TaskStatus = 'backlog' | 'in_progress' | 'done'
-type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
+### Listagem
 
-type TaskDto = {
-  id: string
-  title: string
-  description: string | null
-  status: TaskStatus
-  priority: TaskPriority
-  startDate: string | null
-  dueDate: string | null
-  createdAt: string
-  updatedAt: string
-}
+- `GET /tasks`
+  - Parâmetros: `q`, `status[]`, `priority[]`, `sortBy`, `sortDir`, `page`, `pageSize`.
+  - Pesquisa por título e descrição.
+  - Ordenação por `title`, `status`, `priority`, `updatedAt` ou `dueDate`.
+  - Ordem de status: `backlog`, `in_progress`, `done`.
+  - Ordem de prioridade: `low`, `medium`, `high`, `critical`.
+  - `dueDate` nulo fica no fim, independentemente da direção.
+  - A List usa paginação; Board e Timeline solicitam todos os resultados filtrados.
 
-type TaskFilters = {
-  search?: string
-  status?: TaskStatus[]
-  priority?: TaskPriority[]
-}
-```
+### Pesquisa para comboboxes
 
-### Table
+- `GET /tasks/options`
+  - Parâmetros: `q`, `cursor` e `limit`.
+  - Pesquisa por título.
+  - Retorna somente `id` e `title`.
+  - Usado nos formulários de Plans e Work Logs e nos filtros de Reports.
+  - Deve continuar retornando a opção selecionada pelo ID quando ela não estiver na página atual da pesquisa.
 
-- `ListTasksPaginated(filters, sort, page, pageSize) -> Page<TaskDto>`
-- Ordenação disponível por `title`, `status`, `priority`, `updatedAt` e `dueDate`.
+### Detalhes e comandos
 
-### Kanban e Timeline
+- `GET /tasks/:taskId` — Task, totais planejado/registrado/balanço e atividade combinada de Plans e Work Logs.
+- `POST /tasks` — criar Task.
+- `PATCH /tasks/:taskId` — editar dados gerais.
+- `PATCH /tasks/:taskId/status` — mover entre colunas do Board.
+- `PATCH /tasks/:taskId/schedule` — alterar início e entrega pela Timeline.
+- `DELETE /tasks/:taskId` — excluir e desassociar Plans e Work Logs.
 
-- `ListTasks(filters) -> TaskDto[]`
-- Compartilha os filtros da Table, mas não utiliza paginação.
+## Categories
 
-### Detalhes e ações
+### Consultas e CRUD
 
-- `GetTaskDetails({ taskId }) -> TaskDetailsDto`
-- `CreateTask(input) -> TaskDto`
-- `UpdateTask({ taskId, ...input }) -> TaskDto`
-- `ChangeTaskStatus({ taskId, status }) -> TaskDto`
-- `RescheduleTask({ taskId, startDate, dueDate }) -> TaskDto`
-- `DeleteTask({ taskId }) -> DeleteResult`
-- `ListTaskOptions() -> Array<{ id, title }>` para Plans, Work Logs e Reports.
+- `GET /categories`
+  - Parâmetros opcionais: `q` e `sort`.
+  - Ordenação padrão por nome.
+  - Usado em Settings, comboboxes e filtros.
+- `GET /categories/:categoryId/deletion-impact` — quantidade de Plans e Work Logs que ficarão sem Category.
+- `POST /categories` — nome e cor.
+- `PATCH /categories/:categoryId` — alterar nome ou cor; a nova cor vale imediatamente para todos os registros relacionados.
+- `DELETE /categories/:categoryId` — excluir e definir `categoryId = null` nos Plans e Work Logs relacionados.
 
-```ts
-type TaskDetailsDto = {
-  task: TaskDto
-  plannedMinutes: number
-  loggedMinutes: number
-  balanceMinutes: number | null
-  activity: Array<{
-    id: string
-    kind: 'plan' | 'work-log'
-    title: string
-    startDate: string
-    endDate: string
-    confirmed?: boolean
-  }>
-}
-```
+O nome deve ter entre 1 e 40 caracteres e ser único por usuário, ignorando caixa e espaços externos. As cores aceitas são:
+
+`blue`, `sky`, `cyan`, `slate`, `teal`, `green`, `lime`, `emerald`, `red`, `rose`, `yellow`, `amber`, `orange`, `indigo`, `violet`, `purple`, `fuchsia` e `pink`.
+
+### Preferência visual
+
+- `GET /settings/calendar-preferences` — inclui `uncategorizedColor`.
+- `PATCH /settings/calendar-preferences` — altera a cor usada por Plans e Work Logs sem Category.
 
 ## Plans
 
-```ts
-type PlanDto = {
-  id: string
-  title: string
-  description: string | null
-  color: string
-  startDate: string
-  endDate: string
-  taskId: string | null
-  confirmedAt: string | null
-}
-```
-
 ### Calendário
 
-- `ListPlansInRange({ from, to, taskIds?, includeUnassigned? }) -> PlanDto[]`
-- `CreatePlan(input) -> PlanDto`
-- `UpdatePlan({ planId, ...input }) -> PlanDto`
-- `ReschedulePlan({ planId, startDate, endDate }) -> PlanDto`
-- `DeletePlan({ planId }) -> DeleteResult`
+- `GET /plans`
+  - Obrigatórios: `from` e `to`.
+  - Filtros: `taskIds[]`, `categoryIds[]`, `withoutTask`, `withoutCategory`.
+  - Ordenação padrão: `startDate ASC`.
+  - Retorna Plans com resumos de `task` e `category` incluídos.
+  - Atende as views Day, Week e Month, sem paginação.
+- `POST /plans` — aceita `taskId` e `categoryId` opcionais.
+- `PATCH /plans/:planId` — editar conteúdo e relações.
+- `PATCH /plans/:planId/schedule` — mover ou redimensionar no calendário.
+- `DELETE /plans/:planId`.
 
-As views Day, Week e Month consultam o intervalo visível e não exigem paginação.
+### Registrar como concluído
 
-### Record as done
-
-- `RecordPlanAsDone({ planId }) -> { plan: PlanDto, workLog: WorkLogDto }`
-
-Essa operação deve ser transacional. Ela cria o Work Log e marca `confirmedAt`, rejeitando Plans futuros, já confirmados ou que gerem conflito de horário.
+- `POST /plans/:planId/record-as-done`
+  - Cria um Work Log com Task e Category herdadas do Plan.
+  - Marca `confirmedAt` no Plan.
+  - Operação transacional.
+  - Rejeita Plan futuro, já confirmado ou cujo período conflite com outro Work Log.
 
 ## Work Logs
 
-```ts
-type WorkLogDto = {
-  id: string
-  title: string
-  description: string | null
-  startDate: string
-  endDate: string
-  taskId: string | null
-  createdAt: string
-  updatedAt: string
-}
-```
-
 ### Calendário
 
-- `ListWorkLogsInRange({ from, to, taskIds?, includeUnassigned? }) -> WorkLogDto[]`
-- `GetSuggestedLogNowRange() -> { startDate, endDate }`
-- `CreateWorkLog(input) -> WorkLogDto`
-- `UpdateWorkLog({ workLogId, ...input }) -> WorkLogDto`
-- `RescheduleWorkLog({ workLogId, startDate, endDate }) -> WorkLogDto`
-- `DeleteWorkLog({ workLogId }) -> DeleteResult`
+- `GET /work-logs`
+  - Obrigatórios: `from` e `to`.
+  - Filtros: `taskIds[]`, `categoryIds[]`, `withoutTask`, `withoutCategory`.
+  - Ordenação padrão: `startDate ASC`.
+  - Retorna Work Logs com resumos de `task` e `category` incluídos.
+  - Atende as views Day, Week e Agenda, sem paginação.
+- `GET /work-logs/suggested-range` — intervalo sugerido para “Log now”.
+- `POST /work-logs` — aceita `taskId` e `categoryId` opcionais.
+- `PATCH /work-logs/:workLogId` — editar conteúdo e relações.
+- `PATCH /work-logs/:workLogId/schedule` — mover ou redimensionar no calendário.
+- `DELETE /work-logs/:workLogId`.
 
-As views Day, Week e Agenda não exigem paginação. O backend deve impedir intervalos futuros, atravessando a meia-noite ou sobrepostos a outro Work Log do usuário.
-
-## Dashboard
-
-- `GetDashboardOverview({ referenceDate, timezone }) -> DashboardOverviewDto`
-- `GetPlannedVsLoggedSeries({ days: 7 | 30 | 90, timezone }) -> DailyWorkPointDto[]`
-
-O overview deve retornar:
-
-- Tasks atrasadas e próximas do vencimento, incluindo comparação semanal.
-- Minutos planejados e registrados na semana atual.
-- Plans de hoje.
-- Contribuições diárias de Work Logs no ano.
-- Tasks com mais tempo registrado no ano.
-
-```ts
-type DailyWorkPointDto = {
-  date: string
-  plannedMinutes: number
-  loggedMinutes: number
-}
-```
-
-Antes da integração, o segundo stat card precisa ser corrigido: está rotulado como `Completed tasks`, mas recebe contagens de vencimentos futuros. Os deltas semanais também ainda são mocks.
+O backend deve rejeitar intervalos futuros, com fim anterior ao início, atravessando a meia-noite ou sobrepostos a outro Work Log do usuário.
 
 ## Reports
 
-- `GenerateWorkLogReport({ from, to, taskIds?, includeUnassigned?, groupBy }) -> WorkLogReportDto`
-- `ExportWorkLogReport({ filtros, groupBy, columns, format }) -> arquivo`
-- Formatos atuais: `csv` e `xlsx`.
+- `POST /reports/work-logs/preview`
+  - Parâmetros: `from`, `to`, `taskIds[]`, `categoryIds[]`, `withoutTask`, `withoutCategory`, `groupBy` e `columns[]`.
+  - `groupBy`: `day`, `task` ou `none`.
+  - Colunas atuais: `date`, `start`, `end`, `duration`, `task`, `title`, `description`.
+  - Retorna Work Logs com Task incluída, grupos e resumo agregado.
+  - Category é necessária para filtragem, mas ainda não é coluna nem agrupamento do relatório.
+- `POST /reports/work-logs/export`
+  - Mesmos filtros, agrupamento e colunas do preview.
+  - Formatos: `csv` e `xlsx`.
 
-O relatório deve retornar os Work Logs selecionados e um resumo contendo total de minutos, quantidade de registros, dias ativos, Tasks envolvidas e minutos sem Task.
+O resumo contém minutos totais, quantidade de Work Logs, dias ativos, quantidade de Tasks e minutos sem Task.
+
+## Dashboard
+
+- `GET /dashboard/overview`
+  - Parâmetros: `referenceDate` e `timezone`.
+  - Retorna Tasks atrasadas e próximas da entrega, minutos planejados e registrados na semana, Plans do dia, contribuições anuais de Work Logs e distribuição do tempo por Task.
+  - Plans do dia vêm com Task e Category incluídas.
+  - Distribuição do tempo vem com resumo da Task incluído.
+- `GET /dashboard/planned-vs-logged`
+  - Parâmetros: `days` (`7`, `30` ou `90`) e `timezone`.
+  - Retorna minutos planejados e registrados por dia.
 
 ## Settings
 
-### Profile
+### Perfil
 
-- `GetCurrentUserProfile() -> UserProfileDto`
-- `UpdateCurrentUserProfile(input) -> UserProfileDto`
-- `DeleteCurrentUserAccount() -> { deleted: true }`
+- `GET /users/me`.
+- `PATCH /users/me` — nome, username e cargo.
+- `DELETE /users/me`.
 
-```ts
-type UserProfileDto = {
-  id: string
-  name: string
-  email: string
-  username: string
-  jobTitle: string
-  avatarUrl: string | null
-}
-```
+O avatar permanece somente leitura nesta etapa.
 
-O avatar permanece somente leitura no MVP.
+### Segurança
 
-### Security
+- `PATCH /users/me/password` — senha atual e nova senha.
+- `GET /users/me/sessions` — navegador, sistema operacional, dispositivo, último acesso e indicador da sessão atual.
+- `DELETE /users/me/sessions/:sessionId`.
 
-- `ChangePassword({ currentPassword, newPassword }) -> { success: true }`
-- `ListActiveSessions() -> ActiveSessionDto[]`
-- `RevokeSession({ sessionId }) -> DeleteResult`
+### Notificações
 
-Uma sessão precisa informar navegador, sistema operacional, tipo de dispositivo, último acesso e se é a sessão atual.
+- `GET /users/me/notification-settings`.
+- `PATCH /users/me/notification-settings`.
 
-### Notifications
-
-- `GetNotificationSettings() -> NotificationSettingsDto`
-- `UpdateNotificationSettings(input) -> NotificationSettingsDto`
-
-As preferências incluem canais in-app/browser, lembrete de Plan com antecedência de 5, 10, 15 ou 30 minutos e resumo diário com horário `HH:mm`. A permissão da API `Notification` continua sendo responsabilidade do navegador.
+As preferências incluem canais in-app/browser, lembrete de Plan com antecedência de 5, 10, 15 ou 30 minutos e resumo diário em `HH:mm`. A permissão da API Notification continua sendo responsabilidade do navegador.
 
 ## Fora do escopo da API
 
-- Theme, language e timezone enquanto permanecerem no localStorage.
-- View e formato dos calendários.
-- Estado da sidebar armazenado em cookie.
+- Theme e language enquanto permanecerem locais.
+- View, formato de hora, finais de semana e posição dos calendários.
+- Estado da sidebar.
 - Command global, que atualmente pesquisa apenas rotas e ações estáticas.
+- Category em Tasks.
+- Category como coluna ou agrupamento de Reports.
 
 ## Ordem sugerida
 
 1. Autenticação e sessão.
-2. Queries e CRUD de Tasks.
-3. Queries por intervalo e CRUD de Plans.
-4. Queries por intervalo e CRUD de Work Logs.
-5. Profile, Security e Notifications.
-6. Dashboard agregado.
-7. Reports e exportações.
+2. Tasks, incluindo listagem e pesquisa para comboboxes.
+3. Categories e preferências do calendário.
+4. Plans e operação “Record as done”.
+5. Work Logs.
+6. Perfil, segurança e notificações.
+7. Dashboard.
+8. Reports e exportações.

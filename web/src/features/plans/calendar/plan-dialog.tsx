@@ -13,34 +13,28 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { PLAN_COLORS, PLAN_DOT } from '@/features/plans/model/plan-colors'
+import { CategoryCombobox } from '@/features/categories/components/category-combobox'
+import type { ICategory } from '@/features/categories/model/category-types'
 import { planSchema, type TPlanFormData } from '@/features/plans/model/plan-schema'
 import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
 import { TaskCombobox } from '@/features/tasks/components/task-combobox'
 import type { Task } from '@/features/tasks/model/task-types'
-import { cn } from '@/lib/utils'
 
 const EMPTY_VALUES: TPlanFormData = {
 	title: '',
 	description: '',
 	startDate: new Date(),
 	endDate: new Date(),
-	color: 'blue',
 	taskId: null,
+	categoryId: null,
 }
 
 interface IPlanDialogProps {
 	state: TPlanDialogState
 	tasks: Task[]
+	categories: ICategory[]
 	use24HourFormat: boolean
 	onClose: () => void
 	onCreate: (plan: IPlan) => void
@@ -53,6 +47,7 @@ interface IPlanDialogProps {
 export function PlanDialog({
 	state,
 	tasks,
+	categories,
 	use24HourFormat,
 	onClose,
 	onCreate,
@@ -94,8 +89,8 @@ export function PlanDialog({
 				description: state.plan.description ?? '',
 				startDate: new Date(state.plan.startDate),
 				endDate: new Date(state.plan.endDate),
-				color: state.plan.color,
 				taskId: state.plan.taskId ?? null,
+				categoryId: state.plan.categoryId ?? null,
 			})
 		}
 	}, [state, reset])
@@ -107,8 +102,8 @@ export function PlanDialog({
 			description: values.description?.trim() ? values.description : undefined,
 			startDate: values.startDate.toISOString(),
 			endDate: values.endDate.toISOString(),
-			color: values.color,
 			taskId: values.taskId ?? null,
+			categoryId: values.categoryId ?? null,
 			confirmedAt: state.mode === 'edit' ? state.plan.confirmedAt : null,
 		}
 
@@ -193,33 +188,18 @@ export function PlanDialog({
 
 						<Controller
 							control={control}
-							name="color"
+							name="categoryId"
 							render={({ field, fieldState }) => (
 								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor="plan-color">Color</FieldLabel>
-									<Select
-										value={field.value}
-										onValueChange={(value) => value && field.onChange(value)}
-									>
-										<SelectTrigger
-											id="plan-color"
-											className="w-full capitalize"
-											aria-invalid={fieldState.invalid}
-											onBlur={field.onBlur}
-										>
-											<SelectValue placeholder="Pick a color" />
-										</SelectTrigger>
-										<SelectContent>
-											{PLAN_COLORS.map((color) => (
-												<SelectItem key={color} value={color}>
-													<span className="flex items-center gap-2 capitalize">
-														<span className={cn('size-3 rounded-full', PLAN_DOT[color])} />
-														{color}
-													</span>
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
+									<FieldLabel htmlFor="plan-category">Category</FieldLabel>
+									<CategoryCombobox
+										id="plan-category"
+										categories={categories}
+										value={field.value ?? null}
+										onChange={field.onChange}
+										onBlur={field.onBlur}
+										invalid={fieldState.invalid}
+									/>
 									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
 								</Field>
 							)}

@@ -10,6 +10,7 @@ interface ISeed {
 	description?: string
 	/** Ids from TASKS_MOCK, kept as plain strings so the modules stay independent. */
 	taskId?: string
+	categoryId?: string
 }
 
 /**
@@ -31,6 +32,7 @@ const SEEDS: ISeed[] = [
 		title: 'Mapeamento de eventos',
 		description: 'Event mapping and retry handling.',
 		taskId: 'task-1',
+		categoryId: 'category-development',
 	},
 	{
 		daysAgo: 0,
@@ -38,6 +40,7 @@ const SEEDS: ISeed[] = [
 		end: [15, 0],
 		title: 'Treino do modelo',
 		taskId: 'task-2',
+		categoryId: 'category-focus',
 	},
 	// Yesterday: full day, one task-less block.
 	{
@@ -45,6 +48,7 @@ const SEEDS: ISeed[] = [
 		start: [9, 0],
 		end: [10, 0],
 		title: 'Daily sync',
+		categoryId: 'category-meetings',
 	},
 	{
 		daysAgo: 1,
@@ -52,6 +56,7 @@ const SEEDS: ISeed[] = [
 		end: [12, 0],
 		title: 'Ajuste no parser de datas',
 		taskId: 'task-3',
+		categoryId: 'category-development',
 	},
 	{
 		daysAgo: 1,
@@ -60,6 +65,7 @@ const SEEDS: ISeed[] = [
 		title: 'Integração DAHUA',
 		description: 'Pairing on the camera adapter.',
 		taskId: 'task-1',
+		categoryId: 'category-development',
 	},
 	// Two days ago: single long block, no gaps to report.
 	{
@@ -68,6 +74,7 @@ const SEEDS: ISeed[] = [
 		end: [16, 0],
 		title: 'Revisão Auto Guide',
 		taskId: 'task-4',
+		categoryId: 'category-review',
 	},
 	// Three days ago: fragmented day.
 	{
@@ -75,6 +82,7 @@ const SEEDS: ISeed[] = [
 		start: [8, 0],
 		end: [8, 30],
 		title: 'Planning',
+		categoryId: 'category-planning',
 	},
 	{
 		daysAgo: 3,
@@ -82,12 +90,14 @@ const SEEDS: ISeed[] = [
 		end: [10, 0],
 		title: 'Levantamento de horas',
 		taskId: 'task-5',
+		categoryId: 'category-administration',
 	},
 	{
 		daysAgo: 3,
 		start: [11, 0],
 		end: [12, 0],
 		title: 'Code review',
+		categoryId: 'category-review',
 	},
 	{
 		daysAgo: 3,
@@ -95,6 +105,7 @@ const SEEDS: ISeed[] = [
 		end: [18, 0],
 		title: 'Migração do banco de imagens',
 		taskId: 'task-6',
+		categoryId: 'category-focus',
 	},
 	// Six days ago, so the previous week is not empty in the week view.
 	{
@@ -103,6 +114,7 @@ const SEEDS: ISeed[] = [
 		end: [12, 30],
 		title: 'Atualização de dependências',
 		taskId: 'task-11',
+		categoryId: 'category-development',
 	},
 	{
 		daysAgo: 6,
@@ -110,20 +122,21 @@ const SEEDS: ISeed[] = [
 		end: [16, 0],
 		title: 'Escrita dos exemplos de payload',
 		taskId: 'task-8',
+		categoryId: 'category-administration',
 	},
 ]
 
 const HISTORICAL_DURATIONS = [90, 210, 330, 450] as const
 
 const HISTORICAL_PROFILES = [
-	{ title: 'Integração DAHUA', taskId: 'task-1' },
-	{ title: 'POC de reconhecimento de placas', taskId: 'task-2' },
-	{ title: 'Correção de fuso horário nos logs', taskId: 'task-3' },
-	{ title: 'Revisão Auto Guide', taskId: 'task-4' },
-	{ title: 'Relatório mensal de horas', taskId: 'task-5' },
-	{ title: 'Migração do banco de imagens', taskId: 'task-6' },
-	{ title: 'Documentação da API de eventos', taskId: 'task-8' },
-	{ title: 'Meetings and follow-ups' },
+	{ title: 'Integração DAHUA', taskId: 'task-1', categoryId: 'category-development' },
+	{ title: 'POC de reconhecimento de placas', taskId: 'task-2', categoryId: 'category-focus' },
+	{ title: 'Correção de fuso horário nos logs', taskId: 'task-3', categoryId: 'category-development' },
+	{ title: 'Revisão Auto Guide', taskId: 'task-4', categoryId: 'category-review' },
+	{ title: 'Relatório mensal de horas', taskId: 'task-5', categoryId: 'category-administration' },
+	{ title: 'Migração do banco de imagens', taskId: 'task-6', categoryId: 'category-focus' },
+	{ title: 'Documentação da API de eventos', taskId: 'task-8', categoryId: 'category-administration' },
+	{ title: 'Meetings and follow-ups', categoryId: 'category-meetings' },
 ] as const
 
 /**
@@ -168,6 +181,7 @@ function buildHistoricalWorkLogs(today: Date): IWorkLog[] {
 					startDate: startDate.toISOString(),
 					endDate: endDate.toISOString(),
 					taskId: 'taskId' in profile ? profile.taskId : null,
+					categoryId: profile.categoryId,
 					createdAt: endDate.toISOString(),
 					updatedAt: endDate.toISOString(),
 				}
@@ -200,6 +214,7 @@ function buildWorkLogs(): IWorkLog[] {
 			startDate: startDate.toISOString(),
 			endDate: endDate.toISOString(),
 			taskId: seed.taskId ?? null,
+			categoryId: seed.categoryId ?? null,
 			createdAt: endDate.toISOString(),
 			updatedAt: endDate.toISOString(),
 		}

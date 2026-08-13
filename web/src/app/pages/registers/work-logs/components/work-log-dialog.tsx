@@ -14,6 +14,8 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { CategoryCombobox } from '@/features/categories/components/category-combobox'
+import type { ICategory } from '@/features/categories/model/category-types'
 import type { ICalendarRange } from '@/features/calendar/types'
 import { TaskCombobox } from '@/features/tasks/components/task-combobox'
 import type { Task } from '@/features/tasks/model/task-types'
@@ -26,11 +28,13 @@ const EMPTY_VALUES: TWorkLogFormData = {
 	startDate: new Date(),
 	endDate: new Date(),
 	taskId: null,
+	categoryId: null,
 }
 
 interface IWorkLogDialogProps {
 	state: TWorkLogDialogState
 	tasks: Task[]
+	categories: ICategory[]
 	use24HourFormat: boolean
 	/** Returns why the range cannot be recorded, or null when it is valid. */
 	validateRange: (range: ICalendarRange, ignoreId?: string) => string | null
@@ -42,6 +46,7 @@ interface IWorkLogDialogProps {
 export function WorkLogDialog({
 	state,
 	tasks,
+	categories,
 	use24HourFormat,
 	validateRange,
 	onClose,
@@ -76,6 +81,7 @@ export function WorkLogDialog({
 				startDate: new Date(state.workLog.startDate),
 				endDate: new Date(state.workLog.endDate),
 				taskId: state.workLog.taskId ?? null,
+				categoryId: state.workLog.categoryId ?? null,
 			})
 		}
 	}, [state, reset])
@@ -161,6 +167,25 @@ export function WorkLogDialog({
 									<TaskCombobox
 										id="work-log-task"
 										tasks={tasks}
+										value={field.value ?? null}
+										onChange={field.onChange}
+										onBlur={field.onBlur}
+										invalid={fieldState.invalid}
+									/>
+									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
+								</Field>
+							)}
+						/>
+
+						<Controller
+							control={control}
+							name="categoryId"
+							render={({ field, fieldState }) => (
+								<Field data-invalid={fieldState.invalid}>
+									<FieldLabel htmlFor="work-log-category">Category</FieldLabel>
+									<CategoryCombobox
+										id="work-log-category"
+										categories={categories}
 										value={field.value ?? null}
 										onChange={field.onChange}
 										onBlur={field.onBlur}

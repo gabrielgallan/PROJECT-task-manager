@@ -9,6 +9,7 @@ export interface IWorkLog extends ICalendarItem {
 	title: string
 	description?: string
 	taskId?: string | null
+	categoryId?: string | null
 	createdAt: string
 	updatedAt: string
 }

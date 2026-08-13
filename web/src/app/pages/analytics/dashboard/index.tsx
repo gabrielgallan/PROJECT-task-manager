@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { useMemo } from 'react'
 import { BrowserTitle } from '@/components/browser-title'
+import { useCategories } from '@/features/categories/store/categories-store'
 import { usePlans } from '@/features/plans/store/plans-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { buildWorkLogContributions } from '@/features/work-logs/model/work-log-contributions'
@@ -23,6 +24,7 @@ import {
 
 export function DashboardPage() {
 	const { tasks } = useTasks()
+	const { categories, uncategorizedColor } = useCategories()
 	const { plans } = usePlans()
 	const { workLogs } = useWorkLogs()
 	const deadlineMetrics = useMemo(() => getDashboardDeadlineMetrics(tasks), [tasks])
@@ -58,7 +60,12 @@ export function DashboardPage() {
 
 				<div className="grid gap-4 lg:h-90 lg:grid-cols-10">
 					<PlannedVsLoggedChart className="h-80 lg:col-span-6 lg:h-auto" />
-					<TodayPlanCard className="h-80 lg:col-span-4 lg:h-auto" insight={todayPlan} />
+					<TodayPlanCard
+						className="h-80 lg:col-span-4 lg:h-auto"
+						insight={todayPlan}
+						categories={categories}
+						uncategorizedColor={uncategorizedColor}
+					/>
 				</div>
 
 				<div className="flex flex-wrap items-stretch gap-4">

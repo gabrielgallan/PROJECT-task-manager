@@ -31,6 +31,7 @@ export function createWorkLog(input: {
 	endDate: Date
 	description?: string
 	taskId?: string | null
+	categoryId?: string | null
 }): IWorkLog {
 	const now = new Date().toISOString()
 
@@ -41,6 +42,7 @@ export function createWorkLog(input: {
 		startDate: input.startDate.toISOString(),
 		endDate: input.endDate.toISOString(),
 		taskId: input.taskId ?? null,
+		categoryId: input.categoryId ?? null,
 		createdAt: now,
 		updatedAt: now,
 	}

@@ -78,7 +78,7 @@ export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps)
 
 						{isNearDueDate && (
 							<Tooltip>
-								<TooltipTrigger render={<Info className="size-4 text-slate-500" />} />
+								<TooltipTrigger render={<Info className="size-4 text-muted-foreground" />} />
 
 								<TooltipContent>
 									<p>Due within a week</p>

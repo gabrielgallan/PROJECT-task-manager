@@ -1,4 +1,4 @@
-import { Bell, Settings2, Shield, UserRound } from 'lucide-react'
+import { Bell, Settings2, Shield, Tags, UserRound } from 'lucide-react'
 
 export const SETTINGS_TABS = [
 	{
@@ -18,6 +18,12 @@ export const SETTINGS_TABS = [
 		label: 'Security',
 		icon: Shield,
 		keywords: ['password', 'sessions', 'access'],
+	},
+	{
+		value: 'categories',
+		label: 'Categories',
+		icon: Tags,
+		keywords: ['categories', 'colors', 'plans', 'work logs'],
 	},
 	{
 		value: 'system',

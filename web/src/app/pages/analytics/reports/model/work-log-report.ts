@@ -11,6 +11,7 @@ import {
 } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 
+import { NO_CATEGORY_FILTER } from '@/features/categories/model/category-rules'
 import type { Task } from '@/features/tasks/model/task-types'
 import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
 
@@ -28,6 +29,7 @@ export type TWorkLogReportColumn =
 export interface IWorkLogReportConfig {
 	range: DateRange | undefined
 	taskIds: string[]
+	categoryIds: string[]
 	groupBy: TWorkLogReportGroup
 	columns: TWorkLogReportColumn[]
 }
@@ -94,6 +96,7 @@ export function createDefaultWorkLogReportConfig(
 			to: endOfMonth(today),
 		},
 		taskIds: [],
+		categoryIds: [],
 		groupBy: 'day',
 		columns: [...DEFAULT_WORK_LOG_REPORT_COLUMNS],
 	}
@@ -195,10 +198,15 @@ export function buildWorkLogReport(
 			const startDate = parseISO(workLog.startDate)
 
 			if (!isWithinInterval(startDate, interval)) return false
-			if (config.taskIds.length === 0) return true
 
-			const taskFilterValue = workLog.taskId ?? NO_TASK_REPORT_FILTER
-			return config.taskIds.includes(taskFilterValue)
+			const matchesTask =
+				config.taskIds.length === 0 ||
+				config.taskIds.includes(workLog.taskId ?? NO_TASK_REPORT_FILTER)
+			const matchesCategory =
+				config.categoryIds.length === 0 ||
+				config.categoryIds.includes(workLog.categoryId ?? NO_CATEGORY_FILTER)
+
+			return matchesTask && matchesCategory
 		})
 		.map<IWorkLogReportRow>((workLog) => {
 			const startDate = parseISO(workLog.startDate)

@@ -5,6 +5,7 @@ import {
 	type WorkLogsCalendarHandle,
 } from '@/app/pages/registers/work-logs/components/work-logs-calendar'
 import { BrowserTitle } from '@/components/browser-title'
+import { useCategories } from '@/features/categories/store/categories-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { useCreateAction } from '@/hooks/use-create-action'
@@ -16,6 +17,7 @@ export function WorkLogsPage() {
 	const [searchParams] = useSearchParams()
 	const calendarRef = useRef<WorkLogsCalendarHandle>(null)
 	const { tasks } = useTasks()
+	const { categories, uncategorizedColor } = useCategories()
 	const { workLogs, addWorkLog, updateWorkLog, removeWorkLog } = useWorkLogs()
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
 
@@ -38,6 +40,8 @@ export function WorkLogsPage() {
 					ref={calendarRef}
 					workLogs={workLogs}
 					tasks={tasks}
+					categories={categories}
+					uncategorizedColor={uncategorizedColor}
 					initialTaskIds={initialTaskIds}
 					onCreate={addWorkLog}
 					onUpdate={updateWorkLog}

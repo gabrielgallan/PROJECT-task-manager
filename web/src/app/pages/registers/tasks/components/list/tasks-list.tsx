@@ -58,7 +58,7 @@ export function TasksList({
 								label="Title"
 								query={query}
 								onSort={onSort}
-								className="w-66"
+								className="w-94"
 							/>
 
 							<TasksTableSortHead
@@ -66,7 +66,7 @@ export function TasksList({
 								label="Status"
 								query={query}
 								onSort={onSort}
-								className="w-42"
+								className="w-64"
 							/>
 
 							<TasksTableSortHead
@@ -74,7 +74,7 @@ export function TasksList({
 								label="Priority"
 								query={query}
 								onSort={onSort}
-								className="w-42"
+								className="w-26"
 							/>
 
 							<TasksTableSortHead

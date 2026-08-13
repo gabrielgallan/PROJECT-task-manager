@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AccountSettings } from '@/app/pages/settings/components/account-settings'
+import { CategoriesSettings } from '@/app/pages/settings/components/categories-settings'
 import { SecuritySettings } from '@/app/pages/settings/components/security-settings'
 import { SETTINGS_TAB_VALUES, SETTINGS_TABS, type TSettingsTab } from '@/app/pages/settings/config'
 import { PROFILE_MOCK } from '@/app/pages/settings/model/profile-settings'
@@ -151,6 +152,10 @@ export function SettingsPage() {
 
 					<TabsContent className="min-w-0 w-full" value="security">
 						<SecuritySettings />
+					</TabsContent>
+
+					<TabsContent className="min-w-0 w-full" value="categories">
+						<CategoriesSettings />
 					</TabsContent>
 
 					<TabsContent className="min-w-0 w-full" value="system">

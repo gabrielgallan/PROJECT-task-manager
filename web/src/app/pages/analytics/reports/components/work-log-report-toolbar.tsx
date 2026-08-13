@@ -31,6 +31,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
+import { CategoryFilter } from '@/features/categories/components/category-filter'
+import type { ICategory } from '@/features/categories/model/category-types'
 import type { Task } from '@/features/tasks/model/task-types'
 
 import type {
@@ -45,7 +47,9 @@ type TReportExportFormat = 'xlsx' | 'csv'
 interface IWorkLogReportToolbarProps {
 	range: DateRange | undefined
 	tasks: Task[]
+	categories: ICategory[]
 	selectedTaskIds: string[]
+	selectedCategoryIds: string[]
 	groupBy: TWorkLogReportGroup
 	selectedColumns: TWorkLogReportColumn[]
 	canReset: boolean
@@ -53,6 +57,8 @@ interface IWorkLogReportToolbarProps {
 	onRangeChange: (range: DateRange | undefined) => void
 	onToggleTask: (taskId: string) => void
 	onClearTasks: () => void
+	onToggleCategory: (categoryId: string) => void
+	onClearCategories: () => void
 	onGroupChange: (group: TWorkLogReportGroup) => void
 	onToggleColumn: (column: TWorkLogReportColumn) => void
 	onSelectAllColumns: () => void
@@ -64,7 +70,9 @@ interface IWorkLogReportToolbarProps {
 export function WorkLogReportToolbar({
 	range,
 	tasks,
+	categories,
 	selectedTaskIds,
+	selectedCategoryIds,
 	groupBy,
 	selectedColumns,
 	canReset,
@@ -72,6 +80,8 @@ export function WorkLogReportToolbar({
 	onRangeChange,
 	onToggleTask,
 	onClearTasks,
+	onToggleCategory,
+	onClearCategories,
 	onGroupChange,
 	onToggleColumn,
 	onSelectAllColumns,
@@ -127,6 +137,13 @@ export function WorkLogReportToolbar({
 				selectedTaskIds={selectedTaskIds}
 				onToggle={onToggleTask}
 				onClear={onClearTasks}
+			/>
+
+			<CategoryFilter
+				categories={categories}
+				selectedCategoryIds={selectedCategoryIds}
+				onToggle={onToggleCategory}
+				onClear={onClearCategories}
 			/>
 
 			<Select

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { BrowserTitle } from '@/components/browser-title'
+import { useCategories } from '@/features/categories/store/categories-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 
@@ -37,6 +38,8 @@ function configsMatch(left: IWorkLogReportConfig, right: IWorkLogReportConfig) {
 		left.groupBy === right.groupBy &&
 		left.taskIds.length === right.taskIds.length &&
 		left.taskIds.every((taskId) => right.taskIds.includes(taskId)) &&
+		left.categoryIds.length === right.categoryIds.length &&
+		left.categoryIds.every((categoryId) => right.categoryIds.includes(categoryId)) &&
 		left.columns.length === right.columns.length &&
 		left.columns.every((column, index) => column === right.columns[index])
 	)
@@ -45,10 +48,12 @@ function configsMatch(left: IWorkLogReportConfig, right: IWorkLogReportConfig) {
 export function ReportsPage() {
 	const { workLogs } = useWorkLogs()
 	const { tasks } = useTasks()
+	const { categories } = useCategories()
 	const defaultConfig = useMemo(() => createDefaultWorkLogReportConfig(), [])
 	const [config, setConfig] = useState<IWorkLogReportConfig>(() => ({
 		...defaultConfig,
 		taskIds: [...defaultConfig.taskIds],
+		categoryIds: [...defaultConfig.categoryIds],
 		columns: [...defaultConfig.columns],
 	}))
 
@@ -66,6 +71,15 @@ export function ReportsPage() {
 			taskIds: current.taskIds.includes(taskId)
 				? current.taskIds.filter((value) => value !== taskId)
 				: [...current.taskIds, taskId],
+		}))
+	}
+
+	function toggleCategory(categoryId: string) {
+		setConfig((current) => ({
+			...current,
+			categoryIds: current.categoryIds.includes(categoryId)
+				? current.categoryIds.filter((value) => value !== categoryId)
+				: [...current.categoryIds, categoryId],
 		}))
 	}
 
@@ -90,6 +104,7 @@ export function ReportsPage() {
 		setConfig({
 			...defaultConfig,
 			taskIds: [...defaultConfig.taskIds],
+			categoryIds: [...defaultConfig.categoryIds],
 			columns: [...defaultConfig.columns],
 		})
 	}
@@ -99,6 +114,7 @@ export function ReportsPage() {
 			...current,
 			range: defaultConfig.range,
 			taskIds: [],
+			categoryIds: [],
 		}))
 	}
 
@@ -119,7 +135,9 @@ export function ReportsPage() {
 				<WorkLogReportToolbar
 					range={config.range}
 					tasks={tasks}
+					categories={categories}
 					selectedTaskIds={config.taskIds}
+					selectedCategoryIds={config.categoryIds}
 					groupBy={config.groupBy}
 					selectedColumns={config.columns}
 					canReset={canReset}
@@ -128,6 +146,10 @@ export function ReportsPage() {
 					onToggleTask={toggleTask}
 					onClearTasks={() =>
 						setConfig((current) => ({ ...current, taskIds: [] }))
+					}
+					onToggleCategory={toggleCategory}
+					onClearCategories={() =>
+						setConfig((current) => ({ ...current, categoryIds: [] }))
 					}
 					onGroupChange={(groupBy) =>
 						setConfig((current) => ({ ...current, groupBy }))
