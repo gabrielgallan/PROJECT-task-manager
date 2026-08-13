@@ -11,8 +11,8 @@ export interface TaskProps {
 	description?: string | null
 	status: TaskStatus
 	priority: TaskPriority
-	startDate?: Date | null
-	dueDate?: Date | null
+	startDate?: string | null
+	dueDate?: string | null
 	createdAt: Date
 	updatedAt?: Date | null
 }
@@ -95,13 +95,13 @@ export class Task extends Entity<TaskProps> {
 		this.touch()
 	}
 
-	set startDate(startDate: Date | null | undefined) {
+	set startDate(startDate: string | null | undefined) {
 		this.props.startDate = startDate
 
 		this.touch()
 	}
 
-	set dueDate(dueDate: Date | null | undefined) {
+	set dueDate(dueDate: string | null | undefined) {
 		this.props.dueDate = dueDate
 
 		this.touch()

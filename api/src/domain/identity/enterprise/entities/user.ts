@@ -5,6 +5,7 @@ import type { Optional } from '@/core/types/optional'
 export interface UserProps {
 	name?: string | null
 	email: string
+	jobTitle?: string | null
 	avatarUrl?: string | null
 	passwordHash?: string | null
 	createdAt: Date
@@ -17,8 +18,9 @@ export class User extends Entity<UserProps> {
 			{
 				...props,
 				name: props.name ?? null,
-				passwordHash: props.passwordHash ?? null,
+				jobTitle: props.jobTitle ?? null,
 				avatarUrl: props.avatarUrl ?? null,
+				passwordHash: props.passwordHash ?? null,
 				createdAt: props.createdAt ?? new Date(),
 				updatedAt: props.updatedAt ?? null,
 			},
@@ -54,6 +56,18 @@ export class User extends Entity<UserProps> {
 	}
 
 	// Setters
+	set name(name: string | null | undefined) {
+		this.props.name = name
+
+		this.touch()
+	}
+
+	set jobTitle(jobTitle: string | null | undefined) {
+		this.props.jobTitle = jobTitle
+
+		this.touch()
+	}
+
 	set avatarUrl(url: string | null | undefined) {
 		this.props.avatarUrl = url
 
