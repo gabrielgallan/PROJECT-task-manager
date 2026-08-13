@@ -30,7 +30,6 @@ export class User extends Entity<UserProps> {
 		return user
 	}
 
-	// Getters
 	get name() {
 		return this.props.name
 	}
@@ -55,7 +54,8 @@ export class User extends Entity<UserProps> {
 		return this.props.updatedAt
 	}
 
-	// Setters
+	// --
+
 	set name(name: string | null | undefined) {
 		this.props.name = name
 
@@ -80,7 +80,8 @@ export class User extends Entity<UserProps> {
 		this.touch()
 	}
 
-	// Methods
+	// --
+
 	touch() {
 		this.props.updatedAt = new Date()
 	}

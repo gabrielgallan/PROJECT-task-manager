@@ -1,26 +1,35 @@
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
-import type { User } from '../../enterprise/entities/user'
 import type { UsersRepository } from '../repositories/users-repository'
 
-type GetProfileUseCaseRequest = {
+type EditProfileUseCaseRequest = {
 	userId: string
+	name?: string
+	jobTitle?: string
 }
 
-type GetProfileUseCaseResponse = Either<ResourceNotFoundError, { user: User }>
+type EditProfileUseCaseResponse = Either<ResourceNotFoundError, null>
 
-export class GetProfileUseCase {
+export class EditProfileUseCase {
 	constructor(private usersRepository: UsersRepository) {}
 
-	async execute({ userId }: GetProfileUseCaseRequest): Promise<GetProfileUseCaseResponse> {
+	async execute({
+		userId,
+		name,
+		jobTitle,
+	}: EditProfileUseCaseRequest): Promise<EditProfileUseCaseResponse> {
 		const user = await this.usersRepository.findById(userId)
 
 		if (!user) {
 			return left(new ResourceNotFoundError())
 		}
 
-		return right({
-			user,
-		})
+		if (name) user.name = name
+
+		if (jobTitle) user.jobTitle = jobTitle
+
+		await this.usersRepository.save(user)
+
+		return right(null)
 	}
 }

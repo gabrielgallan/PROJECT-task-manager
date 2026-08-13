@@ -4,10 +4,11 @@ import type { Hasher } from '../cryptography/hasher'
 import type { UsersRepository } from '../repositories/users-repository'
 import { UserAlreadyExistsError } from './errors/user-already-exists-error'
 
-interface RegisterUseCaseRequest {
+type RegisterUseCaseRequest = {
 	name: string
 	email: string
 	password: string
+	jobTitle?: string
 }
 
 type RegisterUseCaseResponse = Either<UserAlreadyExistsError, { user: User }>
@@ -22,6 +23,7 @@ export class RegisterUseCase {
 		name,
 		email,
 		password,
+		jobTitle,
 	}: RegisterUseCaseRequest): Promise<RegisterUseCaseResponse> {
 		const userWithSameEmail = await this.usersRepository.findByEmail(email)
 
@@ -33,6 +35,7 @@ export class RegisterUseCase {
 			name,
 			email,
 			passwordHash: await this.hasher.generate(password),
+			jobTitle,
 		})
 
 		await this.usersRepository.create(user)

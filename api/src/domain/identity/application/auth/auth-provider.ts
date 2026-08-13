@@ -9,6 +9,6 @@ export interface SignInData {
 	code: string
 }
 
-export interface AuthProvider<TUser extends UserProps = UserProps, TSignInData = SignInData> {
-	signIn(data: TSignInData): Promise<TUser>
+export abstract class AuthProvider<TUser extends UserProps = UserProps, TSignInData = SignInData> {
+	abstract signIn(data: TSignInData): Promise<TUser>
 }

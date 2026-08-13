@@ -7,13 +7,19 @@
 		"start": "nest start",
 		"start:dev": "nest start --watch",
 		"start:debug": "nest start --debug --watch",
-		"start:prod": "node dist/main"
+		"start:prod": "node dist/main",
+		"test": "tsx test/index.ts",
+		"test:unit": "vitest run --config ./vitest.config.unit.mjs",
+		"test:unit:covarage": "vitest run --covarage --config ./vitest.config.unit.mjs",
+		"test:unit:ui": "vitest run --ui --watch --config ./vitest.config.unit.mjs"
 	},
 	"dependencies": {
 		"@nestjs/common": "11.0.1",
 		"@nestjs/config": "4.0.4",
 		"@nestjs/core": "11.0.1",
 		"@nestjs/platform-express": "11.0.1",
+		"bcryptjs": "3.0.3",
+		"date-fns": "4.4.0",
 		"dotenv": "17.4.2",
 		"reflect-metadata": "0.2.2",
 		"rxjs": "7.8.1",
@@ -25,12 +31,15 @@
 		"@nestjs/testing": "11.0.1",
 		"@types/express": "5.0.0",
 		"@types/node": "22.10.7",
+		"@vitest/coverage-v8": "4.1.10",
+		"@vitest/ui": "4.1.10",
 		"globals": "16.0.0",
 		"source-map-support": "0.5.21",
 		"ts-loader": "9.5.2",
 		"ts-node": "10.9.2",
 		"tsconfig-paths": "4.2.0",
 		"tsx": "4.23.12",
-		"typescript": "5.7.3"
+		"typescript": "5.7.3",
+		"vitest": "4.1.10"
 	}
 }

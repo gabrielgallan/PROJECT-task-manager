@@ -9,3 +9,5 @@ build
 .claude
 .agents
 .cursor
+
+coverage

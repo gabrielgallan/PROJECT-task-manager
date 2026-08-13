@@ -1,7 +1,7 @@
 import type { Token } from '../../enterprise/entities/token'
 
-export interface TokensRepository {
-	create(token: Token): Promise<void>
-	findById(id: string): Promise<Token | null>
-	save(token: Token): Promise<void>
+export abstract class TokensRepository {
+	abstract create(token: Token): Promise<void>
+	abstract findById(id: string): Promise<Token | null>
+	abstract save(token: Token): Promise<void>
 }

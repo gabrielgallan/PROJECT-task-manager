@@ -5,7 +5,7 @@ import type { EmailSender } from '../email/email-sender'
 import type { TokensRepository } from '../repositories/tokens-repository'
 import type { UsersRepository } from '../repositories/users-repository'
 
-interface RequestPasswordRecoverUseCaseRequest {
+type RequestPasswordRecoverUseCaseRequest = {
 	email: string
 }
 

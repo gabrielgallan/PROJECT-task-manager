@@ -5,7 +5,7 @@ import type { TokensRepository } from '../repositories/tokens-repository'
 import type { UsersRepository } from '../repositories/users-repository'
 import { InvalidTokenError } from './errors/invalid-token-error'
 
-interface ResetPasswordUseCaseRequest {
+type ResetPasswordUseCaseRequest = {
 	recoverCode: string
 	password: string
 }

@@ -1,26 +1,38 @@
-import { type Either, left, right } from '@/core/types/either'
-import type { Encrypter } from '../cryptography/encrypter'
-import type { Hasher } from '../cryptography/hasher'
-import type { UsersRepository } from '../repositories/users-repository'
+import { Injectable } from '@nestjs/common'
+import { addDays } from 'date-fns'
+import { Either, left, right } from '@/core/types/either'
+import { Session } from '../../enterprise/entities/session'
+import { Hasher } from '../cryptography/hasher'
+import { SessionTokenGenerator } from '../cryptography/session-token-generator'
+import { SessionTokenHasher } from '../cryptography/session-token-hasher'
+import { SessionsRepository } from '../repositories/sessions-repository'
+import { UsersRepository } from '../repositories/users-repository'
 import { InvalidCredentialsError } from './errors/invalid-credentials-error'
 
-interface AuthenticateUseCaseRequest {
+type AuthenticateUseCaseRequest = {
 	email: string
 	password: string
+	ipAddress?: string
+	userAgent?: string
 }
 
 type AuthenticateUseCaseResponse = Either<InvalidCredentialsError, { token: string }>
 
+@Injectable()
 export class AuthenticateUseCase {
 	constructor(
 		private usersRepository: UsersRepository,
+		private sessionsRepository: SessionsRepository,
 		private hasher: Hasher,
-		private encrypter: Encrypter,
+		private sessionTokenGenerator: SessionTokenGenerator,
+		private sessionsTokenHasher: SessionTokenHasher,
 	) {}
 
 	async execute({
 		email,
 		password,
+		ipAddress,
+		userAgent,
 	}: AuthenticateUseCaseRequest): Promise<AuthenticateUseCaseResponse> {
 		const userFromEmail = await this.usersRepository.findByEmail(email)
 
@@ -34,9 +46,19 @@ export class AuthenticateUseCase {
 			return left(new InvalidCredentialsError())
 		}
 
-		const token = await this.encrypter.encrypt({
-			sub: userFromEmail.id.toString(),
+		const token = this.sessionTokenGenerator.generate()
+
+		const tokenHash = this.sessionsTokenHasher.hash(token)
+
+		const session = Session.create({
+			userId: userFromEmail.id,
+			tokenHash,
+			expiresAt: addDays(new Date(), 30),
+			ipAddress,
+			userAgent,
 		})
+
+		await this.sessionsRepository.create(session)
 
 		return right({
 			token,

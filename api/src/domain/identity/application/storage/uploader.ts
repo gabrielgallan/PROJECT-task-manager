@@ -6,6 +6,6 @@ export interface UploadParams {
 	body: Readable
 }
 
-export interface Uploader {
-	uploadAvatar(params: UploadParams): Promise<{ url: string }>
+export abstract class Uploader {
+	abstract uploadAvatar(params: UploadParams): Promise<{ url: string }>
 }
