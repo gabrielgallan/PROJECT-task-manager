@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AccountProvider } from "@/../generated/prisma/client";
 import { AccountsRepository } from "@/domain/identity/application/repositories/accounts-repository";
 import { Account } from "@/domain/identity/enterprise/entities/account";
+import { PrismaAccountProviderMapper } from "../mappers/enums/prisma-account-provider-mapper";
 import { PrismaAccountMapper } from "../mappers/prisma-account-mapper";
 import { PrismaService } from "../prisma.service";
 
@@ -17,21 +18,11 @@ export class PrismaAccountsRepository implements AccountsRepository {
         })
     }
 
-    async findByProviderAndUserId(provider: string, userId: string) {
-        let prismaProvider: AccountProvider
-
-        switch (provider) {
-            case 'GITHUB':
-                prismaProvider = AccountProvider.GITHUB
-                break
-            default:
-                throw new Error(`Invalid provider: ${provider}`)
-        }
-
+    async findByProviderAndUserId(provider: AccountProvider, userId: string) {
         const account = await this.prisma.account.findUnique({
             where: {
                 provider_userId: {
-                    provider: prismaProvider,
+                    provider: PrismaAccountProviderMapper.toPrisma(provider),
                     userId
                 }
             }

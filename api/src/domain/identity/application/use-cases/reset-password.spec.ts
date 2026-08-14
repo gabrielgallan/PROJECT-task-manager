@@ -66,6 +66,8 @@ describe('Reset user password [USE CASE]', () => {
 			),
 		)
 
+		expect(tokensRepository.items[0].expiresAt.getTime()).toBe(new Date(2025, 0, 13, 13, 0, 0).getTime())
+
 		vi.setSystemTime(new Date(2025, 0, 13, 14, 0, 0))
 
 		const result = await sut.execute({
@@ -94,6 +96,8 @@ describe('Reset user password [USE CASE]', () => {
 			recoverCode: 'token-1',
 			password: 'new-password',
 		})
+
+		expect(tokensRepository.items[0].usedAt).toEqual(expect.any(Date))
 
 		const result = await sut.execute({
 			recoverCode: 'token-1',

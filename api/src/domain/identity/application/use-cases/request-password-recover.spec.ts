@@ -38,6 +38,9 @@ describe('Request password recover [USE CASE]', () => {
 		expect(result.isRight()).toBe(true)
 		expect(emailSender.emails[0].to).toBe('johndoe@email.com')
 		expect(tokensRepository.items[0].userId.toString()).toBe('user-1')
+
+		expect(tokensRepository.items[0].type).toBe('PASSWORD_RECOVER')
+		expect(tokensRepository.items[0].expiresAt).toEqual(expect.any(Date))
 	})
 
 	it("shouldn't be able to request password recover from an user does not exists", async () => {

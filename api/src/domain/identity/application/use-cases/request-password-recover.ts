@@ -1,9 +1,10 @@
+import { Injectable } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
 import { Token } from '../../enterprise/entities/token'
-import type { EmailSender } from '../email/email-sender'
-import type { TokensRepository } from '../repositories/tokens-repository'
-import type { UsersRepository } from '../repositories/users-repository'
+import { EmailSender } from '../email/email-sender'
+import { TokensRepository } from '../repositories/tokens-repository'
+import { UsersRepository } from '../repositories/users-repository'
 
 type RequestPasswordRecoverUseCaseRequest = {
 	email: string
@@ -11,6 +12,7 @@ type RequestPasswordRecoverUseCaseRequest = {
 
 type RequestPasswordRecoverUseCaseResponse = Either<ResourceNotFoundError, null>
 
+@Injectable()
 export class RequestPasswordRecoverUseCase {
 	constructor(
 		private usersRepository: UsersRepository,

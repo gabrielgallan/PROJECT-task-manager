@@ -1,13 +1,18 @@
+import { Injectable } from '@nestjs/common'
 import { addDays } from 'date-fns'
+import { Either, left, right } from '@/core/types/either'
 import { Account, AccountProvider } from '../../enterprise/entities/account'
 import { Session } from '../../enterprise/entities/session'
 import { User } from '../../enterprise/entities/user'
-import type { AuthProvider } from '../auth/auth-provider'
+import { AuthProviderRegistry } from '../auth/auth-provider-registry'
 import { SessionTokenGenerator } from '../cryptography/session-token-generator'
 import { SessionTokenHasher } from '../cryptography/session-token-hasher'
 import { AccountsRepository } from '../repositories/accounts-repository'
 import { SessionsRepository } from '../repositories/sessions-repository'
-import type { UsersRepository } from '../repositories/users-repository'
+import { UsersRepository } from '../repositories/users-repository'
+import { UnsupportedAuthProviderError } from './errors/unsupported-auth-provider-error'
+
+const supportedAccountProviders: AccountProvider[] = ['GITHUB', 'GOOGLE']
 
 type AuthenticateWithProviderUseCaseRequest = {
 	provider: AccountProvider
@@ -16,14 +21,15 @@ type AuthenticateWithProviderUseCaseRequest = {
 	userAgent?: string
 }
 
-type AuthenticateWithProviderUseCaseResponse = { token: string }
+type AuthenticateWithProviderUseCaseResponse = Either<UnsupportedAuthProviderError, { token: string }>
 
+@Injectable()
 export class AuthenticateWithProviderUseCase {
 	constructor(
 		private usersRepository: UsersRepository,
 		private accountRepository: AccountsRepository,
 		private sessionsRepository: SessionsRepository,
-		private authProvider: AuthProvider,
+		private authProviders: AuthProviderRegistry,
 		private sessionTokenGenerator: SessionTokenGenerator,
 		private sessionsTokenHasher: SessionTokenHasher,
 	) {}
@@ -34,7 +40,11 @@ export class AuthenticateWithProviderUseCase {
 		ipAddress,
 		userAgent,
 	}: AuthenticateWithProviderUseCaseRequest): Promise<AuthenticateWithProviderUseCaseResponse> {
-		const { id, email, name, avatarUrl } = await this.authProvider.signIn({
+		if (!supportedAccountProviders.includes(provider)) {
+			return left(new UnsupportedAuthProviderError(provider))
+		}
+
+		const { id, email, name, avatarUrl } = await this.authProviders.get(provider).signIn({
 			code,
 		})
 
@@ -79,8 +89,8 @@ export class AuthenticateWithProviderUseCase {
 
 		await this.sessionsRepository.create(session)
 
-		return {
+		return right({
 			token,
-		}
+		})
 	}
 }

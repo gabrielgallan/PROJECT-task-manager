@@ -17,8 +17,7 @@ describe('Edit user profile [USE CASE]', () => {
 	})
 
 	it('should be able to edit user profile', async () => {
-		await usersRepository.create(
-			User.create(
+		const user = User.create(
 				{
 					name: 'John Doe',
 					email: 'johndoe@email.com',
@@ -26,8 +25,9 @@ describe('Edit user profile [USE CASE]', () => {
 					jobTitle: 'Developer',
 				},
 				new UniqueEntityID('user-1'),
-			),
-		)
+			)
+
+		await usersRepository.create(user)
 
 		const result = await sut.execute({
 			userId: 'user-1',
@@ -40,6 +40,7 @@ describe('Edit user profile [USE CASE]', () => {
 		if (result.isRight()) {
 			expect(usersRepository.items[0].name).toBe('John')
 			expect(usersRepository.items[0].jobTitle).toBe('Product Manager')
+			expect(usersRepository.items[0].equals(user)).toBe(true)
 		}
 	})
 

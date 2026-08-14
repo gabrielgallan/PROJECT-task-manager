@@ -17,8 +17,7 @@ describe('Get user profile [USE CASE]', () => {
 	})
 
 	it('should be able to get user profile', async () => {
-		await usersRepository.create(
-			User.create(
+		const user = User.create(
 				{
 					name: 'John Doe',
 					email: 'johndoe@email.com',
@@ -26,8 +25,9 @@ describe('Get user profile [USE CASE]', () => {
 					jobTitle: 'Developer',
 				},
 				new UniqueEntityID('user-1'),
-			),
-		)
+			)
+
+		await usersRepository.create(user)
 
 		const result = await sut.execute({
 			userId: 'user-1',
@@ -36,9 +36,7 @@ describe('Get user profile [USE CASE]', () => {
 		expect(result.isRight())
 
 		if (result.isRight()) {
-			expect(usersRepository.items[0].name).toBe('John Doe')
-			expect(usersRepository.items[0].jobTitle).toBe('Developer')
-			expect(usersRepository.items[0].email).toBe('johndoe@email.com')
+			expect(usersRepository.items[0].equals(user)).toBe(true)
 		}
 	})
 

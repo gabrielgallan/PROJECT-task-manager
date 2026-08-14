@@ -1,6 +1,6 @@
-import type { Account } from '../../enterprise/entities/account'
+import type { Account, AccountProvider } from '../../enterprise/entities/account'
 
 export abstract class AccountsRepository {
 	abstract create(account: Account): Promise<void>
-	abstract findByProviderAndUserId(provider: string, userId: string): Promise<Account | null>
+	abstract findByProviderAndUserId(provider: AccountProvider, userId: string): Promise<Account | null>
 }

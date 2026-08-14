@@ -1,3 +1,4 @@
+import { addDays } from 'date-fns'
 import { SessionTokenHasherStub } from 'test/stubs/session-token-hasher'
 import { makeSession } from 'test/unit/factories/make-session'
 import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
@@ -79,6 +80,7 @@ describe('Validate session token [USE CASE]', () => {
 
 		expect(result.isLeft())
 		expect(result.value).instanceOf(InvalidSessionError)
+		expect(sessionsRepository.items[0].expiresAt.getTime()).toBe(addDays(new Date(2026, 5, 20), 30).getTime())
 	})
 
 	it('should not be able to validate token of an revoked session', async () => {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import type { AccountsRepository } from '@/domain/identity/application/repositories/accounts-repository'
-import type { Account } from '@/domain/identity/enterprise/entities/account'
+import type { Account, AccountProvider } from '@/domain/identity/enterprise/entities/account'
 
 @Injectable()
 export class InMemoryAccountsRepository implements AccountsRepository {
@@ -12,7 +12,7 @@ export class InMemoryAccountsRepository implements AccountsRepository {
 		return
 	}
 
-	async findByProviderAndUserId(provider: string, userId: string) {
+	async findByProviderAndUserId(provider: AccountProvider, userId: string) {
 		const account = this.items.find((item) => {
 			return item.provider === provider && item.userId.toString() === userId
 		})
