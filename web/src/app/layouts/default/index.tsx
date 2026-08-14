@@ -55,7 +55,7 @@ function DefaultLayoutContent() {
 							<Button
 								size="icon"
 								variant={aiChatIsOpen ? 'default' : 'outline'}
-								className="hidden ml-auto"
+								className="ml-auto"
 								onClick={() => setAiChatIsOpen(!aiChatIsOpen)}
 							>
 								<Bot />
