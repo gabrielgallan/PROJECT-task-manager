@@ -1,7 +1,8 @@
+import { Injectable } from '@nestjs/common'
 import { type Either, left, right } from '@/core/types/either'
 import { User } from '../../enterprise/entities/user'
-import type { Hasher } from '../cryptography/hasher'
-import type { UsersRepository } from '../repositories/users-repository'
+import { Hasher } from '../cryptography/hasher'
+import { UsersRepository } from '../repositories/users-repository'
 import { UserAlreadyExistsError } from './errors/user-already-exists-error'
 
 type RegisterUseCaseRequest = {
@@ -13,6 +14,7 @@ type RegisterUseCaseRequest = {
 
 type RegisterUseCaseResponse = Either<UserAlreadyExistsError, { user: User }>
 
+@Injectable()
 export class RegisterUseCase {
 	constructor(
 		private usersRepository: UsersRepository,

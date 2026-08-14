@@ -25,7 +25,7 @@ export class AuthenticateUseCase {
 		private sessionsRepository: SessionsRepository,
 		private hasher: Hasher,
 		private sessionTokenGenerator: SessionTokenGenerator,
-		private sessionsTokenHasher: SessionTokenHasher,
+		private sessionTokenHasher: SessionTokenHasher,
 	) {}
 
 	async execute({
@@ -48,7 +48,7 @@ export class AuthenticateUseCase {
 
 		const token = this.sessionTokenGenerator.generate()
 
-		const tokenHash = this.sessionsTokenHasher.hash(token)
+		const tokenHash = this.sessionTokenHasher.hash(token)
 
 		const session = Session.create({
 			userId: userFromEmail.id,

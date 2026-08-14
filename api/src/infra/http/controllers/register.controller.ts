@@ -8,6 +8,7 @@ import {
 import { z } from 'zod'
 import { UserAlreadyExistsError } from '@/domain/identity/application/use-cases/errors/user-already-exists-error'
 import { RegisterUseCase } from '@/domain/identity/application/use-cases/register'
+import { Public } from '@/infra/auth/public.decorator'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 
 const registerBodySchema = z.object({
@@ -23,6 +24,7 @@ type RegisterBody = z.infer<typeof registerBodySchema>
 export class RegisterController {
 	constructor(private readonly register: RegisterUseCase) {}
 
+	@Public()
 	@Post('/api/users')
 	async handle(
 		@Body(new ZodValidationPipe(registerBodySchema))
@@ -49,6 +51,6 @@ export class RegisterController {
 			}
 		}
 
-		return
+		return { success: true }
 	}
 }

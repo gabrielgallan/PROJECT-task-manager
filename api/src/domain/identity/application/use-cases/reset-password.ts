@@ -1,8 +1,9 @@
+import { Injectable } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
-import type { Hasher } from '../cryptography/hasher'
-import type { TokensRepository } from '../repositories/tokens-repository'
-import type { UsersRepository } from '../repositories/users-repository'
+import { Hasher } from '../cryptography/hasher'
+import { TokensRepository } from '../repositories/tokens-repository'
+import { UsersRepository } from '../repositories/users-repository'
 import { InvalidTokenError } from './errors/invalid-token-error'
 
 type ResetPasswordUseCaseRequest = {
@@ -12,6 +13,7 @@ type ResetPasswordUseCaseRequest = {
 
 type ResetPasswordUseCaseResponse = Either<ResourceNotFoundError | InvalidTokenError, null>
 
+@Injectable()
 export class ResetPasswordUseCase {
 	constructor(
 		private usersRepository: UsersRepository,

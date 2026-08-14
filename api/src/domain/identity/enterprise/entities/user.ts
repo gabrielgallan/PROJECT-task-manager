@@ -38,6 +38,10 @@ export class User extends Entity<UserProps> {
 		return this.props.email
 	}
 
+	get jobTitle() {
+		return this.props.jobTitle
+	}
+
 	get passwordHash() {
 		return this.props.passwordHash
 	}

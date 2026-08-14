@@ -1,32 +1,36 @@
 import { Module } from '@nestjs/common'
-import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
-import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
-import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
-import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { AccountsRepository } from '@/domain/identity/application/repositories/accounts-repository'
 import { SessionsRepository } from '@/domain/identity/application/repositories/sessions-repository'
 import { TokensRepository } from '@/domain/identity/application/repositories/tokens-repository'
 import { UsersRepository } from '@/domain/identity/application/repositories/users-repository'
+import { EnvModule } from '../env/env.module'
+import { PrismaService } from './prisma/prisma.service'
+import { PrismaAccountsRepository } from './prisma/repositories/prisma-accounts-repository'
+import { PrismaSessionsRepository } from './prisma/repositories/prisma-sessions-repository'
+import { PrismaTokensRepository } from './prisma/repositories/prisma-tokens-repository'
+import { PrismaUsersRepository } from './prisma/repositories/prisma-users-repository'
 
 @Module({
+	imports: [EnvModule],
 	providers: [
+		PrismaService,
 		{
 			provide: UsersRepository,
-			useClass: InMemoryUsersRepository,
+			useClass: PrismaUsersRepository,
 		},
 		{
 			provide: AccountsRepository,
-			useClass: InMemoryAccountsRepository,
+			useClass: PrismaAccountsRepository,
 		},
 		{
 			provide: TokensRepository,
-			useClass: InMemoryTokensRepository,
+			useClass: PrismaTokensRepository,
 		},
 		{
 			provide: SessionsRepository,
-			useClass: InMemorySessionsRepository,
+			useClass: PrismaSessionsRepository,
 		},
 	],
-	exports: [UsersRepository, AccountsRepository, TokensRepository, SessionsRepository],
+	exports: [PrismaService, UsersRepository, AccountsRepository, TokensRepository, SessionsRepository],
 })
 export class DatabaseModule {}

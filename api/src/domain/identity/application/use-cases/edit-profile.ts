@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
-import type { UsersRepository } from '../repositories/users-repository'
+import { UsersRepository } from '../repositories/users-repository'
 
 type EditProfileUseCaseRequest = {
 	userId: string
@@ -10,6 +11,7 @@ type EditProfileUseCaseRequest = {
 
 type EditProfileUseCaseResponse = Either<ResourceNotFoundError, null>
 
+@Injectable()
 export class EditProfileUseCase {
 	constructor(private usersRepository: UsersRepository) {}
 

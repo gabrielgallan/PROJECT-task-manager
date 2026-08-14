@@ -11,4 +11,10 @@ export class InMemorySessionsRepository implements SessionsRepository {
 
 		return
 	}
+
+	async findByTokenHash(tokenHash: string) {
+		const session = this.items.find(s => s.tokenHash === tokenHash)
+
+		return session ?? null
+	}
 }

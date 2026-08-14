@@ -11,10 +11,12 @@ import type { Request, Response } from 'express'
 import { z } from 'zod'
 import { AuthenticateUseCase } from '@/domain/identity/application/use-cases/authenticate'
 import { InvalidCredentialsError } from '@/domain/identity/application/use-cases/errors/invalid-credentials-error'
+import { Public } from '@/infra/auth/public.decorator'
+import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 
 const authenticateBodySchema = z.object({
-	email: z.string().email(),
+	email: z.email(),
 	password: z.string(),
 })
 
@@ -24,6 +26,7 @@ type AuthenticateBody = z.infer<typeof authenticateBodySchema>
 export class AuthenticateController {
 	constructor(private readonly authenticate: AuthenticateUseCase) {}
 
+	@Public()
 	@Post('/api/sessions')
 	async handle(
 		@Body(new ZodValidationPipe(authenticateBodySchema))
@@ -58,7 +61,7 @@ export class AuthenticateController {
 
 		const { token } = result.value
 
-		response.cookie('session', token, {
+		response.cookie(SESSION_COOKIE_NAME, token, {
 			httpOnly: true,
 			sameSite: 'lax',
 			path: '/',
