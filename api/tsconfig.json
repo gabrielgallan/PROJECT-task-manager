@@ -12,7 +12,6 @@
 		"allowSyntheticDefaultImports": true,
 		"target": "ES2023",
 		"sourceMap": true,
-		"baseUrl": "./",
 		"incremental": true,
 		"skipLibCheck": true,
 		"strictNullChecks": true,
@@ -22,7 +21,9 @@
 		"noFallthroughCasesInSwitch": false,
 
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"test/*": ["./test/*"],
+			"generated/*": ["./generated/*"]
 		},
 
 		"types": ["node", "vitest/globals"]
