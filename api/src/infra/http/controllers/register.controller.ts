@@ -21,10 +21,10 @@ const registerBodySchema = z.object({
 type RegisterBody = z.infer<typeof registerBodySchema>
 
 @Controller()
+@Public()
 export class RegisterController {
 	constructor(private readonly register: RegisterUseCase) {}
 
-	@Public()
 	@Post('/api/users')
 	async handle(
 		@Body(new ZodValidationPipe(registerBodySchema))

@@ -9,17 +9,6 @@ interface Upload {
 export class UploaderStub implements Uploader {
 	public uploads: Upload[] = []
 
-	async upload({ fileName }: UploadParams): Promise<{ url: string }> {
-		const url = randomUUID()
-
-		this.uploads.push({
-			fileName,
-			url,
-		})
-
-		return { url }
-	}
-
 	async uploadAvatar({ fileName }: UploadParams): Promise<{ url: string }> {
 		const url = randomUUID()
 

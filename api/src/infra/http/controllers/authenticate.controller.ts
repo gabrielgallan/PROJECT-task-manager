@@ -23,10 +23,10 @@ const authenticateBodySchema = z.object({
 type AuthenticateBody = z.infer<typeof authenticateBodySchema>
 
 @Controller()
+@Public()
 export class AuthenticateController {
 	constructor(private readonly authenticate: AuthenticateUseCase) {}
 
-	@Public()
 	@Post('/api/sessions')
 	async handle(
 		@Body(new ZodValidationPipe(authenticateBodySchema))
