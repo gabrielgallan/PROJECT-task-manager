@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common'
 import type { UsersRepository } from '@/domain/identity/application/repositories/users-repository'
 import type { User } from '@/domain/identity/enterprise/entities/user'
 
-@Injectable()
 export class InMemoryUsersRepository implements UsersRepository {
 	public items: User[] = []
 

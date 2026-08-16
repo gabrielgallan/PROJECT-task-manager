@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common'
 import { SessionsRepository } from '@/domain/identity/application/repositories/sessions-repository'
 import { Session } from '@/domain/identity/enterprise/entities/session'
 
-@Injectable()
 export class InMemorySessionsRepository implements SessionsRepository {
 	public items: Session[] = []
 
@@ -12,9 +10,62 @@ export class InMemorySessionsRepository implements SessionsRepository {
 		return
 	}
 
-	async findByTokenHash(tokenHash: string) {
-		const session = this.items.find(s => s.tokenHash === tokenHash)
+	async findById(sessionId: string) {
+		const session = this.items.find((s) => s.id.toString() === sessionId)
 
 		return session ?? null
+	}
+
+	async findByTokenHash(tokenHash: string) {
+		const session = this.items.find((s) => s.tokenHash === tokenHash)
+
+		return session ?? null
+	}
+
+	async fetchByUserId(userId: string) {
+		const sessions = this.items.filter((session) => session.userId.toString() === userId)
+
+		return sessions
+	}
+
+	async revokeAllByUserId(userId: string, revokedAt: Date) {
+		let count = 0
+
+		this.items = this.items.map((session) => {
+			if (
+				session.userId.toString() !== userId ||
+				session.isRevoked() ||
+				session.isExpired()
+			) {
+				return session
+			}
+
+			count++
+
+			return Session.create(
+				{
+					userId: session.userId,
+					tokenHash: session.tokenHash,
+					ipAddress: session.ipAddress,
+					userAgent: session.userAgent,
+					expiresAt: session.expiresAt,
+					createdAt: session.createdAt,
+					revokedAt,
+				},
+				session.id,
+			)
+		})
+
+		return count
+	}
+
+	async save(session: Session) {
+		const sessionIndex = this.items.findIndex((s) => s.id.toString() === session.id.toString())
+
+		if (sessionIndex >= 0) {
+			this.items[sessionIndex] = session
+		}
+
+		return
 	}
 }

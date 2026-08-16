@@ -1,8 +1,6 @@
-import { Injectable } from '@nestjs/common'
 import type { TokensRepository } from '@/domain/identity/application/repositories/tokens-repository'
 import type { Token } from '@/domain/identity/enterprise/entities/token'
 
-@Injectable()
 export class InMemoryTokensRepository implements TokensRepository {
 	public items: Token[] = []
 
