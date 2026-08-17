@@ -1,3 +1,6 @@
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
+import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { HasherStub } from '../../../../../test/stubs/hasher'
 import { InMemoryUsersRepository } from '../../../../../test/unit/repositories/in-memory-users-repository'
 import { User } from '../../enterprise/entities/user'
@@ -12,7 +15,11 @@ let sut: RegisterUseCase
 
 describe('Register user [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
+		usersRepository = new InMemoryUsersRepository(
+			new InMemorySessionsRepository(),
+			new InMemoryAccountsRepository(),
+			new InMemoryTokensRepository(),
+		)
 		hasher = new HasherStub()
 
 		sut = new RegisterUseCase(usersRepository, hasher)

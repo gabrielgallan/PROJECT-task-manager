@@ -1,6 +1,9 @@
 import { Readable } from 'node:stream'
 import { UploaderStub } from 'test/stubs/uploader'
 import { makeUser } from 'test/unit/factories/make-user'
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
+import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -13,7 +16,11 @@ let sut: UploadAvatarUseCase
 
 describe('Upload user avatar [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
+		usersRepository = new InMemoryUsersRepository(
+			new InMemorySessionsRepository(),
+			new InMemoryAccountsRepository(),
+			new InMemoryTokensRepository(),
+		)
 		uploader = new UploaderStub()
 
 		sut = new UploadAvatarUseCase(usersRepository, uploader)

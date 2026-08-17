@@ -1,5 +1,7 @@
 import { EmailSenderStub } from 'test/stubs/email-sender'
 import { makeUser } from 'test/unit/factories/make-user'
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
 import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
@@ -14,8 +16,12 @@ let sut: RequestPasswordRecoverUseCase
 
 describe('Request password recover [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
 		tokensRepository = new InMemoryTokensRepository()
+		usersRepository = new InMemoryUsersRepository(
+			new InMemorySessionsRepository(),
+			new InMemoryAccountsRepository(),
+			tokensRepository,
+		)
 		emailSender = new EmailSenderStub()
 
 		sut = new RequestPasswordRecoverUseCase(usersRepository, tokensRepository, emailSender)

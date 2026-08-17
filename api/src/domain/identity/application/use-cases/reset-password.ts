@@ -7,7 +7,7 @@ import { UsersRepository } from '../repositories/users-repository'
 import { InvalidTokenError } from './errors/invalid-token-error'
 
 type ResetPasswordUseCaseRequest = {
-	recoverCode: string
+	tokenId: string
 	password: string
 }
 
@@ -22,10 +22,10 @@ export class ResetPasswordUseCase {
 	) {}
 
 	async execute({
-		recoverCode,
+		tokenId,
 		password,
 	}: ResetPasswordUseCaseRequest): Promise<ResetPasswordUseCaseResponse> {
-		const token = await this.tokensRepository.findById(recoverCode)
+		const token = await this.tokensRepository.findById(tokenId)
 
 		if (!token) {
 			return left(new ResourceNotFoundError())

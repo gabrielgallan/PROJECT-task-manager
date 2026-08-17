@@ -1,3 +1,5 @@
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { HasherStub } from '../../../../../test/stubs/hasher'
 import { SessionTokenGeneratorStub } from '../../../../../test/stubs/session-token-generator'
@@ -21,8 +23,12 @@ let sut: AuthenticateUseCase
 
 describe('Authenticate user [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
 		sessionsRepository = new InMemorySessionsRepository()
+		usersRepository = new InMemoryUsersRepository(
+			sessionsRepository,
+			new InMemoryAccountsRepository(),
+			new InMemoryTokensRepository(),
+		)
 		hasher = new HasherStub()
 		sessionTokenGenerator = new SessionTokenGeneratorStub()
 		sessionTokenHasher = new SessionTokenHasherStub()

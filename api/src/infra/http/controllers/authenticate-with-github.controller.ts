@@ -23,11 +23,11 @@ const authenticateWithGithubBodySchema = z.object({
 type AuthenticateWithGithubBody = z.infer<typeof authenticateWithGithubBodySchema>
 
 @Controller()
+@Public()
 export class AuthenticateWithGithubController {
 	constructor(private authenticateWithGitHub: AuthenticateWithProviderUseCase) {}
 
 	@Post('/api/sessions/github')
-	@Public()
 	async handle(
 		@Body(new ZodValidationPipe(authenticateWithGithubBodySchema))
 		body: AuthenticateWithGithubBody,

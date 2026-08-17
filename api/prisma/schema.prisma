@@ -42,7 +42,7 @@ model Token {
   createdAt DateTime  @default(now()) @map("created_at")
   userId    String    @map("user_id")
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("tokens")
 }
@@ -58,7 +58,7 @@ model Account {
   providerAccountId String?         @unique @map("provider_account_id")
   userId            String          @map("user_id")
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, userId])
   @@map("accounts")
@@ -74,7 +74,7 @@ model Session {
   revokedAt DateTime? @map("revoked_at")
   userId    String    @map("user_id")
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("session")

@@ -1,11 +1,11 @@
 import {
-    BadRequestException,
-    Body,
-    Controller,
-    HttpCode,
-    InternalServerErrorException,
-    NotFoundException,
-    Patch,
+	BadRequestException,
+	Body,
+	Controller,
+	HttpCode,
+	InternalServerErrorException,
+	NotFoundException,
+	Patch,
 } from '@nestjs/common'
 import { z } from 'zod'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -15,8 +15,8 @@ import { Public } from '@/infra/auth/public.decorator'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
 
 const resetPasswordBodySchema = z.object({
-    code: z.string(),
-    password: z.string().min(6).max(18),
+	tokenId: z.string(),
+	password: z.string().min(6).max(18),
 })
 
 type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>
@@ -24,36 +24,36 @@ type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>
 @Controller()
 @Public()
 export class ResetPasswordController {
-    constructor(private readonly resetPassword: ResetPasswordUseCase) {}
+	constructor(private readonly resetPassword: ResetPasswordUseCase) {}
 
-    @Patch('/api/profile/password')
-    @HttpCode(204)
-    async handle(
-        @Body(new ZodValidationPipe(resetPasswordBodySchema))
-        body: ResetPasswordBody,
-    ) {
-        const { code, password } = body
+	@Patch('/api/profile/password')
+	@HttpCode(204)
+	async handle(
+		@Body(new ZodValidationPipe(resetPasswordBodySchema))
+		body: ResetPasswordBody,
+	) {
+		const { tokenId, password } = body
 
-        const result = await this.resetPassword.execute({
-            recoverCode: code,
-            password
-        })
+		const result = await this.resetPassword.execute({
+			tokenId,
+			password,
+		})
 
-        if (result.isLeft()) {
-            const error = result.value
+		if (result.isLeft()) {
+			const error = result.value
 
-            switch (error.constructor) {
-                case ResourceNotFoundError:
-                    throw new NotFoundException(error.message)
+			switch (error.constructor) {
+				case ResourceNotFoundError:
+					throw new NotFoundException(error.message)
 
-                case InvalidTokenError:
-                    throw new BadRequestException(error.message)
+				case InvalidTokenError:
+					throw new BadRequestException(error.message)
 
-                default:
-                    throw new InternalServerErrorException()
-            }
-        }
+				default:
+					throw new InternalServerErrorException()
+			}
+		}
 
-        return null
-    }
+		return null
+	}
 }

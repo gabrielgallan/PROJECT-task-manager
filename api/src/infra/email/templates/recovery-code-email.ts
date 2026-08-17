@@ -1,13 +1,13 @@
-export const recoveryCodeEmail = (recoverUrl: string) => {
-    return {
-        subject: 'Password recovery',
-        text: `You requested to reset your password. 
+export const recoveryLinkEmail = (recoverUrl: string) => {
+	return {
+		subject: 'Password recovery',
+		text: `You requested to reset your password. 
     Please click the link below to reset it:
     
     ${recoverUrl}
     
     If you didn't request this, you can safely ignore this email.`,
-        html: `
+		html: `
 <div style="font-family: Arial, Helvetica, sans-serif; background:#f4f4f5; padding:40px 20px;">
   <div style="max-width:500px; margin:0 auto; background:white; padding:32px; border-radius:8px; border:1px solid #e4e4e7; text-align: center;">
     
@@ -44,6 +44,6 @@ export const recoveryCodeEmail = (recoverUrl: string) => {
     </p>
   </div>
 </div>
-`
-    }
+`,
+	}
 }

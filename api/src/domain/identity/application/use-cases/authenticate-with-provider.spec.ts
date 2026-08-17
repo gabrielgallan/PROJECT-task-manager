@@ -4,6 +4,7 @@ import { SessionTokenGeneratorStub } from 'test/stubs/session-token-generator'
 import { SessionTokenHasherStub } from 'test/stubs/session-token-hasher'
 import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
 import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
+import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import type { AccountProvider } from '../../enterprise/entities/account'
@@ -23,9 +24,13 @@ let sut: AuthenticateWithProviderUseCase
 
 describe('Authenticate with  provider [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
 		accountsRepository = new InMemoryAccountsRepository()
 		sessionsRepository = new InMemorySessionsRepository()
+		usersRepository = new InMemoryUsersRepository(
+			sessionsRepository,
+			accountsRepository,
+			new InMemoryTokensRepository(),
+		)
 		authProviders = new AuthProviderRegistryStub().register(new AuthProviderStub('GITHUB'))
 		sessionTokenGenerator = new SessionTokenGeneratorStub()
 		sessionTokenHasher = new SessionTokenHasherStub()

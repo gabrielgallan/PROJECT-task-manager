@@ -1,6 +1,8 @@
 import { HasherStub } from 'test/stubs/hasher'
 import { makeToken } from 'test/unit/factories/make-token'
 import { makeUser } from 'test/unit/factories/make-user'
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
 import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
@@ -17,8 +19,12 @@ let sut: ResetPasswordUseCase
 
 describe('Reset user password [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
 		tokensRepository = new InMemoryTokensRepository()
+		usersRepository = new InMemoryUsersRepository(
+			new InMemorySessionsRepository(),
+			new InMemoryAccountsRepository(),
+			tokensRepository,
+		)
 		hasher = new HasherStub()
 
 		sut = new ResetPasswordUseCase(usersRepository, tokensRepository, hasher)
@@ -44,7 +50,7 @@ describe('Reset user password [USE CASE]', () => {
 		)
 
 		const result = await sut.execute({
-			recoverCode: 'token-1',
+			tokenId: 'token-1',
 			password: 'new-password',
 		})
 
@@ -66,12 +72,14 @@ describe('Reset user password [USE CASE]', () => {
 			),
 		)
 
-		expect(tokensRepository.items[0].expiresAt.getTime()).toBe(new Date(2025, 0, 13, 13, 0, 0).getTime())
+		expect(tokensRepository.items[0].expiresAt.getTime()).toBe(
+			new Date(2025, 0, 13, 13, 0, 0).getTime(),
+		)
 
 		vi.setSystemTime(new Date(2025, 0, 13, 14, 0, 0))
 
 		const result = await sut.execute({
-			recoverCode: 'token-1',
+			tokenId: 'token-1',
 			password: 'new-password',
 		})
 
@@ -93,14 +101,14 @@ describe('Reset user password [USE CASE]', () => {
 		)
 
 		await sut.execute({
-			recoverCode: 'token-1',
+			tokenId: 'token-1',
 			password: 'new-password',
 		})
 
 		expect(tokensRepository.items[0].usedAt).toEqual(expect.any(Date))
 
 		const result = await sut.execute({
-			recoverCode: 'token-1',
+			tokenId: 'token-1',
 			password: 'new-password',
 		})
 
@@ -110,7 +118,7 @@ describe('Reset user password [USE CASE]', () => {
 
 	it('should not be able to reset the password of a non-existent resource (token|user)', async () => {
 		const result = await sut.execute({
-			recoverCode: 'token-1',
+			tokenId: 'token-1',
 			password: 'new-password',
 		})
 

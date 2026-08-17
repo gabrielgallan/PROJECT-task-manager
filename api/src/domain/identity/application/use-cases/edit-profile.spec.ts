@@ -1,3 +1,6 @@
+import { InMemoryAccountsRepository } from 'test/unit/repositories/in-memory-accounts-repository'
+import { InMemorySessionsRepository } from 'test/unit/repositories/in-memory-sessions-repository'
+import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-tokens-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { HasherStub } from '../../../../../test/stubs/hasher'
@@ -11,7 +14,7 @@ let sut: EditProfileUseCase
 
 describe('Edit user profile [USE CASE]', () => {
 	beforeEach(() => {
-		usersRepository = new InMemoryUsersRepository()
+		usersRepository = new InMemoryUsersRepository(new InMemorySessionsRepository(), new InMemoryAccountsRepository(), new InMemoryTokensRepository())
 
 		sut = new EditProfileUseCase(usersRepository)
 	})

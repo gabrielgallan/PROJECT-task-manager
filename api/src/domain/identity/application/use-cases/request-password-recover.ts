@@ -36,7 +36,7 @@ export class RequestPasswordRecoverUseCase {
 
 		await this.tokensRepository.create(token)
 
-		await this.emailSender.sendRecoveryCode(user.email, token.id.toString())
+		await this.emailSender.sendRecoveryLink(user.email, token.id.toString())
 
 		return right(null)
 	}

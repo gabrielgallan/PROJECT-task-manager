@@ -22,11 +22,11 @@ const authenticateWithGoogleBodySchema = z.object({
 type AuthenticateWithGoogleBody = z.infer<typeof authenticateWithGoogleBodySchema>
 
 @Controller()
+@Public()
 export class AuthenticateWithGoogleController {
 	constructor(private authenticateWithGoogle: AuthenticateWithProviderUseCase) {}
 
 	@Post('/api/sessions/google')
-	@Public()
 	async handle(
 		@Body(new ZodValidationPipe(authenticateWithGoogleBodySchema))
 		body: AuthenticateWithGoogleBody,
