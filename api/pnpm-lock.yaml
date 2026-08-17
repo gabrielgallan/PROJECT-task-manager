@@ -20,6 +20,9 @@ importers:
       '@nestjs/platform-express':
         specifier: 11.0.1
         version: 11.0.1(@nestjs/common@11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.0.1)
+      '@nestjs/serve-static':
+        specifier: 5.0.5
+        version: 5.0.5(@nestjs/common@11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.0.1)(express@5.0.1)
       '@prisma/adapter-pg':
         specifier: 7.9.1
         version: 7.9.1
@@ -50,6 +53,9 @@ importers:
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
+      ua-parser-js:
+        specifier: 2.0.10
+        version: 2.0.10
       zod:
         specifier: 4.4.3
         version: 4.4.3
@@ -602,6 +608,22 @@ packages:
       typescript: '>=4.8.2'
     peerDependenciesMeta:
       prettier:
+        optional: true
+
+  '@nestjs/serve-static@5.0.5':
+    resolution: {integrity: sha512-AhYx3N9aMwR2cb0w5Nlb5nHNYiAcF74ea/D/xna+PxlXwjmwGN/PpC/5fuMtOwmPBMgOTxNPOnB8C9LDZBSgyw==}
+    peerDependencies:
+      '@fastify/static': ^8.0.4 || ^9.0.0
+      '@nestjs/common': ^11.0.2
+      '@nestjs/core': ^11.0.2
+      express: ^5.0.1
+      fastify: ^5.2.1
+    peerDependenciesMeta:
+      '@fastify/static':
+        optional: true
+      express:
+        optional: true
+      fastify:
         optional: true
 
   '@nestjs/testing@11.0.1':
@@ -1539,6 +1561,9 @@ packages:
     resolution: {integrity: sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
+  detect-europe-js@0.1.2:
+    resolution: {integrity: sha512-lgdERlL3u0aUdHocoouzT10d9I89VVhk0qNRmll7mXdGfJT1/wqZ2ZLA4oJAjeACPY5fT1wsbq2AT+GkuInsow==}
+
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
@@ -1872,6 +1897,9 @@ packages:
 
   is-property@1.0.2:
     resolution: {integrity: sha512-Ks/IoX00TtClbGQr4TWXemAnktAQvYB7HzcCxDGqEZU6oCmb2INHuOoKxbtR+HFkmYWBKv/dOZtGRiAjDhj92g==}
+
+  is-standalone-pwa@0.1.1:
+    resolution: {integrity: sha512-9Cbovsa52vNQCjdXOzeQq5CnCbAcRk05aU62K20WO372NrTv0NxibLFCK6lQ4/iZEFdEA3p3t2VNOn8AJ53F5g==}
 
   is-unicode-supported@0.1.0:
     resolution: {integrity: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==}
@@ -2763,6 +2791,13 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  ua-is-frozen@0.1.2:
+    resolution: {integrity: sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==}
+
+  ua-parser-js@2.0.10:
+    resolution: {integrity: sha512-t+3Ktbq0Ies2vaSezfOaWiolH4OigQIO1dk+1xDpOydB1COVPocVYOrEV5rqZ0kFY9XYG1v9LutCyMgYBpABcw==}
+    hasBin: true
+
   uid@2.0.2:
     resolution: {integrity: sha512-u3xV3X7uzvi5b1MncmZo3i2Aw222Zk1keqLA1YkHldREkAhAqi65wuPfe7lHx8H/Wzy+8CE7S7uS3jekIM5s8g==}
     engines: {node: '>=8'}
@@ -3417,6 +3452,14 @@ snapshots:
       typescript: 5.9.3
     transitivePeerDependencies:
       - chokidar
+
+  '@nestjs/serve-static@5.0.5(@nestjs/common@11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.0.1)(express@5.0.1)':
+    dependencies:
+      '@nestjs/common': 11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      '@nestjs/core': 11.0.1(@nestjs/common@11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/platform-express@11.0.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      path-to-regexp: 8.4.2
+    optionalDependencies:
+      express: 5.0.1
 
   '@nestjs/testing@11.0.1(@nestjs/common@11.0.1(reflect-metadata@0.2.2)(rxjs@7.8.1))(@nestjs/core@11.0.1)(@nestjs/platform-express@11.0.1)':
     dependencies:
@@ -4396,6 +4439,8 @@ snapshots:
 
   destroy@1.2.0: {}
 
+  detect-europe-js@0.1.2: {}
+
   detect-libc@2.1.2: {}
 
   diff@4.0.4: {}
@@ -4743,6 +4788,8 @@ snapshots:
   is-promise@4.0.0: {}
 
   is-property@1.0.2: {}
+
+  is-standalone-pwa@0.1.1: {}
 
   is-unicode-supported@0.1.0: {}
 
@@ -5545,6 +5592,14 @@ snapshots:
   typedarray@0.0.6: {}
 
   typescript@5.9.3: {}
+
+  ua-is-frozen@0.1.2: {}
+
+  ua-parser-js@2.0.10:
+    dependencies:
+      detect-europe-js: 0.1.2
+      is-standalone-pwa: 0.1.1
+      ua-is-frozen: 0.1.2
 
   uid@2.0.2:
     dependencies:

@@ -1,40 +1,28 @@
 import {
 	Controller,
+	Get,
+	HttpCode,
 	InternalServerErrorException,
-	MaxFileSizeValidator,
 	NotFoundException,
-	ParseFilePipe,
-	Post,
-	UploadedFile,
-	UseInterceptors,
 } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
-import { UploadAvatarUseCase } from '@/domain/identity/application/use-cases/upload-avatar'
+import { FetchSessionsUseCase } from '@/domain/identity/application/use-cases/fetch-sessions'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
+import { SessionPresenter } from '../../presenters/session-presenter'
 
 @Controller()
-export class UploadAvatarController {
-	constructor(private uploadAvatar: UploadAvatarUseCase) {}
+export class FetchSessionController {
+	constructor(private readonly fetchSessions: FetchSessionsUseCase) {}
 
-	@Post('file')
-	@UseInterceptors(FileInterceptor('file'))
+	@Get('/api/sessions')
+	@HttpCode(200)
 	async handle(
 		@CurrentUser()
 		user: UserPayload,
-
-		@UploadedFile(
-			new ParseFilePipe({
-				validators: [new MaxFileSizeValidator({ maxSize: 1000 })],
-			}),
-		)
-		file: Express.Multer.File,
 	) {
-		const result = await this.uploadAvatar.execute({
+		const result = await this.fetchSessions.execute({
 			userId: user.id,
-			fileName: file.fileName,
-			fileType: file.fileType,
-			body: file.body,
 		})
 
 		if (result.isLeft()) {
@@ -49,6 +37,8 @@ export class UploadAvatarController {
 			}
 		}
 
-		return null
+		return {
+			sessions: result.value.sessions.map(SessionPresenter.toHTTP),
+		}
 	}
 }

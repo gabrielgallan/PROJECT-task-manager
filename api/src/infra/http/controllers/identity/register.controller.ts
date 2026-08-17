@@ -5,20 +5,11 @@ import {
 	InternalServerErrorException,
 	Post,
 } from '@nestjs/common'
-import { z } from 'zod'
 import { UserAlreadyExistsError } from '@/domain/identity/application/use-cases/errors/user-already-exists-error'
 import { RegisterUseCase } from '@/domain/identity/application/use-cases/register'
 import { Public } from '@/infra/auth/public.decorator'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-
-const registerBodySchema = z.object({
-	name: z.string(),
-	email: z.email(),
-	password: z.string().min(6).max(18),
-	jobTitle: z.string().optional(),
-})
-
-type RegisterBody = z.infer<typeof registerBodySchema>
+import { type RegisterDto, registerSchema } from './dto/register.dto'
 
 @Controller()
 @Public()
@@ -27,8 +18,8 @@ export class RegisterController {
 
 	@Post('/api/users')
 	async handle(
-		@Body(new ZodValidationPipe(registerBodySchema))
-		body: RegisterBody,
+		@Body(new ZodValidationPipe(registerSchema))
+		body: RegisterDto,
 	) {
 		const { name, email, password, jobTitle } = body
 

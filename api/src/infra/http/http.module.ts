@@ -1,4 +1,6 @@
+import { join } from 'node:path'
 import { Module } from '@nestjs/common'
+import { ServeStaticModule } from '@nestjs/serve-static'
 import { AuthenticateUseCase } from '@/domain/identity/application/use-cases/authenticate'
 import { AuthenticateWithProviderUseCase } from '@/domain/identity/application/use-cases/authenticate-with-provider'
 import { EditProfileUseCase } from '@/domain/identity/application/use-cases/edit-profile'
@@ -11,20 +13,28 @@ import { CryptographyModule } from '../cryptography/cryptography.module'
 import { DatabaseModule } from '../database/database.module'
 import { EmailModule } from '../email/email.module'
 import { EnvModule } from '../env/env.module'
-import { AuthenticateController } from './controllers/authenticate.controller'
-import { AuthenticateWithGithubController } from './controllers/authenticate-with-github.controller'
-import { AuthenticateWithGoogleController } from './controllers/authenticate-with-google.controller'
-import { EditProfileController } from './controllers/edit-profile.controller'
-import { GetProfileController } from './controllers/get-profile.controller'
-import { HealthController } from './controllers/health.controller'
-import { RegisterController } from './controllers/register.controller'
-import { RequestPasswordRecoverController } from './controllers/request-password-recover.controller'
-import { ResetPasswordController } from './controllers/reset-password.controller'
+import { AuthenticateController } from './controllers/identity/authenticate.controller'
+import { AuthenticateWithGithubController } from './controllers/identity/authenticate-with-github.controller'
+import { AuthenticateWithGoogleController } from './controllers/identity/authenticate-with-google.controller'
+import { EditProfileController } from './controllers/identity/edit-profile.controller'
+import { GetProfileController } from './controllers/identity/get-profile.controller'
+import { RegisterController } from './controllers/identity/register.controller'
+import { RequestPasswordRecoverController } from './controllers/identity/request-password-recover.controller'
+import { ResetPasswordController } from './controllers/identity/reset-password.controller'
 
 @Module({
-	imports: [EnvModule, DatabaseModule, CryptographyModule, AuthModule, EmailModule],
+	imports: [
+		EnvModule,
+		AuthModule,
+		CryptographyModule,
+		DatabaseModule,
+		EmailModule,
+		ServeStaticModule.forRoot({
+			rootPath: join(process.cwd(), '..', 'web', 'dist'),
+			renderPath: '/',
+		}),
+	],
 	controllers: [
-		HealthController,
 		AuthenticateController,
 		AuthenticateWithGithubController,
 		AuthenticateWithGoogleController,

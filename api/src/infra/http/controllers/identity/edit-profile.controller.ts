@@ -1,28 +1,37 @@
 import {
+	Body,
 	Controller,
-	Get,
 	HttpCode,
 	InternalServerErrorException,
 	NotFoundException,
+	Put,
 } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
-import { FetchSessionsUseCase } from '@/domain/identity/application/use-cases/fetch-sessions'
+import { EditProfileUseCase } from '@/domain/identity/application/use-cases/edit-profile'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
-import { SessionPresenter } from '../presenters/session-presenter'
+import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { type EditProfileDto, editProfileSchema } from './dto/edit-profile.dto'
 
 @Controller()
-export class FetchSessionController {
-	constructor(private readonly fetchSessions: FetchSessionsUseCase) {}
+export class EditProfileController {
+	constructor(private readonly editProfile: EditProfileUseCase) {}
 
-	@Get('/api/sessions')
-	@HttpCode(200)
+	@Put('/api/profile')
+	@HttpCode(204)
 	async handle(
 		@CurrentUser()
 		user: UserPayload,
+
+		@Body(new ZodValidationPipe(editProfileSchema))
+		body: EditProfileDto,
 	) {
-		const result = await this.fetchSessions.execute({
+		const { name, jobTitle } = body
+
+		const result = await this.editProfile.execute({
 			userId: user.id,
+			name,
+			jobTitle,
 		})
 
 		if (result.isLeft()) {
@@ -37,8 +46,6 @@ export class FetchSessionController {
 			}
 		}
 
-		return {
-			sessions: result.value.sessions.map(SessionPresenter.toHTTP),
-		}
+		return null
 	}
 }

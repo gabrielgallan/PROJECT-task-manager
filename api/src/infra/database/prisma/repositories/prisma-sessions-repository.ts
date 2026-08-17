@@ -18,6 +18,18 @@ export class PrismaSessionsRepository implements SessionsRepository {
         return
     }
 
+    async findById(sessionId: string) {
+        const session = await this.prisma.session.findUnique({
+            where: {
+                id: sessionId
+            }
+        })
+
+        if (!session) return null
+
+        return PrismaSessionMapper.toDomain(session)
+    }
+
     async findByTokenHash(tokenHash: string) {
         const session = await this.prisma.session.findUnique({
             where: {
@@ -28,5 +40,39 @@ export class PrismaSessionsRepository implements SessionsRepository {
         if (!session) return null
 
         return PrismaSessionMapper.toDomain(session)
+    }
+
+    async fetchByUserId(userId: string) {
+        const sessions = await this.prisma.session.findMany({
+            where: {
+                userId
+            }
+        })
+
+        return sessions.map(PrismaSessionMapper.toDomain)
+    }
+
+    async revokeAllByUserId(userId: string, revokedAt: Date) {
+        const { count } = await this.prisma.session.updateMany({
+                where: {
+                    userId
+                },
+                data: {
+                    revokedAt
+                }
+            })
+        
+        return count
+    }
+
+    async save(session: Session) {
+        await this.prisma.session.update({
+            where: {
+                id: session.id.toString()
+            },
+            data: PrismaSessionMapper.toPrisma(session)
+        })
+
+        return
     }
 }

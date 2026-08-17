@@ -7,19 +7,12 @@ import {
 	NotFoundException,
 	Patch,
 } from '@nestjs/common'
-import { z } from 'zod'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { InvalidTokenError } from '@/domain/identity/application/use-cases/errors/invalid-token-error'
 import { ResetPasswordUseCase } from '@/domain/identity/application/use-cases/reset-password'
 import { Public } from '@/infra/auth/public.decorator'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-
-const resetPasswordBodySchema = z.object({
-	tokenId: z.string(),
-	password: z.string().min(6).max(18),
-})
-
-type ResetPasswordBody = z.infer<typeof resetPasswordBodySchema>
+import { type ResetPasswordDto, resetPasswordSchema } from './dto/reset-password.dto'
 
 @Controller()
 @Public()
@@ -29,8 +22,8 @@ export class ResetPasswordController {
 	@Patch('/api/profile/password')
 	@HttpCode(204)
 	async handle(
-		@Body(new ZodValidationPipe(resetPasswordBodySchema))
-		body: ResetPasswordBody,
+		@Body(new ZodValidationPipe(resetPasswordSchema))
+		body: ResetPasswordDto,
 	) {
 		const { tokenId, password } = body
 

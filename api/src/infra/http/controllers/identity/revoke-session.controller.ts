@@ -5,17 +5,15 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 	Param,
+	UnauthorizedException,
 } from '@nestjs/common'
-import { z } from 'zod'
+import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { RevokeSessionUseCase } from '@/domain/identity/application/use-cases/revoke-session'
+import { CurrentUser } from '@/infra/auth/current-user.decorator'
+import type { UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-
-const revokeSessionParamsSchema = z.object({
-	sessionId: z.uuid(),
-})
-
-type RevokeSessionParams = z.infer<typeof revokeSessionParamsSchema>
+import { type RevokeSessionDto, revokeSessionSchema } from './dto/revoke-session.dto'
 
 @Controller()
 export class RevokeSessionController {
@@ -24,13 +22,15 @@ export class RevokeSessionController {
 	@Delete('/api/sessions/:sessionId')
 	@HttpCode(204)
 	async handle(
-		@Param(new ZodValidationPipe(revokeSessionParamsSchema))
-		params: RevokeSessionParams,
-	) {
-		const { sessionId } = params
+		@CurrentUser()
+		user: UserPayload,
 
+		@Param(new ZodValidationPipe(revokeSessionSchema))
+		params: RevokeSessionDto,
+	) {
 		const result = await this.revokeSession.execute({
-			sessionId,
+			userId: user.id,
+			sessionId: params.sessionId,
 		})
 
 		if (result.isLeft()) {
@@ -39,6 +39,9 @@ export class RevokeSessionController {
 			switch (error.constructor) {
 				case ResourceNotFoundError:
 					throw new NotFoundException(error.message)
+
+				case NotAllowedError:
+					throw new UnauthorizedException(error.message)
 
 				default:
 					throw new InternalServerErrorException()

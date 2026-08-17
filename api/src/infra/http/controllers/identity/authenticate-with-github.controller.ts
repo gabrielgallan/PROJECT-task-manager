@@ -8,28 +8,26 @@ import {
 	Res,
 } from '@nestjs/common'
 import type { Request, Response } from 'express'
-import z from 'zod'
+import { AccountProvider } from '@/../generated/prisma/client'
 import { AuthenticateWithProviderUseCase } from '@/domain/identity/application/use-cases/authenticate-with-provider'
 import { UnsupportedAuthProviderError } from '@/domain/identity/application/use-cases/errors/unsupported-auth-provider-error'
 import { Public } from '@/infra/auth/public.decorator'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
-import { ZodValidationPipe } from '../pipes/zod-validation-pipe'
-
-const authenticateWithGoogleBodySchema = z.object({
-	code: z.string(),
-})
-
-type AuthenticateWithGoogleBody = z.infer<typeof authenticateWithGoogleBodySchema>
+import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import {
+	type AuthenticateWithProviderDto,
+	authenticateWithProviderSchema,
+} from './dto/authenticate-with-provider.dto'
 
 @Controller()
 @Public()
-export class AuthenticateWithGoogleController {
-	constructor(private authenticateWithGoogle: AuthenticateWithProviderUseCase) {}
+export class AuthenticateWithGithubController {
+	constructor(private authenticateWithGitHub: AuthenticateWithProviderUseCase) {}
 
-	@Post('/api/sessions/google')
+	@Post('/api/sessions/github')
 	async handle(
-		@Body(new ZodValidationPipe(authenticateWithGoogleBodySchema))
-		body: AuthenticateWithGoogleBody,
+		@Body(new ZodValidationPipe(authenticateWithProviderSchema))
+		body: AuthenticateWithProviderDto,
 
 		@Req()
 		request: Request,
@@ -39,11 +37,11 @@ export class AuthenticateWithGoogleController {
 	) {
 		const { code } = body
 
-		const result = await this.authenticateWithGoogle.execute({
-			provider: 'GOOGLE',
+		const result = await this.authenticateWithGitHub.execute({
+			provider: AccountProvider.GITHUB,
 			code,
 			ipAddress: request.ip,
-			userAgent: request.header('user-agent'),
+			userAgent: request.header['user-agent'],
 		})
 
 		if (result.isLeft()) {
