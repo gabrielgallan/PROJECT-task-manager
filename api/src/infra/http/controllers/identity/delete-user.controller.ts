@@ -5,16 +5,22 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 } from '@nestjs/common'
+import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { DeleteUserUseCase } from '@/domain/identity/application/use-cases/delete-user'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
 
-@Controller()
+@ApiTags('Profile')
+@Controller('/api/profile')
 export class DeleteUserController {
 	constructor(private readonly deleteUser: DeleteUserUseCase) {}
 
-	@Delete('/api/profile')
+	@ApiOperation({ summary: 'delete user' })
+	@ApiNoContentResponse({ description: 'User and data deleted successfully' })
+	@ApiNotFoundResponse({ type: ApiErrorResponseDto })
+	@Delete()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()
@@ -36,6 +42,6 @@ export class DeleteUserController {
 			}
 		}
 
-		return null
+		return
 	}
 }

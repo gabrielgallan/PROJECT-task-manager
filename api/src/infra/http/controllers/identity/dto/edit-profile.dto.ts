@@ -1,3 +1,4 @@
+import { createZodDto } from 'nestjs-zod'
 import z from 'zod'
 
 export const editProfileSchema = z.object({
@@ -5,4 +6,4 @@ export const editProfileSchema = z.object({
 	jobTitle: z.string().optional(),
 })
 
-export type EditProfileDto = z.infer<typeof editProfileSchema>
+export class EditProfileDto extends createZodDto(editProfileSchema) {}

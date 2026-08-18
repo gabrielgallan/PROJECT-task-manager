@@ -1,7 +1,8 @@
+import { createZodDto } from 'nestjs-zod'
 import z from 'zod'
 
 export const requestPasswordRecoverSchema = z.object({
 	email: z.email(),
 })
 
-export type RequestPasswordRecoverDto = z.infer<typeof requestPasswordRecoverSchema>
+export class RequestPasswordRecoverDto extends createZodDto(requestPasswordRecoverSchema) {}

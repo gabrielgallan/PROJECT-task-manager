@@ -6,18 +6,24 @@ import {
 	NotFoundException,
 	Put,
 } from '@nestjs/common'
+import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { EditProfileUseCase } from '@/domain/identity/application/use-cases/edit-profile'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
-import { type EditProfileDto, editProfileSchema } from './dto/edit-profile.dto'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
+import { EditProfileDto, editProfileSchema } from './dto/edit-profile.dto'
 
-@Controller()
+@ApiTags('Profile')
+@Controller('/api/profile')
 export class EditProfileController {
 	constructor(private readonly editProfile: EditProfileUseCase) {}
 
-	@Put('/api/profile')
+	@ApiOperation({ summary: 'edit profile' })
+	@ApiNoContentResponse({ description: 'User edited sucessfully' })
+	@ApiNotFoundResponse({ type: ApiErrorResponseDto })
+	@Put()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()

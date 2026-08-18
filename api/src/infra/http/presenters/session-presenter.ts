@@ -14,17 +14,10 @@ export class SessionPresenter {
 			ipAddress: session.ipAddress ?? null,
 			userAgent: userAgent
 				? {
-						os: {
-							name: userAgent.os.name,
-							version: userAgent.os.version,
-						},
-						browser: {
-							name: userAgent.browser.name,
-							version: userAgent.browser.version,
-						},
-						device: {
-							type: userAgent.device.type,
-						},
+						osName: userAgent.os.name,
+						osVersion: userAgent.os.version,
+						browserName: userAgent.browser.name,
+						deviceType: userAgent.device.type,
 					}
 				: null,
 			createdAt: session.createdAt,

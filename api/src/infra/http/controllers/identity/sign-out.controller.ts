@@ -7,6 +7,13 @@ import {
 	Res,
 	UnauthorizedException,
 } from '@nestjs/common'
+import {
+	ApiNoContentResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiTags,
+	ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import type { Response } from 'express'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -14,12 +21,21 @@ import { RevokeSessionUseCase } from '@/domain/identity/application/use-cases/re
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import type { UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
 
-@Controller()
+@ApiTags('Authentication')
+@Controller('/api/sign-out')
 export class SignOutController {
 	constructor(private readonly revokeSession: RevokeSessionUseCase) {}
 
-	@Post('/api/sign-out')
+	@ApiOperation({ summary: 'sign-out' })
+	@ApiNoContentResponse({ description: 'Sign-out successfully' })
+	@ApiNotFoundResponse({ description: 'Session not found', type: ApiErrorResponseDto })
+	@ApiUnauthorizedResponse({
+		description: 'Not allowed to revoke this session',
+		type: ApiErrorResponseDto,
+	})
+	@Post()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()

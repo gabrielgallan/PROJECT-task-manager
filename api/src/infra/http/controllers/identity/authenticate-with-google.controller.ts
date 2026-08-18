@@ -2,28 +2,44 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	HttpCode,
 	InternalServerErrorException,
 	Post,
 	Req,
 	Res,
 } from '@nestjs/common'
+import {
+	ApiBadGatewayResponse,
+	ApiBadRequestResponse,
+	ApiCreatedResponse,
+	ApiOperation,
+	ApiTags,
+} from '@nestjs/swagger'
 import type { Request, Response } from 'express'
 import { AuthenticateWithProviderUseCase } from '@/domain/identity/application/use-cases/authenticate-with-provider'
 import { UnsupportedAuthProviderError } from '@/domain/identity/application/use-cases/errors/unsupported-auth-provider-error'
 import { Public } from '@/infra/auth/public.decorator'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
+import { AuthenticateResponseDto } from './dto/authenticate.dto'
 import {
 	type AuthenticateWithProviderDto,
 	authenticateWithProviderSchema,
 } from './dto/authenticate-with-provider.dto'
 
-@Controller()
+@ApiTags('Authentication')
 @Public()
+@Controller('/api/sessions/google')
 export class AuthenticateWithGoogleController {
 	constructor(private authenticateWithGoogle: AuthenticateWithProviderUseCase) {}
 
-	@Post('/api/sessions/google')
+	@ApiOperation({ summary: 'authenticate with google' })
+	@ApiCreatedResponse({ type: AuthenticateResponseDto })
+	@ApiBadRequestResponse({ type: ApiErrorResponseDto })
+	@ApiBadGatewayResponse({ type: ApiErrorResponseDto })
+	@Post()
+	@HttpCode(201)
 	async handle(
 		@Body(new ZodValidationPipe(authenticateWithProviderSchema))
 		body: AuthenticateWithProviderDto,

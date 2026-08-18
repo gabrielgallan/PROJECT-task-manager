@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { Injectable } from '@nestjs/common'
 import type { Uploader, UploadParams } from '@/domain/identity/application/storage/uploader'
 
 interface Upload {
@@ -6,6 +7,7 @@ interface Upload {
 	url: string
 }
 
+@Injectable()
 export class UploaderStub implements Uploader {
 	public uploads: Upload[] = []
 

@@ -2,25 +2,37 @@ import {
 	BadRequestException,
 	Body,
 	Controller,
+	HttpCode,
 	InternalServerErrorException,
 	Post,
 	Req,
 	Res,
 } from '@nestjs/common'
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { Request, Response } from 'express'
 import { AuthenticateUseCase } from '@/domain/identity/application/use-cases/authenticate'
 import { InvalidCredentialsError } from '@/domain/identity/application/use-cases/errors/invalid-credentials-error'
 import { Public } from '@/infra/auth/public.decorator'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-import { type AuthenticateDto, authenticateSchema } from './dto/authenticate.dto'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
+import {
+	type AuthenticateDto,
+	AuthenticateResponseDto,
+	authenticateSchema,
+} from './dto/authenticate.dto'
 
-@Controller()
+@ApiTags('Authentication')
 @Public()
+@Controller('/api/sessions')
 export class AuthenticateController {
 	constructor(private readonly authenticate: AuthenticateUseCase) {}
 
-	@Post('/api/sessions')
+	@ApiOperation({ summary: 'authenticate with credentials' })
+	@ApiCreatedResponse({ type: AuthenticateResponseDto })
+	@ApiBadRequestResponse({ type: ApiErrorResponseDto })
+	@Post()
+	@HttpCode(201)
 	async handle(
 		@Body(new ZodValidationPipe(authenticateSchema))
 		body: AuthenticateDto,

@@ -2,21 +2,32 @@ import {
 	Body,
 	ConflictException,
 	Controller,
+	HttpCode,
 	InternalServerErrorException,
 	Post,
 } from '@nestjs/common'
+import { ApiConflictResponse, ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { UserAlreadyExistsError } from '@/domain/identity/application/use-cases/errors/user-already-exists-error'
 import { RegisterUseCase } from '@/domain/identity/application/use-cases/register'
 import { Public } from '@/infra/auth/public.decorator'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-import { type RegisterDto, registerSchema } from './dto/register.dto'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
+import { RegisterDto, RegisterResposeDto, registerSchema } from './dto/register.dto'
 
-@Controller()
+@ApiTags('Profile')
 @Public()
+@Controller('/api/users')
 export class RegisterController {
 	constructor(private readonly register: RegisterUseCase) {}
 
-	@Post('/api/users')
+	@ApiOperation({ summary: 'register' })
+	@ApiCreatedResponse({ description: 'User successfully created', type: RegisterResposeDto })
+	@ApiConflictResponse({
+		description: 'User with email alrady registered',
+		type: ApiErrorResponseDto,
+	})
+	@Post()
+	@HttpCode(201)
 	async handle(
 		@Body(new ZodValidationPipe(registerSchema))
 		body: RegisterDto,

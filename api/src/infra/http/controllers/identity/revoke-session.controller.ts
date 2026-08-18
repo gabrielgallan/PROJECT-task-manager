@@ -7,19 +7,35 @@ import {
 	Param,
 	UnauthorizedException,
 } from '@nestjs/common'
+import {
+	ApiNoContentResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiTags,
+	ApiUnauthorizedResponse,
+} from '@nestjs/swagger'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { RevokeSessionUseCase } from '@/domain/identity/application/use-cases/revoke-session'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '@/infra/http/pipes/zod-validation-pipe'
-import { type RevokeSessionDto, revokeSessionSchema } from './dto/revoke-session.dto'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
+import { RevokeSessionDto, revokeSessionSchema } from './dto/revoke-session.dto'
 
-@Controller()
+@ApiTags('Authentication')
+@Controller('/api/sessions/:sessionId')
 export class RevokeSessionController {
 	constructor(private readonly revokeSession: RevokeSessionUseCase) {}
 
-	@Delete('/api/sessions/:sessionId')
+	@ApiOperation({ summary: 'revoke session' })
+	@ApiNoContentResponse({ description: 'Session revoked successfully' })
+	@ApiNotFoundResponse({ description: 'Session not found', type: ApiErrorResponseDto })
+	@ApiUnauthorizedResponse({
+		description: 'Not allowed to revoke this session',
+		type: ApiErrorResponseDto,
+	})
+	@Delete()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()
@@ -48,6 +64,6 @@ export class RevokeSessionController {
 			}
 		}
 
-		return null
+		return
 	}
 }

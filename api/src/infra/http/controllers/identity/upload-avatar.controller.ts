@@ -12,19 +12,32 @@ import {
 	UseInterceptors,
 } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express'
+import {
+	ApiBadRequestResponse,
+	ApiNoContentResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiTags,
+} from '@nestjs/swagger'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { InvalidImageTypeError } from '@/domain/identity/application/use-cases/errors/invalid-image-type-error'
 import { UploadAvatarUseCase } from '@/domain/identity/application/use-cases/upload-avatar'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import type { UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from './dto/api-error-response.dto'
 
-@Controller()
+@ApiTags('Profile')
+@Controller('/api/profile/avatar')
 export class UploadAvatarController {
 	constructor(private uploadAvatar: UploadAvatarUseCase) {}
 
-	@Put('/api/profile/avatar')
-	@UseInterceptors(FileInterceptor('file'))
+	@ApiOperation({ summary: 'upload avatar' })
+	@ApiNoContentResponse({ description: 'User avatar updated successfully' })
+	@ApiNotFoundResponse({ description: 'User not found', type: ApiErrorResponseDto })
+	@ApiBadRequestResponse({ description: 'Invalid image type', type: ApiErrorResponseDto })
+	@Put()
 	@HttpCode(204)
+	@UseInterceptors(FileInterceptor('file'))
 	async handle(
 		@CurrentUser()
 		user: UserPayload,
@@ -58,6 +71,6 @@ export class UploadAvatarController {
 			}
 		}
 
-		return null
+		return
 	}
 }
