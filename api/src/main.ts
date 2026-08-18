@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
-import cookieParser from 'cookie-parser'
 import { AppModule } from './infra/app.module'
 import { EnvService } from './infra/env/env.service'
 
@@ -14,8 +13,6 @@ async function bootstrap() {
 	const envService = app.get(EnvService)
 
 	const port = envService.get('PORT')
-
-	app.use(cookieParser())
 
 	app
 		.listen(port)

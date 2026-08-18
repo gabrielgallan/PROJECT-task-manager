@@ -10,9 +10,20 @@ export class PrismaService
 	implements OnModuleInit, OnModuleDestroy
 {
 	constructor(env: EnvService) {
-		const adapter = new PrismaPg({
-			connectionString: env.get('DATABASE_URL'),
-		})
+		const connectionString = env.get('DATABASE_URL')
+
+		// O driver `pg` ignora o parametro `?schema=` da connection string, entao
+		// o schema precisa ser aplicado no `search_path` da conexao.
+		const schema =
+			new URL(connectionString).searchParams.get('schema') ?? undefined
+
+		const adapter = new PrismaPg(
+			{
+				connectionString,
+				options: schema ? `-c search_path="${schema}"` : undefined,
+			},
+			{ schema },
+		)
 
 		super({
 			adapter,
