@@ -19,7 +19,7 @@ import { type ResetPasswordDto, resetPasswordSchema } from './dto/reset-password
 export class ResetPasswordController {
 	constructor(private readonly resetPassword: ResetPasswordUseCase) {}
 
-	@Patch('/api/profile/password')
+	@Patch('/api/profile/password-recover')
 	@HttpCode(204)
 	async handle(
 		@Body(new ZodValidationPipe(resetPasswordSchema))

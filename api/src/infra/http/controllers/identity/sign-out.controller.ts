@@ -1,9 +1,9 @@
 import {
 	Controller,
-	Delete,
 	HttpCode,
 	InternalServerErrorException,
 	NotFoundException,
+	Post,
 	Res,
 	UnauthorizedException,
 } from '@nestjs/common'
@@ -19,7 +19,7 @@ import type { UserPayload } from '@/infra/auth/user-payload'
 export class SignOutController {
 	constructor(private readonly revokeSession: RevokeSessionUseCase) {}
 
-	@Delete('/api/sessions/current')
+	@Post('/api/sign-out')
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()

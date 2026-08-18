@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { Either, left, right } from '@/core/types/either'
@@ -10,6 +11,7 @@ type RevokeSessionUseCaseRequest = {
 
 type RevokeSessionUseCaseResponse = Either<ResourceNotFoundError | NotAllowedError, null>
 
+@Injectable()
 export class RevokeSessionUseCase {
 	constructor(private sessionsRepository: SessionsRepository) {}
 

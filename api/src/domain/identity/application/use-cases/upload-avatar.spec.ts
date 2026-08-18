@@ -7,6 +7,7 @@ import { InMemoryTokensRepository } from 'test/unit/repositories/in-memory-token
 import { InMemoryUsersRepository } from 'test/unit/repositories/in-memory-users-repository'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
+import { InvalidImageTypeError } from './errors/invalid-image-type-error'
 import { UploadAvatarUseCase } from './upload-avatar'
 
 let usersRepository: InMemoryUsersRepository
@@ -29,15 +30,14 @@ describe('Upload user avatar [USE CASE]', () => {
 	it('should be able to upload an user avatar', async () => {
 		await usersRepository.create(await makeUser({}, new UniqueEntityID('user-1')))
 
-		const result = await sut.execute({
+		await sut.execute({
 			userId: 'user-1',
 			fileName: 'avatar.png',
 			fileType: 'image/png',
 			body: Readable.from(Buffer.from('')),
 		})
 
-		expect(result.isRight()).toBe(true)
-		expect(uploader.uploads).toHaveLength(1)
+		expect(usersRepository.items[0].avatarUrl).toEqual(expect.any(String))
 		expect(uploader.uploads[0]).toMatchObject({
 			fileName: 'avatar.png',
 			url: expect.any(String),
@@ -52,7 +52,17 @@ describe('Upload user avatar [USE CASE]', () => {
 			body: Readable.from(Buffer.from('')),
 		})
 
-		expect(result.isLeft()).toBe(true)
 		expect(result.value).instanceOf(ResourceNotFoundError)
+	})
+
+	it('should not be able to upload an unsupported image type', async () => {
+		const result = await sut.execute({
+			userId: 'user-1',
+			fileName: 'avatar.png',
+			fileType: 'image/svg',
+			body: Readable.from(Buffer.from('')),
+		})
+
+		expect(result.value).instanceOf(InvalidImageTypeError)
 	})
 })

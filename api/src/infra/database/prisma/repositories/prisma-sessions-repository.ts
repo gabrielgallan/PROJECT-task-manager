@@ -1,78 +1,79 @@
-import { Injectable } from "@nestjs/common";
-import { SessionsRepository } from "@/domain/identity/application/repositories/sessions-repository";
-import { Session } from "@/domain/identity/enterprise/entities/session";
-import { PrismaSessionMapper } from "../mappers/prisma-session-mapper";
-import { PrismaService } from "../prisma.service";
+import { Injectable } from '@nestjs/common'
+import { SessionsRepository } from '@/domain/identity/application/repositories/sessions-repository'
+import { Session } from '@/domain/identity/enterprise/entities/session'
+import { PrismaSessionMapper } from '../mappers/prisma-session-mapper'
+import { PrismaService } from '../prisma.service'
 
 @Injectable()
 export class PrismaSessionsRepository implements SessionsRepository {
-    constructor(private prisma: PrismaService) { }
+	constructor(private prisma: PrismaService) {}
 
-    async create(session: Session) {
-        const data = PrismaSessionMapper.toPrisma(session)
+	async create(session: Session) {
+		const data = PrismaSessionMapper.toPrisma(session)
 
-        await this.prisma.session.create({
-            data
-        })
+		await this.prisma.session.create({
+			data,
+		})
 
-        return
-    }
+		return
+	}
 
-    async findById(sessionId: string) {
-        const session = await this.prisma.session.findUnique({
-            where: {
-                id: sessionId
-            }
-        })
+	async findById(sessionId: string) {
+		const session = await this.prisma.session.findUnique({
+			where: {
+				id: sessionId,
+			},
+		})
 
-        if (!session) return null
+		if (!session) return null
 
-        return PrismaSessionMapper.toDomain(session)
-    }
+		return PrismaSessionMapper.toDomain(session)
+	}
 
-    async findByTokenHash(tokenHash: string) {
-        const session = await this.prisma.session.findUnique({
-            where: {
-                tokenHash
-            }
-        })
+	async findByTokenHash(tokenHash: string) {
+		const session = await this.prisma.session.findUnique({
+			where: {
+				tokenHash,
+			},
+		})
 
-        if (!session) return null
+		if (!session) return null
 
-        return PrismaSessionMapper.toDomain(session)
-    }
+		return PrismaSessionMapper.toDomain(session)
+	}
 
-    async fetchByUserId(userId: string) {
-        const sessions = await this.prisma.session.findMany({
-            where: {
-                userId
-            }
-        })
+	async fetchByUserId(userId: string) {
+		const sessions = await this.prisma.session.findMany({
+			where: {
+				userId,
+			},
+		})
 
-        return sessions.map(PrismaSessionMapper.toDomain)
-    }
+		return sessions.map(PrismaSessionMapper.toDomain)
+	}
 
-    async revokeAllByUserId(userId: string, revokedAt: Date) {
-        const { count } = await this.prisma.session.updateMany({
-                where: {
-                    userId
-                },
-                data: {
-                    revokedAt
-                }
-            })
-        
-        return count
-    }
+	async revokeAllByUserId(userId: string, revokedAt: Date) {
+		const { count } = await this.prisma.session.updateMany({
+			where: {
+				userId,
+				revokedAt: null,
+			},
+			data: {
+				revokedAt,
+			},
+		})
 
-    async save(session: Session) {
-        await this.prisma.session.update({
-            where: {
-                id: session.id.toString()
-            },
-            data: PrismaSessionMapper.toPrisma(session)
-        })
+		return count
+	}
 
-        return
-    }
+	async save(session: Session) {
+		await this.prisma.session.update({
+			where: {
+				id: session.id.toString(),
+			},
+			data: PrismaSessionMapper.toPrisma(session),
+		})
+
+		return
+	}
 }

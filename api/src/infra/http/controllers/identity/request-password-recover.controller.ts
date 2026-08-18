@@ -20,7 +20,7 @@ import {
 export class RequestPasswordRecoverController {
 	constructor(private readonly requestPasswordRecover: RequestPasswordRecoverUseCase) {}
 
-	@Post('/api/profile/password/recover')
+	@Post('/api/profile/password-recover')
 	@HttpCode(201)
 	async handle(
 		@Body(new ZodValidationPipe(requestPasswordRecoverSchema))

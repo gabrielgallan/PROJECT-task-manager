@@ -19,7 +19,7 @@ export class RevokeAllSessionsController {
 		}
 
 		return {
-			count: result.value.count,
+			sessionsCount: result.value.sessionsCount,
 		}
 	}
 }

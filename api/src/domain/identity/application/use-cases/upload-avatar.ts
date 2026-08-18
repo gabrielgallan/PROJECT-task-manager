@@ -1,8 +1,10 @@
 import type { Readable } from 'node:stream'
+import { Injectable } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
-import type { UsersRepository } from '../repositories/users-repository'
-import type { Uploader } from '../storage/uploader'
+import { UsersRepository } from '../repositories/users-repository'
+import { Uploader } from '../storage/uploader'
+import { InvalidImageTypeError } from './errors/invalid-image-type-error'
 
 type UploadAvatarUseCaseRequest = {
 	userId: string
@@ -11,8 +13,9 @@ type UploadAvatarUseCaseRequest = {
 	body: Readable
 }
 
-type UploadAvatarUseCaseResponse = Either<ResourceNotFoundError, null>
+type UploadAvatarUseCaseResponse = Either<ResourceNotFoundError | InvalidImageTypeError, null>
 
+@Injectable()
 export class UploadAvatarUseCase {
 	constructor(
 		private usersRepository: UsersRepository,
@@ -25,6 +28,10 @@ export class UploadAvatarUseCase {
 		fileType,
 		body,
 	}: UploadAvatarUseCaseRequest): Promise<UploadAvatarUseCaseResponse> {
+		if (!/^image\/(jpeg|png|webp|heic)$/.test(fileType)) {
+			return left(new InvalidImageTypeError())
+		}
+
 		const user = await this.usersRepository.findById(userId)
 
 		if (!user) {

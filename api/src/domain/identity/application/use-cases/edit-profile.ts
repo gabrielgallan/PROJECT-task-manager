@@ -5,8 +5,8 @@ import { UsersRepository } from '../repositories/users-repository'
 
 type EditProfileUseCaseRequest = {
 	userId: string
-	name?: string
-	jobTitle?: string
+	name?: string | null
+	jobTitle?: string | null
 }
 
 type EditProfileUseCaseResponse = Either<ResourceNotFoundError, null>
@@ -26,9 +26,9 @@ export class EditProfileUseCase {
 			return left(new ResourceNotFoundError())
 		}
 
-		if (name) user.name = name
+		if (name !== undefined) user.name = name
 
-		if (jobTitle) user.jobTitle = jobTitle
+		if (jobTitle !== undefined) user.jobTitle = jobTitle
 
 		await this.usersRepository.save(user)
 

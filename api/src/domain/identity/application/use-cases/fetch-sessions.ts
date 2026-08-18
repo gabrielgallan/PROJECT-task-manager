@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { Either, left, right } from '@/core/types/either'
 import { Session } from '../../enterprise/entities/session'
@@ -10,6 +11,7 @@ type FetchSessionsUseCaseRequest = {
 
 type FetchSessionsUseCaseResponse = Either<ResourceNotFoundError, { sessions: Session[] }>
 
+@Injectable()
 export class FetchSessionsUseCase {
 	constructor(
 		private sessionsRepository: SessionsRepository,
