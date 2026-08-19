@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { type Either, right } from '@/core/types/either'
 import { Task, type TaskPriority, type TaskStatus } from '../../enterprise/entities/task'
@@ -15,6 +16,7 @@ type CreateTaskUseCaseRequest = {
 
 type CreateTaskUseCaseResponse = Either<null, { task: Task }>
 
+@Injectable()
 export class CreateTaskUseCase {
 	constructor(private tasksRepository: TasksRepository) {}
 

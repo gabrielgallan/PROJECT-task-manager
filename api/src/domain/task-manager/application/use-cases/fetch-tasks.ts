@@ -1,27 +1,37 @@
 import { type Either, right } from '@/core/types/either'
-import { type TaskPriority, type TaskStatus } from '../../enterprise/entities/task'
-
-type TaskFilterInput = {
-	search?: string
-	status?: TaskStatus[]
-	priority?: TaskPriority[]
-}
-
-type TaskSortInput = {
-	by: 'title' | 'status' | 'priority' | 'updatedAt' | 'dueDate'
-	dir: 'asc' | 'desc'
-}
+import { PaginatedList, PaginationInput } from '@/core/types/pagination'
+import { Task } from '../../enterprise/entities/task'
+import { TaskFilterInput, TaskSortInput, TasksRepository } from '../repositories/tasks-repository'
 
 type FetchTasksUseCaseRequest = {
 	userId: string
 	filters?: TaskFilterInput
 	sort?: TaskSortInput
+	pagination?: PaginationInput
 }
 
-type FetchTasksUseCaseResponse = Either<null, null>
+type FetchTasksUseCaseResponse = Either<
+	null,
+	{ data: Task[]; meta: PaginatedList<Task>['meta'] | undefined }
+>
 
 export class FetchTasksUseCase {
-	async execute({ userId }: FetchTasksUseCaseRequest): Promise<FetchTasksUseCaseResponse> {
-		return right(null)
+	constructor(private tasksRepository: TasksRepository) {}
+
+	async execute({
+		userId,
+		filters,
+		sort,
+		pagination,
+	}: FetchTasksUseCaseRequest): Promise<FetchTasksUseCaseResponse> {
+		if (pagination) {
+			const result = await this.tasksRepository.listByUserId(userId, pagination, filters, sort)
+
+			return right(result)
+		} else {
+			const data = await this.tasksRepository.fetchAllByUserId(userId, filters, sort)
+
+			return right({ data, meta: undefined })
+		}
 	}
 }

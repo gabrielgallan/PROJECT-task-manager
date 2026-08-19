@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 
-export class ApiPaginationMetaDto {
+export class PaginationMetaDto {
 	@ApiProperty({
 		example: 10,
 	})
