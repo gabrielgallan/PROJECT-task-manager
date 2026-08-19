@@ -1,16 +1,18 @@
 import { INestApplication } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
-import { addDays, subDays } from 'date-fns'
+import { addDays } from 'date-fns'
 import request from 'supertest'
+import { Hasher } from '@/domain/identity/application/cryptography/hasher'
 import { SessionTokenGenerator } from '@/domain/identity/application/cryptography/session-token-generator'
 import { SessionTokenHasher } from '@/domain/identity/application/cryptography/session-token-hasher'
 import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Fetch user sessions [E2E]', () => {
+describe('Change password [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
+	let hasher: Hasher
 	let sessionTokenGenerator: SessionTokenGenerator
 	let sessionTokenHasher: SessionTokenHasher
 
@@ -23,6 +25,8 @@ describe('Fetch user sessions [E2E]', () => {
 
 		prisma = moduleRef.get(PrismaService)
 
+		hasher = moduleRef.get(Hasher)
+
 		sessionTokenGenerator = moduleRef.get(SessionTokenGenerator)
 
 		sessionTokenHasher = moduleRef.get(SessionTokenHasher)
@@ -30,46 +34,42 @@ describe('Fetch user sessions [E2E]', () => {
 		await app.init()
 	})
 
-	it('[GET] /api/sessions', async () => {
+	it('[PATCH] /api/profile/password', async () => {
 		const sessionToken = sessionTokenGenerator.generate()
 
 		await prisma.user.create({
 			data: {
-				name: 'John Doe',
 				email: 'johndoe@email.com',
-				jobTitle: 'Developer',
+				passwordHash: await hasher.generate('johnDoe123'),
 				sessions: {
-					createMany: {
-						data: [
-							{
-								tokenHash: sessionTokenHasher.hash(sessionToken),
-								expiresAt: addDays(new Date(), 30),
-							},
-							{
-								tokenHash: sessionTokenHasher.hash(sessionTokenGenerator.generate()),
-								expiresAt: addDays(new Date(), 30),
-							},
-							{
-								tokenHash: sessionTokenHasher.hash(sessionTokenGenerator.generate()),
-								expiresAt: addDays(new Date(), 30),
-								revokedAt: subDays(new Date(), 2),
-							},
-							{
-								tokenHash: sessionTokenHasher.hash(sessionTokenGenerator.generate()),
-								expiresAt: subDays(new Date(), 2),
-							},
-						],
+					create: {
+						tokenHash: sessionTokenHasher.hash(sessionToken),
+						expiresAt: addDays(new Date(), 30),
 					},
 				},
 			},
 		})
 
-		const response = await request(app.getHttpServer())
-			.get('/api/sessions')
+		await request(app.getHttpServer())
+			.patch('/api/profile/password')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
-			.expect(200)
+			.send({
+				currentPassword: 'johnDoe123',
+				newPassword: 'johnNewPassword',
+			})
+			.expect(204)
 
-		expect(response.body.sessions).toHaveLength(2)
+		const user = await prisma.user.findUnique({
+			where: { email: 'johndoe@email.com' },
+		})
+
+		if (!user?.passwordHash) {
+			throw new Error('(Change Password [E2E]) - User without passwordHash!')
+		}
+
+		const isPasswordCorrect = await hasher.compare('johnNewPassword', user.passwordHash)
+
+		expect(isPasswordCorrect).toBe(true)
 	})
 
 	afterAll(async () => {

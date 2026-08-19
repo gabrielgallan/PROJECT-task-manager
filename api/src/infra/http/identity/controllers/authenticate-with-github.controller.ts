@@ -57,7 +57,7 @@ export class AuthenticateWithGithubController {
 			provider: AccountProvider.GITHUB,
 			code,
 			ipAddress: request.ip,
-			userAgent: request.header['user-agent'],
+			userAgent: request.header('user-agent'),
 		})
 
 		if (result.isLeft()) {

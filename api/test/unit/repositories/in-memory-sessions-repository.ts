@@ -22,21 +22,24 @@ export class InMemorySessionsRepository implements SessionsRepository {
 		return session ?? null
 	}
 
-	async fetchByUserId(userId: string) {
-		const sessions = this.items.filter((session) => session.userId.toString() === userId)
+	async fetchActiveByUserId(userId: string) {
+		const sessions = this.items.filter(
+			(session) =>
+				session.userId.toString() === userId && !session.isExpired() && !session.isRevoked(),
+		)
 
-		return sessions
+		const orderedByCreatedAt = sessions.sort(
+			(a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+		)
+
+		return orderedByCreatedAt
 	}
 
 	async revokeAllByUserId(userId: string, revokedAt: Date) {
 		let count = 0
 
 		this.items = this.items.map((session) => {
-			if (
-				session.userId.toString() !== userId ||
-				session.isRevoked() ||
-				session.isExpired()
-			) {
+			if (session.userId.toString() !== userId || session.isRevoked() || session.isExpired()) {
 				return session
 			}
 

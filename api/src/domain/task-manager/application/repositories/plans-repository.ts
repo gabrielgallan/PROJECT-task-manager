@@ -1,5 +1,5 @@
 import type { Plan } from '../../enterprise/entities/plan'
 
-export interface PlansRepository {
-	create(plan: Plan): Promise<void>
+export abstract class PlansRepository {
+	abstract create(plan: Plan): Promise<void>
 }

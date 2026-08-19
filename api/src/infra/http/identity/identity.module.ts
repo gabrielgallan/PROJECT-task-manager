@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { AuthenticateUseCase } from '@/domain/identity/application/use-cases/authenticate'
 import { AuthenticateWithProviderUseCase } from '@/domain/identity/application/use-cases/authenticate-with-provider'
+import { ChangePasswordUseCase } from '@/domain/identity/application/use-cases/change-password'
 import { DeleteUserUseCase } from '@/domain/identity/application/use-cases/delete-user'
 import { EditProfileUseCase } from '@/domain/identity/application/use-cases/edit-profile'
 import { FetchSessionsUseCase } from '@/domain/identity/application/use-cases/fetch-sessions'
@@ -19,6 +20,7 @@ import { StorageModule } from '../../storage/storage.module'
 import { AuthenticateController } from './controllers/authenticate.controller'
 import { AuthenticateWithGithubController } from './controllers/authenticate-with-github.controller'
 import { AuthenticateWithGoogleController } from './controllers/authenticate-with-google.controller'
+import { ChangePasswordController } from './controllers/change-password.controller'
 import { DeleteUserController } from './controllers/delete-user.controller'
 import { EditProfileController } from './controllers/edit-profile.controller'
 import { FetchSessionController } from './controllers/fetch-sessions.controller'
@@ -48,6 +50,7 @@ import { UploadAvatarController } from './controllers/upload-avatar.controller'
 		SignOutController,
 		DeleteUserController,
 		UploadAvatarController,
+		ChangePasswordController,
 	],
 	providers: [
 		RegisterUseCase,
@@ -62,6 +65,7 @@ import { UploadAvatarController } from './controllers/upload-avatar.controller'
 		RevokeAllSessionsUseCase,
 		DeleteUserUseCase,
 		UploadAvatarUseCase,
+		ChangePasswordUseCase,
 	],
 })
 export class IdentityModule {}

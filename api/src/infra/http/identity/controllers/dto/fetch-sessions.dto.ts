@@ -42,6 +42,11 @@ export class SessionDto {
 		deviceType?: string
 	} | null
 
+	@ApiProperty({
+		example: true,
+	})
+	isCurrent!: boolean
+
 	@ApiProperty()
 	createdAt!: Date
 

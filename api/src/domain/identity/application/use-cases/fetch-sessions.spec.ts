@@ -23,6 +23,12 @@ describe('Edit user profile [USE CASE]', () => {
 		)
 
 		sut = new FetchSessionsUseCase(sessionsRepository, usersRepository)
+
+		vi.useFakeTimers()
+	})
+
+	afterEach(() => {
+		vi.useRealTimers()
 	})
 
 	it('should be able to fetch user sessions', async () => {
@@ -48,8 +54,20 @@ describe('Edit user profile [USE CASE]', () => {
 				userId: new UniqueEntityID('user-1'),
 				ipAddress: '192.168.0.2',
 				userAgent: 'node-test',
+				expiresAt: new Date(2025, 0, 12),
 			}),
 		)
+
+		await sessionsRepository.create(
+			await makeSession({
+				userId: new UniqueEntityID('user-1'),
+				ipAddress: '192.168.0.3',
+				userAgent: 'node-test',
+				revokedAt: new Date(),
+			}),
+		)
+
+		vi.setSystemTime(new Date(2025, 0, 13))
 
 		const result = await sut.execute({
 			userId: 'user-1',
@@ -58,7 +76,7 @@ describe('Edit user profile [USE CASE]', () => {
 		expect(result.isRight())
 
 		if (result.isRight()) {
-			expect(result.value.sessions).toHaveLength(2)
+			expect(result.value.sessions).toHaveLength(1)
 		}
 	})
 

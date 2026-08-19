@@ -2,7 +2,7 @@ import { UAParser } from 'ua-parser-js'
 import { Session } from '@/domain/identity/enterprise/entities/session'
 
 export class SessionPresenter {
-	static toHTTP(session: Session) {
+	static toHTTP(session: Session, currentSessionId: string) {
 		let userAgent: UAParser.IResult | null = null
 
 		if (session.userAgent) {
@@ -20,6 +20,7 @@ export class SessionPresenter {
 						deviceType: userAgent.device.type,
 					}
 				: null,
+			isCurrent: session.id.toString() === currentSessionId,
 			createdAt: session.createdAt,
 			revokedAt: session.revokedAt ?? null,
 		}

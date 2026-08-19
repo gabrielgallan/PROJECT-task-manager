@@ -68,13 +68,13 @@ export class WorkLog extends Entity<WorkLogProps> {
 	}
 
 	set taskId(taskId: UniqueEntityID | null | undefined) {
-		this.props.taskId = taskId
+		this.props.taskId = taskId ?? null
 
 		this.touch()
 	}
 
 	set categoryId(categoryId: UniqueEntityID | null | undefined) {
-		this.props.categoryId = categoryId
+		this.props.categoryId = categoryId ?? null
 
 		this.touch()
 	}
@@ -86,7 +86,7 @@ export class WorkLog extends Entity<WorkLogProps> {
 	}
 
 	set description(description: string | null | undefined) {
-		this.props.description = description
+		this.props.description = description ?? null
 
 		this.touch()
 	}

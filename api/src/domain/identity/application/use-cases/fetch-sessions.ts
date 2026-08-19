@@ -25,7 +25,7 @@ export class FetchSessionsUseCase {
 			return left(new ResourceNotFoundError())
 		}
 
-		const sessions = await this.sessionsRepository.fetchByUserId(userId)
+		const sessions = await this.sessionsRepository.fetchActiveByUserId(userId)
 
 		return right({
 			sessions,

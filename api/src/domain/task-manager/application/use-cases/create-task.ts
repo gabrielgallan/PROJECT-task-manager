@@ -8,9 +8,9 @@ type CreateTaskUseCaseRequest = {
 	title: string
 	description?: string
 	status?: TaskStatus
-	priority: TaskPriority
-	startDate?: string
-	dueDate?: string
+	priority?: TaskPriority
+	startDate?: Date
+	dueDate?: Date
 }
 
 type CreateTaskUseCaseResponse = Either<null, { task: Task }>

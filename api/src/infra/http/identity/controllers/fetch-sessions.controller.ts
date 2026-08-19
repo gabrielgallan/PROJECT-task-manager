@@ -46,7 +46,9 @@ export class FetchSessionController {
 		}
 
 		return {
-			sessions: result.value.sessions.map(SessionPresenter.toHTTP),
+			sessions: result.value.sessions.map((session) =>
+				SessionPresenter.toHTTP(session, user.sessionId),
+			),
 		}
 	}
 }

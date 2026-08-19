@@ -42,10 +42,17 @@ export class PrismaSessionsRepository implements SessionsRepository {
 		return PrismaSessionMapper.toDomain(session)
 	}
 
-	async fetchByUserId(userId: string) {
+	async fetchActiveByUserId(userId: string) {
 		const sessions = await this.prisma.session.findMany({
 			where: {
 				userId,
+				revokedAt: null,
+				expiresAt: {
+					gt: new Date(),
+				},
+			},
+			orderBy: {
+				createdAt: 'desc',
 			},
 		})
 

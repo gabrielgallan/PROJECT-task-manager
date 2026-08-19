@@ -11,19 +11,23 @@ export interface TaskProps {
 	description?: string | null
 	status: TaskStatus
 	priority: TaskPriority
-	startDate?: string | null
-	dueDate?: string | null
+	startDate?: Date | null
+	dueDate?: Date | null
 	createdAt: Date
 	updatedAt?: Date | null
 }
 
 export class Task extends Entity<TaskProps> {
-	static create(props: Optional<TaskProps, 'createdAt' | 'status'>, id?: UniqueEntityID) {
+	static create(
+		props: Optional<TaskProps, 'createdAt' | 'status' | 'priority'>,
+		id?: UniqueEntityID,
+	) {
 		const task = new Task(
 			{
 				...props,
 				description: props.description ?? null,
 				status: props.status ?? 'BACKLOG',
+				priority: props.priority ?? 'LOW',
 				startDate: props.startDate ?? null,
 				dueDate: props.dueDate ?? null,
 				createdAt: props.createdAt ?? new Date(),
@@ -78,7 +82,7 @@ export class Task extends Entity<TaskProps> {
 	}
 
 	set description(description: string | null | undefined) {
-		this.props.description = description
+		this.props.description = description ?? null
 
 		this.touch()
 	}
@@ -95,14 +99,14 @@ export class Task extends Entity<TaskProps> {
 		this.touch()
 	}
 
-	set startDate(startDate: string | null | undefined) {
-		this.props.startDate = startDate
+	set startDate(startDate: Date | null | undefined) {
+		this.props.startDate = startDate ?? null
 
 		this.touch()
 	}
 
-	set dueDate(dueDate: string | null | undefined) {
-		this.props.dueDate = dueDate
+	set dueDate(dueDate: Date | null | undefined) {
+		this.props.dueDate = dueDate ?? null
 
 		this.touch()
 	}

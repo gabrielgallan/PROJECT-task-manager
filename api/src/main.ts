@@ -8,6 +8,7 @@ import { EnvService } from './infra/env/env.service'
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
 		logger: ['error', 'warn', 'log', 'verbose'],
+		cors: true,
 	})
 
 	const config = new DocumentBuilder().setTitle('task_manager API').setVersion('1.0').build()
