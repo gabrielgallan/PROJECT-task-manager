@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import { type Either, right } from '@/core/types/either'
 import { PaginatedList, PaginationInput } from '@/core/types/pagination'
 import { Task } from '../../enterprise/entities/task'
@@ -15,6 +16,7 @@ type FetchTasksUseCaseResponse = Either<
 	{ data: Task[]; meta: PaginatedList<Task>['meta'] | undefined }
 >
 
+@Injectable()
 export class FetchTasksUseCase {
 	constructor(private tasksRepository: TasksRepository) {}
 

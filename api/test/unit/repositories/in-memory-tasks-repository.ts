@@ -15,6 +15,12 @@ export class InMemoryTasksRepository implements TasksRepository {
 		return
 	}
 
+	async findById(taskId: string) {
+		const task = this.items.find((t) => t.id.toString() === taskId)
+
+		return task ?? null
+	}
+
 	async fetchAllByUserId(userId: string, filters?: TaskFilterInput, sort?: TaskSortInput) {
 		let tasks = this.items.filter((task) => task.userId.toString() === userId)
 
@@ -49,6 +55,22 @@ export class InMemoryTasksRepository implements TasksRepository {
 				total,
 			},
 		}
+	}
+
+	async save(task: Task) {
+		const taskIndex = this.items.findIndex((t) => t.id.toString() === task.id.toString())
+
+		if (taskIndex >= 0) {
+			this.items[taskIndex] = task
+		}
+
+		return
+	}
+
+	async delete(task: Task) {
+		this.items = this.items.filter((t) => t.id.toString() !== task.id.toString())
+
+		return
 	}
 
 	private filterTasks(tasks: Task[], filters?: TaskFilterInput): Task[] {

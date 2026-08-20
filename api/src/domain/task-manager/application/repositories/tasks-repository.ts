@@ -20,6 +20,7 @@ export type TaskOptionsCursor = {
 }
 export abstract class TasksRepository {
 	abstract create(task: Task): Promise<void>
+	abstract findById(taskId: string): Promise<Task | null>
 	abstract listByUserId(
 		userId: string,
 		pagination: PaginationInput,
@@ -31,10 +32,6 @@ export abstract class TasksRepository {
 		filters?: TaskFilterInput,
 		sort?: TaskSortInput,
 	): Promise<Task[]>
-	abstract fetchByUserIdWithCursor(
-		userId: string,
-		limit: number,
-		search?: string,
-		cursor?: TaskOptionsCursor,
-	)
+	abstract save(task: Task): Promise<void>
+	abstract delete(task: Task): Promise<void>
 }
