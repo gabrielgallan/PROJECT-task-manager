@@ -174,4 +174,104 @@ describe('Fetch tasks [USE CASE]', () => {
 			total: 16,
 		})
 	})
+
+	it('should normalize title and description searches', async () => {
+		await tasksRepository.create(
+			makeTask({
+				userId: new UniqueEntityID('user-1'),
+				title: 'Revisar autenticação',
+				description: 'Validar integração com o FRONTEND',
+			}),
+		)
+		await tasksRepository.create(
+			makeTask({
+				userId: new UniqueEntityID('user-1'),
+				title: 'Outra tarefa',
+				description: 'Sem correspondência',
+			}),
+		)
+
+		const byTitle = await sut.execute({
+			userId: 'user-1',
+			filters: { search: '  AUTENTICACAO  ' },
+		})
+		const byDescription = await sut.execute({
+			userId: 'user-1',
+			filters: { search: 'frontend' },
+		})
+
+		expect(byTitle.value?.data).toHaveLength(1)
+		expect(byDescription.value?.data).toHaveLength(1)
+		expect(byDescription.value?.data[0].title).toBe('Revisar autenticação')
+	})
+
+	it('should keep tasks without a due date last in both directions', async () => {
+		await tasksRepository.create(
+			makeTask({
+				userId: new UniqueEntityID('user-1'),
+				title: 'No due date',
+				dueDate: null,
+			}),
+		)
+		await tasksRepository.create(
+			makeTask({
+				userId: new UniqueEntityID('user-1'),
+				title: 'Earlier',
+				dueDate: new Date('2026-01-10T00:00:00.000Z'),
+			}),
+		)
+		await tasksRepository.create(
+			makeTask({
+				userId: new UniqueEntityID('user-1'),
+				title: 'Later',
+				dueDate: new Date('2026-01-20T00:00:00.000Z'),
+			}),
+		)
+
+		const ascending = await sut.execute({
+			userId: 'user-1',
+			sort: { by: 'dueDate', dir: 'asc' },
+		})
+		const descending = await sut.execute({
+			userId: 'user-1',
+			sort: { by: 'dueDate', dir: 'desc' },
+		})
+
+		expect(ascending.value?.data.map((task) => task.title)).toEqual([
+			'Earlier',
+			'Later',
+			'No due date',
+		])
+		expect(descending.value?.data.map((task) => task.title)).toEqual([
+			'Later',
+			'Earlier',
+			'No due date',
+		])
+	})
+
+	it('should sort titles accent-insensitively and break other ties by title ascending', async () => {
+		for (const title of ['zebra', 'Ábaco', 'banana']) {
+			await tasksRepository.create(
+				makeTask({
+					userId: new UniqueEntityID('user-1'),
+					title,
+					status: 'BACKLOG',
+				}),
+			)
+		}
+
+		const byTitle = await sut.execute({
+			userId: 'user-1',
+			sort: { by: 'title', dir: 'asc' },
+		})
+		const byStatusDescending = await sut.execute({
+			userId: 'user-1',
+			sort: { by: 'status', dir: 'desc' },
+		})
+
+		const expectedOrder = ['Ábaco', 'banana', 'zebra']
+
+		expect(byTitle.value?.data.map((task) => task.title)).toEqual(expectedOrder)
+		expect(byStatusDescending.value?.data.map((task) => task.title)).toEqual(expectedOrder)
+	})
 })

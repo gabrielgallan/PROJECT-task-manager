@@ -4,9 +4,9 @@ import z from 'zod'
 import { PaginationMetaDto } from '@/infra/http/dto/pagination-meta.dto'
 import { TaskDto } from '../../dtos/task.dto'
 
-const taskStatusSchema = z.enum(['BACKLOG', 'IN_PROGRESS', 'DONE'])
+export const taskStatusSchema = z.enum(['BACKLOG', 'IN_PROGRESS', 'DONE'])
 
-const taskPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
+export const taskPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
 
 const taskSortBySchema = z.enum(['title', 'status', 'priority', 'updatedAt', 'dueDate'])
 

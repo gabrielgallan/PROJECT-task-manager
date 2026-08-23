@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { type Either, right } from '@/core/types/either'
 import { Task, type TaskPriority, type TaskStatus } from '../../enterprise/entities/task'
-import type { TasksRepository } from '../repositories/tasks-repository'
+import { TasksRepository } from '../repositories/tasks-repository'
 
 type CreateTaskUseCaseRequest = {
 	userId: string

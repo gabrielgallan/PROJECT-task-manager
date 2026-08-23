@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { isAfter, isFuture, isSameDay } from 'date-fns'
+import { isAfter, isFuture } from 'date-fns'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
+import { isSameCalendarDay, isValidTimeZone } from '@/core/utils/time-zone'
 import { WorkLog } from '../../enterprise/entities/work-log'
 import { CategoriesRepository } from '../repositories/categories-repository'
 import { TasksRepository } from '../repositories/tasks-repository'
 import { WorkLogsRepository } from '../repositories/work-logs-repository'
 import { InvalidDatetimeError } from './errors/invalid-datetime-error'
+import { InvalidTimeZoneError } from './errors/invalid-time-zone-error'
 
 type EditWorkLogUseCaseRequest = {
 	userId: string
@@ -19,10 +21,11 @@ type EditWorkLogUseCaseRequest = {
 	description?: string | null
 	startsAt?: Date
 	endsAt?: Date
+	timeZone: string
 }
 
 type EditWorkLogUseCaseResponse = Either<
-	ResourceNotFoundError | NotAllowedError | InvalidDatetimeError,
+	ResourceNotFoundError | NotAllowedError | InvalidDatetimeError | InvalidTimeZoneError,
 	{ workLog: WorkLog }
 >
 
@@ -43,7 +46,12 @@ export class EditWorkLogUseCase {
 		description,
 		startsAt,
 		endsAt,
+		timeZone,
 	}: EditWorkLogUseCaseRequest): Promise<EditWorkLogUseCaseResponse> {
+		if (!isValidTimeZone(timeZone)) {
+			return left(new InvalidTimeZoneError())
+		}
+
 		const workLog = await this.workLogsRepository.findById(workLogId)
 
 		if (!workLog) {
@@ -78,7 +86,7 @@ export class EditWorkLogUseCase {
 			return left(new InvalidDatetimeError('endsAt must be after startsAt'))
 		}
 
-		if (!isSameDay(newStartsAt, newEndsAt)) {
+		if (!isSameCalendarDay(newStartsAt, newEndsAt, timeZone)) {
 			return left(new InvalidDatetimeError('startsAt and endsAt must be on the same day'))
 		}
 
@@ -90,9 +98,10 @@ export class EditWorkLogUseCase {
 			userId,
 			newStartsAt,
 			newEndsAt,
+			workLogId,
 		)
 
-		if (overlappingWorkLog && overlappingWorkLog.id.toString() !== workLogId) {
+		if (overlappingWorkLog) {
 			return left(new InvalidDatetimeError('The work log interval overlaps an existing work log'))
 		}
 

@@ -1,21 +1,17 @@
 import { Controller, Get, HttpCode, InternalServerErrorException, Query } from '@nestjs/common'
-import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { FetchTasksUseCase } from '@/domain/task-manager/application/use-cases/fetch-tasks'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
-import { Public } from '@/infra/auth/public.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { TaskPresenter } from '../presenters/task-presenter'
 import { parsePaginationQuery } from '../utils/parse-pagination-query'
 import { parseTaskSortQuery } from '../utils/parse-sort-query'
 import { FetchTasksDto, fetchTasksSchema } from './dto/fetch-tasks.dto'
 
-@ApiTags('Tasks')
-@Public()
 @Controller('/api/tasks')
 export class FetchTasksController {
 	constructor(private fetchTasks: FetchTasksUseCase) {}
 
-	@ApiOperation({ summary: 'fetch user tasks' })
 	@Get()
 	@HttpCode(200)
 	async handle(
@@ -45,7 +41,7 @@ export class FetchTasksController {
 		}
 
 		return {
-			data: result.value.data,
+			data: result.value.data.map(TaskPresenter.toHTTP),
 			meta: result.value.meta,
 		}
 	}

@@ -20,6 +20,7 @@ export abstract class PlansRepository {
 		range: PlanDateRangeInput,
 		filters?: PlanFilterInput,
 	): Promise<Plan[]>
+	abstract fetchAllByTaskId(userId: string, taskId: string): Promise<Plan[]>
 	abstract save(plan: Plan): Promise<void>
 	abstract delete(plan: Plan): Promise<void>
 }

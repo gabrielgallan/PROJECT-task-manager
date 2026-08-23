@@ -9,7 +9,7 @@ let plansRepository: InMemoryPlansRepository
 
 let sut: DeletePlanUseCase
 
-describe('Delete category [USE CASE]', () => {
+describe('Delete plan [USE CASE]', () => {
 	beforeEach(() => {
 		plansRepository = new InMemoryPlansRepository()
 
@@ -34,7 +34,7 @@ describe('Delete category [USE CASE]', () => {
 		expect(plansRepository.items).toHaveLength(0)
 	})
 
-	it('should not be able to delete a category of another plan', async () => {
+	it('should not be able to delete a plan of another user', async () => {
 		await plansRepository.create(
 			makePlan(
 				{

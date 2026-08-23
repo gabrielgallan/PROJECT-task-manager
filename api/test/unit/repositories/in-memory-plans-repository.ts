@@ -57,6 +57,18 @@ export class InMemoryPlansRepository implements PlansRepository {
 		return plans.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
 	}
 
+	async fetchAllByTaskId(userId: string, taskId: string) {
+		return this.items
+			.filter(
+				(plan) => plan.userId.toString() === userId && plan.taskId?.toString() === taskId,
+			)
+			.sort(
+				(a, b) =>
+					b.startsAt.getTime() - a.startsAt.getTime() ||
+					a.id.toString().localeCompare(b.id.toString()),
+			)
+	}
+
 	async save(plan: Plan) {
 		const planIndex = this.items.findIndex((p) => p.id.toString() === plan.id.toString())
 

@@ -1,6 +1,10 @@
 import { PaginationInput } from '@/core/types/pagination'
+import { normalizeSearchText } from '@/core/utils/text'
 import {
 	TaskFilterInput,
+	TaskOption,
+	TaskOptionsCursor,
+	TaskOptionsInput,
 	TaskSortInput,
 	TasksRepository,
 } from '@/domain/task-manager/application/repositories/tasks-repository'
@@ -19,6 +23,39 @@ export class InMemoryTasksRepository implements TasksRepository {
 		const task = this.items.find((t) => t.id.toString() === taskId)
 
 		return task ?? null
+	}
+
+	async fetchOptionsByUserId(userId: string, input: TaskOptionsInput) {
+		let options: TaskOption[] = this.items
+			.filter((task) => task.userId.toString() === userId)
+			.map((task) => ({ id: task.id, title: task.title }))
+
+		if (input.search) {
+			const search = normalizeSearchText(input.search)
+
+			options = options.filter((option) => normalizeSearchText(option.title).includes(search))
+		}
+
+		options.sort(compareTaskOptions)
+
+		if (input.cursor) {
+			const cursor = input.cursor
+
+			options = options.filter((option) => isTaskOptionAfterCursor(option, cursor))
+		}
+
+		const page = options.slice(0, input.limit + 1)
+		const hasNextPage = page.length > input.limit
+		const items = page.slice(0, input.limit)
+		const lastItem = items.at(-1)
+
+		return {
+			items,
+			nextCursor:
+				hasNextPage && lastItem
+					? { title: lastItem.title, id: lastItem.id.toString() }
+					: null,
+		}
 	}
 
 	async fetchAllByUserId(userId: string, filters?: TaskFilterInput, sort?: TaskSortInput) {
@@ -81,9 +118,13 @@ export class InMemoryTasksRepository implements TasksRepository {
 		let result = tasks
 
 		if (filters.search) {
-			const search = filters.search.toLowerCase()
+			const search = normalizeSearchText(filters.search)
 
-			result = result.filter((task) => task.title.toLowerCase().includes(search))
+			result = result.filter(
+				(task) =>
+					normalizeSearchText(task.title).includes(search) ||
+					normalizeSearchText(task.description ?? '').includes(search),
+			)
 		}
 
 		if (filters.status?.length) {
@@ -116,11 +157,20 @@ export class InMemoryTasksRepository implements TasksRepository {
 		}
 
 		return tasks.sort((a, b) => {
+			const compareTitles = () =>
+				normalizeSearchText(a.title).localeCompare(normalizeSearchText(b.title))
+
+			if (sort.by === 'dueDate') {
+				if (!a.dueDate && !b.dueDate) return compareTitles()
+				if (!a.dueDate) return 1
+				if (!b.dueDate) return -1
+			}
+
 			let comparison = 0
 
 			switch (sort.by) {
 				case 'title':
-					comparison = a.title.localeCompare(b.title)
+					comparison = compareTitles()
 					break
 
 				case 'priority':
@@ -136,11 +186,30 @@ export class InMemoryTasksRepository implements TasksRepository {
 					break
 
 				case 'dueDate':
-					comparison = (a.dueDate?.getTime() ?? 0) - (b.dueDate?.getTime() ?? 0)
+					comparison = a.dueDate!.getTime() - b.dueDate!.getTime()
 					break
 			}
+
+			if (comparison === 0) return compareTitles()
 
 			return sort.dir === 'asc' ? comparison : -comparison
 		})
 	}
+}
+
+function compareTaskOptions(a: TaskOption, b: TaskOption) {
+	const titleComparison = normalizeSearchText(a.title).localeCompare(normalizeSearchText(b.title))
+
+	return titleComparison || a.id.toString().localeCompare(b.id.toString())
+}
+
+function isTaskOptionAfterCursor(option: TaskOption, cursor: TaskOptionsCursor) {
+	const titleComparison = normalizeSearchText(option.title).localeCompare(
+		normalizeSearchText(cursor.title),
+	)
+
+	return (
+		titleComparison > 0 ||
+		(titleComparison === 0 && option.id.toString().localeCompare(cursor.id) > 0)
+	)
 }

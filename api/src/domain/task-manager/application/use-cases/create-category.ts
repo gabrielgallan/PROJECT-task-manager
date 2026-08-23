@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
-import { type Either, right } from '@/core/types/either'
-import { Category } from '../../enterprise/entities/category'
+import { type Either, left, right } from '@/core/types/either'
+import { normalizeDisplayText } from '@/core/utils/text'
+import { Category, isCategoryColor } from '../../enterprise/entities/category'
 import { CategoriesRepository } from '../repositories/categories-repository'
+import { InvalidCategoryError } from './errors/invalid-category-error'
 
 type CreateCategoryUseCaseRequest = {
 	userId: string
@@ -10,7 +12,7 @@ type CreateCategoryUseCaseRequest = {
 	color: string
 }
 
-type CreateCategoryUseCaseResponse = Either<null, { category: Category }>
+type CreateCategoryUseCaseResponse = Either<InvalidCategoryError, { category: Category }>
 
 @Injectable()
 export class CreateCategoryUseCase {
@@ -21,9 +23,19 @@ export class CreateCategoryUseCase {
 		name,
 		color,
 	}: CreateCategoryUseCaseRequest): Promise<CreateCategoryUseCaseResponse> {
+		const normalizedName = normalizeDisplayText(name)
+
+		if (normalizedName.length < 1 || normalizedName.length > 40) {
+			return left(new InvalidCategoryError('Category name must be between 1 and 40 characters'))
+		}
+
+		if (!isCategoryColor(color)) {
+			return left(new InvalidCategoryError('Invalid category color'))
+		}
+
 		const category = Category.create({
 			userId: new UniqueEntityID(userId),
-			name,
+			name: normalizedName,
 			color,
 		})
 

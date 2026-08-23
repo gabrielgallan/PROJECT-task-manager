@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common'
-import { isAfter, isFuture, isSameDay } from 'date-fns'
+import { isAfter, isFuture } from 'date-fns'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
+import { isSameCalendarDay, isValidTimeZone } from '@/core/utils/time-zone'
 import { WorkLog } from '../../enterprise/entities/work-log'
 import { CategoriesRepository } from '../repositories/categories-repository'
 import { TasksRepository } from '../repositories/tasks-repository'
 import { WorkLogsRepository } from '../repositories/work-logs-repository'
 import { InvalidDatetimeError } from './errors/invalid-datetime-error'
+import { InvalidTimeZoneError } from './errors/invalid-time-zone-error'
 
 type CreateWorkLogUseCaseRequest = {
 	userId: string
@@ -18,10 +20,11 @@ type CreateWorkLogUseCaseRequest = {
 	description?: string
 	startsAt: Date
 	endsAt: Date
+	timeZone: string
 }
 
 type CreateWorkLogUseCaseResponse = Either<
-	ResourceNotFoundError | NotAllowedError | InvalidDatetimeError,
+	ResourceNotFoundError | NotAllowedError | InvalidDatetimeError | InvalidTimeZoneError,
 	{ workLog: WorkLog }
 >
 
@@ -41,12 +44,17 @@ export class CreateWorkLogUseCase {
 		description,
 		startsAt,
 		endsAt,
+		timeZone,
 	}: CreateWorkLogUseCaseRequest): Promise<CreateWorkLogUseCaseResponse> {
+		if (!isValidTimeZone(timeZone)) {
+			return left(new InvalidTimeZoneError())
+		}
+
 		if (!isAfter(endsAt, startsAt)) {
 			return left(new InvalidDatetimeError('endsAt must be after startsAt'))
 		}
 
-		if (!isSameDay(startsAt, endsAt)) {
+		if (!isSameCalendarDay(startsAt, endsAt, timeZone)) {
 			return left(new InvalidDatetimeError('startsAt and endsAt must be on the same day'))
 		}
 
