@@ -1,7 +1,14 @@
 import { CategoriesRepository } from '@/domain/task-manager/application/repositories/categories-repository'
 import { Category } from '@/domain/task-manager/enterprise/entities/category'
+import { InMemoryPlansRepository } from './in-memory-plans-repository'
+import { InMemoryWorkLogsRepository } from './in-memory-work-logs-repository'
 
 export class InMemoryCategoriesRepository implements CategoriesRepository {
+	constructor(
+		private plansRepository: InMemoryPlansRepository,
+		private workLogsRepository: InMemoryWorkLogsRepository,
+	) {}
+
 	public items: Category[] = []
 
 	async create(category: Category) {
@@ -20,6 +27,18 @@ export class InMemoryCategoriesRepository implements CategoriesRepository {
 		const categories = this.items.filter((c) => c.userId.toString() === userId)
 
 		return categories
+	}
+
+	async countRelatedRecords(categoryId: string) {
+		const plans = this.plansRepository.items.filter((p) => p.categoryId?.toString() === categoryId)
+		const workLogs = this.workLogsRepository.items.filter(
+			(w) => w.categoryId?.toString() === categoryId,
+		)
+
+		return {
+			plansCount: plans.length,
+			workLogsCount: workLogs.length,
+		}
 	}
 
 	async save(category: Category) {

@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common'
-import { isAfter } from 'date-fns'
+import { isAfter, isFuture, isSameDay } from 'date-fns'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { type Either, left, right } from '@/core/types/either'
-import { Plan } from '../../enterprise/entities/plan'
+import { WorkLog } from '../../enterprise/entities/work-log'
 import { CategoriesRepository } from '../repositories/categories-repository'
-import { PlansRepository } from '../repositories/plans-repository'
 import { TasksRepository } from '../repositories/tasks-repository'
+import { WorkLogsRepository } from '../repositories/work-logs-repository'
 import { InvalidDatetimeError } from './errors/invalid-datetime-error'
 
-type EditPlanUseCaseRequest = {
+type EditWorkLogUseCaseRequest = {
 	userId: string
-	planId: string
+	workLogId: string
 	taskId?: string | null
 	categoryId?: string | null
 	title?: string
@@ -21,36 +21,36 @@ type EditPlanUseCaseRequest = {
 	endsAt?: Date
 }
 
-type EditPlanUseCaseResponse = Either<
+type EditWorkLogUseCaseResponse = Either<
 	ResourceNotFoundError | NotAllowedError | InvalidDatetimeError,
-	{ plan: Plan }
+	{ workLog: WorkLog }
 >
 
 @Injectable()
-export class EditPlanUseCase {
+export class EditWorkLogUseCase {
 	constructor(
-		private plansRepository: PlansRepository,
+		private workLogsRepository: WorkLogsRepository,
 		private tasksRepository: TasksRepository,
 		private categoriesRepository: CategoriesRepository,
 	) {}
 
 	async execute({
 		userId,
-		planId,
+		workLogId,
 		taskId,
 		categoryId,
 		title,
 		description,
 		startsAt,
 		endsAt,
-	}: EditPlanUseCaseRequest): Promise<EditPlanUseCaseResponse> {
-		const plan = await this.plansRepository.findById(planId)
+	}: EditWorkLogUseCaseRequest): Promise<EditWorkLogUseCaseResponse> {
+		const workLog = await this.workLogsRepository.findById(workLogId)
 
-		if (!plan) {
+		if (!workLog) {
 			return left(new ResourceNotFoundError())
 		}
 
-		if (plan.userId.toString() !== userId) {
+		if (workLog.userId.toString() !== userId) {
 			return left(new NotAllowedError())
 		}
 
@@ -70,36 +70,54 @@ export class EditPlanUseCase {
 			if (category.userId.toString() !== userId) return left(new NotAllowedError())
 		}
 
-		const newStartsAt = startsAt ?? plan.startsAt
+		const newStartsAt = startsAt ?? workLog.startsAt
 
-		const newEndsAt = endsAt ?? plan.endsAt
+		const newEndsAt = endsAt ?? workLog.endsAt
 
 		if (!isAfter(newEndsAt, newStartsAt)) {
 			return left(new InvalidDatetimeError('endsAt must be after startsAt'))
 		}
 
+		if (!isSameDay(newStartsAt, newEndsAt)) {
+			return left(new InvalidDatetimeError('startsAt and endsAt must be on the same day'))
+		}
+
+		if (isFuture(newEndsAt)) {
+			return left(new InvalidDatetimeError('endsAt cannot be in the future'))
+		}
+
+		const overlappingWorkLog = await this.workLogsRepository.findByUserIdOverlapping(
+			userId,
+			newStartsAt,
+			newEndsAt,
+		)
+
+		if (overlappingWorkLog && overlappingWorkLog.id.toString() !== workLogId) {
+			return left(new InvalidDatetimeError('The work log interval overlaps an existing work log'))
+		}
+
 		if (taskId !== undefined) {
-			plan.taskId = taskId ? new UniqueEntityID(taskId) : null
+			workLog.taskId = taskId ? new UniqueEntityID(taskId) : null
 		}
 
 		if (categoryId !== undefined) {
-			plan.categoryId = categoryId ? new UniqueEntityID(categoryId) : null
+			workLog.categoryId = categoryId ? new UniqueEntityID(categoryId) : null
 		}
 
 		if (title !== undefined) {
-			plan.title = title
+			workLog.title = title
 		}
 
 		if (description !== undefined) {
-			plan.description = description
+			workLog.description = description
 		}
 
-		plan.startsAt = newStartsAt
+		workLog.startsAt = newStartsAt
 
-		plan.endsAt = newEndsAt
+		workLog.endsAt = newEndsAt
 
-		await this.plansRepository.save(plan)
+		await this.workLogsRepository.save(workLog)
 
-		return right({ plan })
+		return right({ workLog })
 	}
 }

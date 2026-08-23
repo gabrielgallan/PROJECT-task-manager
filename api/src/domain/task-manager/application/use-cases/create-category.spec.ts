@@ -1,4 +1,6 @@
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
+import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
+import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
 import { CreateCategoryUseCase } from './create-category'
 
 let categoriesRepository: InMemoryCategoriesRepository
@@ -7,8 +9,10 @@ let sut: CreateCategoryUseCase
 
 describe('Create category [USE CASE]', () => {
 	beforeEach(() => {
-		categoriesRepository = new InMemoryCategoriesRepository()
-
+		categoriesRepository = new InMemoryCategoriesRepository(
+			new InMemoryPlansRepository(),
+			new InMemoryWorkLogsRepository(),
+		)
 		sut = new CreateCategoryUseCase(categoriesRepository)
 	})
 

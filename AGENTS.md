@@ -1,44 +1,43 @@
-# Contexto do projeto
+# Project Context
 
-Este projeto é uma aplicação de produtividade pessoal. Nesta fase, o foco está em compreender as necessidades dos usuários, definir as páginas e estruturar a experiência visual do frontend antes da implementação efetiva da API e da persistência em banco de dados.
+This repository contains a personal productivity application. The current goal is to validate the product flows and domain boundaries before completing the API integration and replacing the frontend prototype state with persisted data.
 
-O frontend é desenvolvido em React com dados estáticos e mocks. As decisões atuais devem favorecer a exploração e a validação dos fluxos, sem antecipar regras de negócio que ainda não foram definidas.
+## Core Concepts
 
-## Conceitos centrais
+The application coordinates three related but independent resources:
 
-A aplicação coordena três recursos relacionados, mas independentes:
+- **Tasks** describe what needs to be accomplished. A Task is a single unit of work even when it spans several weeks; do not assume projects or subtasks without an explicit product decision.
+- **Plans** describe when the user intends to work. They are calendar time blocks and may optionally reference a Task.
+- **Work Logs** describe what was actually done during a time interval. They form the work history and may optionally reference a Task.
 
-- **Tasks (tarefas):** objetivos ou demandas isoladas que precisam ser concluídos. Podem representar desde uma atividade curta até um trabalho com duração de várias semanas e geralmente possuem uma data de entrega ou validade. Mesmo quando extensa, uma Task continua sendo uma unidade de trabalho; não presumir uma estrutura de projeto ou subtarefas sem uma decisão futura.
-- **Plans (planos):** blocos de tempo que representam a intenção de trabalhar em algo, ajudando a planejar o dia, a semana ou o mês. A principal referência visual é a experiência de calendário do Microsoft Teams. Um Plan pode existir sozinho ou apontar opcionalmente para uma Task.
-- **Work Logs (registros de trabalho):** registros do que realmente foi realizado em determinado período. Servem como histórico consultável e, futuramente, como fonte para relatórios e planilhas de horas. Um Work Log pode existir sozinho ou apontar opcionalmente para uma Task.
+Keep the distinction explicit:
 
-A distinção de domínio deve permanecer explícita:
+- A Task defines an outcome.
+- A Plan reserves intended time.
+- A Work Log records actual time.
 
-- Task define **o que precisa ser alcançado**.
-- Plan define **quando se pretende trabalhar**.
-- Work Log registra **o que de fato foi feito**.
+Each module must remain useful on its own. Links between them are optional enhancements, not prerequisites for completing an isolated flow.
 
-Nenhum dos três módulos deve depender dos outros para ser útil. As integrações são opcionais e devem enriquecer a experiência sem tornar um fluxo isolado incompleto.
+Categories are optional visual classifications for Plans and Work Logs. They are not part of Tasks.
 
-## Áreas da aplicação
+## Product Areas
 
-- **Operacional:** escopo atual, com cadastros, edições, exclusões, consultas e visualizações de Tasks, Plans e Work Logs.
-- **Administrativa:** escopo futuro, destinado a dashboards, relatórios e exportações. Não é prioridade nesta fase.
+- **Operational:** Tasks, Plans, Work Logs, Categories, and their create, edit, delete, query, and visualization flows. This is the primary scope.
+- **Administrative:** dashboards, reports, and exports. These exist in the frontend prototype but are not the current backend priority.
+- **Identity:** registration, authentication, profile, credentials, and sessions.
 
-## Estado atual
+## Current State
 
-- O frontend fica em `web/` e usa React, TypeScript, Vite, Tailwind CSS e componentes shadcn/ui.
-- A navegação operacional já apresenta Tasks, Plans e Work Logs.
-- A página de Plans é a área mais desenvolvida: possui calendário com visualizações de dia, semana, mês e agenda, dados mockados e operações locais de criação, edição e exclusão.
-- A relação opcional entre Plan e Task já aparece no modelo visual por meio de `taskId` anulável.
-- A página de Tasks ainda é um placeholder, e Work Logs ainda não possui uma rota/tela implementada.
-- A API e o domínio de backend ainda estão em estágio inicial e não devem conduzir prematuramente o design do frontend.
+- `web/` is a functional React prototype backed by static mocks and in-memory state. It contains operational pages plus Dashboard, Reports, Settings, and Identity screens.
+- `api/` is a NestJS application. Identity is implemented end to end. The Task Manager domain is partially implemented, with several unit-tested use cases but little HTTP wiring and no Task Manager persistence yet.
+- `api/STATUS.md` is the canonical backend coverage and roadmap document.
+- Technology-specific architecture and conventions are documented in `web/AGENTS.md` and `api/AGENTS.md`.
 
-## Diretrizes para a evolução
+## Product Direction
 
-- Priorizar clareza operacional e leitura rápida, especialmente nas visualizações de tempo.
-- Manter visualmente clara a diferença entre planejamento e trabalho realizado.
-- Projetar primeiro os fluxos e estados das páginas com dados estáticos; integrar API e banco quando os conceitos estiverem mais maduros.
-- Preservar a possibilidade de usar somente Tasks, somente Plans ou somente Work Logs.
-- Evitar adicionar dashboards, relatórios complexos ou regras rígidas de integração antes que entrem explicitamente no escopo.
-- Tratar este documento como contexto inicial, não como uma especificação fechada. Atualizá-lo à medida que o domínio e o produto ganharem definições reais.
+- Favor clear operational workflows and fast scanning, especially in time-based views.
+- Keep planned time visually and conceptually distinct from completed work.
+- Continue validating flows with static data where the product rules are not mature.
+- Do not let the current backend implementation prematurely redefine frontend concepts.
+- Avoid introducing dashboards, complex reports, projects, subtasks, or rigid cross-module dependencies unless they explicitly enter scope.
+- Treat these documents as living context and update them when the implementation or product decisions change.
