@@ -9,11 +9,15 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Crate task [E2E]', () => {
+describe('Delete category [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
 	let sessionTokenHasher: SessionTokenHasher
+
+	let userId: string
+	let categoryId: string
+	let sessionToken: string
 
 	beforeAll(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -29,12 +33,10 @@ describe('Crate task [E2E]', () => {
 		sessionTokenHasher = moduleRef.get(SessionTokenHasher)
 
 		await app.init()
-	})
 
-	it('[POST] /api/tasks', async () => {
-		const sessionToken = sessionTokenGenerator.generate()
-
-		const [userId] = UUIDGenerator(1)
+		userId = UUIDGenerator(1)[0]
+		categoryId = UUIDGenerator(1)[0]
+		sessionToken = sessionTokenGenerator.generate()
 
 		await prisma.user.create({
 			data: {
@@ -48,32 +50,26 @@ describe('Crate task [E2E]', () => {
 						expiresAt: addDays(new Date(), 30),
 					},
 				},
+				categories: {
+					create: {
+						id: categoryId,
+						name: 'Work Meeting',
+						color: 'blue',
+					},
+				},
 			},
 		})
+	})
 
+	it('[DELETE] /api/categories/:categoryId', async () => {
 		await request(app.getHttpServer())
-			.post('/api/tasks')
+			.delete(`/api/categories/${categoryId}`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
-			.send({
-				title: 'Fix auth feature',
-				status: 'BACKLOG',
-				priority: 'MEDIUM',
-				startDate: '2026-08-26',
-				dueDate: '2026-08-28',
-			})
-			.expect(201)
+			.expect(204)
 
-		const task = await prisma.task.findFirst({
-			where: {
-				userId,
-			},
-		})
+		const category = await prisma.category.findUnique({ where: { id: categoryId } })
 
-		expect(task?.title).toBe('Fix auth feature')
-		expect(task?.status).toBe('BACKLOG')
-		expect(task?.priority).toBe('MEDIUM')
-		expect(task?.startDate).toEqual(new Date('2026-08-26'))
-		expect(task?.dueDate).toEqual(new Date('2026-08-28'))
+		expect(category).toBeNull()
 	})
 
 	afterAll(async () => {

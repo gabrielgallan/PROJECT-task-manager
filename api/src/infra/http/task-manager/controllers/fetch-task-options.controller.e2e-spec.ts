@@ -9,11 +9,14 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Crate task [E2E]', () => {
+describe('Fetch task options [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
 	let sessionTokenHasher: SessionTokenHasher
+
+	let userId: string
+	let sessionToken: string
 
 	beforeAll(async () => {
 		const moduleRef = await Test.createTestingModule({
@@ -29,12 +32,9 @@ describe('Crate task [E2E]', () => {
 		sessionTokenHasher = moduleRef.get(SessionTokenHasher)
 
 		await app.init()
-	})
 
-	it('[POST] /api/tasks', async () => {
-		const sessionToken = sessionTokenGenerator.generate()
-
-		const [userId] = UUIDGenerator(1)
+		userId = UUIDGenerator(1)[0]
+		sessionToken = sessionTokenGenerator.generate()
 
 		await prisma.user.create({
 			data: {
@@ -48,32 +48,63 @@ describe('Crate task [E2E]', () => {
 						expiresAt: addDays(new Date(), 30),
 					},
 				},
+				tasks: {
+					createMany: {
+						data: [
+							{
+								title: 'Add auth feat',
+							},
+							{
+								title: 'Add session feat',
+							},
+							{
+								title: 'Add checkout feat',
+							},
+							{
+								title: 'Add products feat',
+							},
+							{
+								title: 'Add payments feat',
+							},
+							{
+								title: 'Add users feat',
+							},
+							{
+								title: 'Remove notifications feat',
+							},
+							{
+								title: 'Remove .env',
+							},
+						],
+					},
+				},
 			},
 		})
+	})
 
-		await request(app.getHttpServer())
-			.post('/api/tasks')
+	it('[GET] /api/tasks/options', async () => {
+		const response1 = await request(app.getHttpServer())
+			.get('/api/tasks/options')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
-			.send({
-				title: 'Fix auth feature',
-				status: 'BACKLOG',
-				priority: 'MEDIUM',
-				startDate: '2026-08-26',
-				dueDate: '2026-08-28',
+			.query({
+				q: 'task',
+				limit: 5,
 			})
-			.expect(201)
+			.expect(200)
 
-		const task = await prisma.task.findFirst({
-			where: {
-				userId,
-			},
-		})
+		expect(response1.body.data).toHaveLength(5)
 
-		expect(task?.title).toBe('Fix auth feature')
-		expect(task?.status).toBe('BACKLOG')
-		expect(task?.priority).toBe('MEDIUM')
-		expect(task?.startDate).toEqual(new Date('2026-08-26'))
-		expect(task?.dueDate).toEqual(new Date('2026-08-28'))
+		const response2 = await request(app.getHttpServer())
+			.get('/api/tasks/options')
+			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
+			.query({
+				q: 'task',
+				limit: 5,
+				cursor: response1.body.meta.nextCursor,
+			})
+			.expect(200)
+
+		expect(response2.body.data).toHaveLength(2)
 	})
 
 	afterAll(async () => {
