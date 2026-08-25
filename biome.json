@@ -20,9 +20,11 @@
       "complexity": {
         "noStaticOnlyClass": "off"
       },
-      "recommended": true,
       "style": {
         "useImportType": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "off"
       }
     }
   },

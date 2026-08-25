@@ -6,7 +6,7 @@ import { WorkLogsRepository } from '../repositories/work-logs-repository'
 
 type DeleteWorkLogUseCaseRequest = {
 	userId: string
-	worklogId: string
+	workLogId: string
 }
 
 type DeleteWorkLogUseCaseResponse = Either<ResourceNotFoundError | NotAllowedError, null>
@@ -17,9 +17,9 @@ export class DeleteWorkLogUseCase {
 
 	async execute({
 		userId,
-		worklogId,
+		workLogId,
 	}: DeleteWorkLogUseCaseRequest): Promise<DeleteWorkLogUseCaseResponse> {
-		const workLog = await this.worklogsRepository.findById(worklogId)
+		const workLog = await this.worklogsRepository.findById(workLogId)
 
 		if (!workLog) {
 			return left(new ResourceNotFoundError())

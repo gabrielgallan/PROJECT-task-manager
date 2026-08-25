@@ -29,7 +29,7 @@ describe('Delete work-log [USE CASE]', () => {
 
 		await sut.execute({
 			userId: 'user-1',
-			worklogId: 'work-log-1',
+			workLogId: 'work-log-1',
 		})
 
 		expect(workLogsRepository.items).toHaveLength(0)
@@ -47,7 +47,7 @@ describe('Delete work-log [USE CASE]', () => {
 
 		const result = await sut.execute({
 			userId: 'user-2',
-			worklogId: 'work-log-1',
+			workLogId: 'work-log-1',
 		})
 
 		expect(result.value).instanceOf(NotAllowedError)
@@ -56,7 +56,7 @@ describe('Delete work-log [USE CASE]', () => {
 	it('should not be able to delete a non-existentr work-log', async () => {
 		const result = await sut.execute({
 			userId: 'user-1',
-			worklogId: 'work-log-1',
+			workLogId: 'work-log-1',
 		})
 
 		expect(result.value).instanceOf(ResourceNotFoundError)

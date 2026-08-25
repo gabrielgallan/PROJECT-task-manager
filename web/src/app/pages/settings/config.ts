@@ -1,4 +1,4 @@
-import { Bell, Settings2, Shield, Tags, UserRound } from 'lucide-react'
+import { Settings2, Shield, Tags, UserRound } from 'lucide-react'
 
 export const SETTINGS_TABS = [
 	{
@@ -7,12 +7,12 @@ export const SETTINGS_TABS = [
 		icon: UserRound,
 		keywords: ['account', 'user', 'name', 'email', 'avatar'],
 	},
-	{
-		value: 'notifications',
-		label: 'Notifications',
-		icon: Bell,
-		keywords: ['alerts', 'reminders', 'channels', 'summary'],
-	},
+	// {
+	// 	value: 'notifications',
+	// 	label: 'Notifications',
+	// 	icon: Bell,
+	// 	keywords: ['alerts', 'reminders', 'channels', 'summary'],
+	// },
 	{
 		value: 'security',
 		label: 'Security',
