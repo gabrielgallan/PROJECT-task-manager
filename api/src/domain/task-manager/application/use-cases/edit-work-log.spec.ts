@@ -1,12 +1,10 @@
 import { makeCategory } from 'test/unit/factories/make-category'
 import { makeTask } from 'test/unit/factories/make-tasks'
 import { makeWorkLog } from 'test/unit/factories/make-work-logs'
-import {
-	InMemoryCategoriesRepository,
-} from 'test/unit/repositories/in-memory-categories-repository'
-import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
+import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -22,12 +20,8 @@ let sut: EditWorkLogUseCase
 
 describe('Edit work-log [USE CASE]', () => {
 	beforeEach(() => {
-		workLogsRepository = new InMemoryWorkLogsRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			new InMemoryPlansRepository(),
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ workLogsRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
 		sut = new EditWorkLogUseCase(workLogsRepository, tasksRepository, categoriesRepository)
 	})
@@ -145,10 +139,7 @@ describe('Edit work-log [USE CASE]', () => {
 		})
 
 		await tasksRepository.create(
-			makeTask(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('task-1'),
-			),
+			makeTask({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('task-1')),
 		)
 
 		const anotherUserTask = await sut.execute({
@@ -165,10 +156,7 @@ describe('Edit work-log [USE CASE]', () => {
 		})
 
 		await categoriesRepository.create(
-			makeCategory(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('category-1'),
-			),
+			makeCategory({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('category-1')),
 		)
 
 		const anotherUserCategory = await sut.execute({
@@ -228,10 +216,7 @@ describe('Edit work-log [USE CASE]', () => {
 
 	it('should switch optional relations while preserving omitted content', async () => {
 		await categoriesRepository.create(
-			makeCategory(
-				{ userId: new UniqueEntityID('user-1') },
-				new UniqueEntityID('category-1'),
-			),
+			makeCategory({ userId: new UniqueEntityID('user-1') }, new UniqueEntityID('category-1')),
 		)
 		await workLogsRepository.create(
 			makeWorkLog(
@@ -299,8 +284,6 @@ describe('Edit work-log [USE CASE]', () => {
 
 		expect(result.value).toBeInstanceOf(InvalidDatetimeError)
 		expect(result.value.message).toBe('The work log interval overlaps an existing work log')
-		expect(workLogsRepository.items[0].startsAt).toEqual(
-			new Date('2026-01-12T08:00:00.000Z'),
-		)
+		expect(workLogsRepository.items[0].startsAt).toEqual(new Date('2026-01-12T08:00:00.000Z'))
 	})
 })

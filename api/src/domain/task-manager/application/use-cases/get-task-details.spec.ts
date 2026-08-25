@@ -4,6 +4,7 @@ import { makeWorkLog } from 'test/unit/factories/make-work-logs'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -16,9 +17,8 @@ let sut: GetTaskDetailsUseCase
 
 describe('Get task details [USE CASE]', () => {
 	beforeEach(() => {
-		tasksRepository = new InMemoryTasksRepository()
-		plansRepository = new InMemoryPlansRepository()
-		workLogsRepository = new InMemoryWorkLogsRepository()
+		;({ tasksRepository, plansRepository, workLogsRepository } =
+			makeInMemoryTaskManagerRepositories())
 		sut = new GetTaskDetailsUseCase(tasksRepository, plansRepository, workLogsRepository)
 	})
 
@@ -107,10 +107,7 @@ describe('Get task details [USE CASE]', () => {
 
 	it('should return an empty history', async () => {
 		await tasksRepository.create(
-			makeTask(
-				{ userId: new UniqueEntityID('user-1') },
-				new UniqueEntityID('task-1'),
-			),
+			makeTask({ userId: new UniqueEntityID('user-1') }, new UniqueEntityID('task-1')),
 		)
 
 		const result = await sut.execute({ userId: 'user-1', taskId: 'task-1' })
@@ -120,10 +117,7 @@ describe('Get task details [USE CASE]', () => {
 	})
 
 	it('should clamp invalid stored durations and break same-kind ties by id', async () => {
-		const task = makeTask(
-			{ userId: new UniqueEntityID('user-1') },
-			new UniqueEntityID('task-1'),
-		)
+		const task = makeTask({ userId: new UniqueEntityID('user-1') }, new UniqueEntityID('task-1'))
 
 		await tasksRepository.create(task)
 
@@ -163,10 +157,7 @@ describe('Get task details [USE CASE]', () => {
 
 	it('should reject another user task without fetching related history', async () => {
 		await tasksRepository.create(
-			makeTask(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('task-1'),
-			),
+			makeTask({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('task-1')),
 		)
 		const fetchPlans = vi.spyOn(plansRepository, 'fetchAllByTaskId')
 		const fetchWorkLogs = vi.spyOn(workLogsRepository, 'fetchAllByTaskId')

@@ -1,5 +1,6 @@
 import { makePlan } from 'test/unit/factories/make-plan'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -11,7 +12,7 @@ let sut: DeletePlanUseCase
 
 describe('Delete plan [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
+		;({ plansRepository } = makeInMemoryTaskManagerRepositories())
 
 		sut = new DeletePlanUseCase(plansRepository)
 	})

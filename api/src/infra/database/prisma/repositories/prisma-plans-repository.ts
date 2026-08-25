@@ -7,6 +7,7 @@ import {
 } from '@/domain/task-manager/application/repositories/plans-repository'
 import { Plan } from '@/domain/task-manager/enterprise/entities/plan'
 import { PrismaPlanMapper } from '../mappers/prisma-plan-mapper'
+import { PrismaPlanDataMapper } from '../mappers/vo/prisma-plan-data-mapper'
 import { PrismaService } from '../prisma.service'
 
 @Injectable()
@@ -27,7 +28,7 @@ export class PrismaPlansRepository implements PlansRepository {
 		return plan ? PrismaPlanMapper.toDomain(plan) : null
 	}
 
-	async fetchAllByUserId(
+	async fetchAllWithDataByUserId(
 		userId: string,
 		{ from, to }: PlanDateRangeInput,
 		filters?: PlanFilterInput,
@@ -35,9 +36,13 @@ export class PrismaPlansRepository implements PlansRepository {
 		const plans = await this.prisma.plan.findMany({
 			where: this.buildWhere(userId, from, to, filters),
 			orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+			include: {
+				task: { select: { id: true, title: true, userId: true } },
+				category: { select: { id: true, name: true, color: true, userId: true } },
+			},
 		})
 
-		return plans.map(PrismaPlanMapper.toDomain)
+		return plans.map(PrismaPlanDataMapper.toDomain)
 	}
 
 	async fetchAllByTaskId(userId: string, taskId: string) {

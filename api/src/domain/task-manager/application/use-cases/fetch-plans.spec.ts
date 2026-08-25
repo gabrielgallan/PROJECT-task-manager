@@ -4,8 +4,9 @@ import { makeTask } from 'test/unit/factories/make-tasks'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
-import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import { PlanData } from '../../enterprise/entities/value-objects/plan-data'
 import { InvalidDatetimeError } from './errors/invalid-datetime-error'
 import { FetchPlansUseCase } from './fetch-plans'
 
@@ -22,14 +23,10 @@ const range = {
 
 describe('Fetch plans [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			plansRepository,
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ plansRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
-		sut = new FetchPlansUseCase(plansRepository, tasksRepository, categoriesRepository)
+		sut = new FetchPlansUseCase(plansRepository)
 	})
 
 	it('should fetch overlapping user plans ordered by start time', async () => {
@@ -84,14 +81,21 @@ describe('Fetch plans [USE CASE]', () => {
 			}),
 		]
 
-		for (const plan of [contained, endingAfterRange, crossingMidnight, spanningRange, ...excludedPlans]) {
+		for (const plan of [
+			contained,
+			endingAfterRange,
+			crossingMidnight,
+			spanningRange,
+			...excludedPlans,
+		]) {
 			await plansRepository.create(plan)
 		}
 
 		const result = await sut.execute({ userId: 'user-1', ...range })
 
 		expect(result.isRight()).toBe(true)
-		expect(result.value?.data.map(({ plan }) => plan.id.toString())).toEqual([
+		if (result.isLeft()) throw result.value
+		expect(result.value?.data.map((plan) => plan.id)).toEqual([
 			'spanning-range',
 			'crossing-midnight',
 			'contained',
@@ -108,36 +112,87 @@ describe('Fetch plans [USE CASE]', () => {
 			{ userId: new UniqueEntityID('user-1'), name: 'Development', color: 'blue' },
 			new UniqueEntityID('category-1'),
 		)
-		const relatedPlan = makePlan({
-			userId: new UniqueEntityID('user-1'),
-			taskId: task.id,
-			categoryId: category.id,
-			startsAt: new Date('2026-01-12T10:00:00.000Z'),
-			endsAt: new Date('2026-01-12T11:00:00.000Z'),
-		})
-		const planWithMissingRelations = makePlan({
-			userId: new UniqueEntityID('user-1'),
-			taskId: new UniqueEntityID('missing-task'),
-			categoryId: new UniqueEntityID('missing-category'),
-			startsAt: new Date('2026-01-12T12:00:00.000Z'),
-			endsAt: new Date('2026-01-12T13:00:00.000Z'),
-		})
+		const foreignTask = makeTask(
+			{ userId: new UniqueEntityID('user-2') },
+			new UniqueEntityID('foreign-task'),
+		)
+		const foreignCategory = makeCategory(
+			{ userId: new UniqueEntityID('user-2') },
+			new UniqueEntityID('foreign-category'),
+		)
+		const relatedPlan = makePlan(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: task.id,
+				categoryId: category.id,
+				title: 'Release planning',
+				description: 'Plan the next release',
+				startsAt: new Date('2026-01-12T10:00:00.000Z'),
+				endsAt: new Date('2026-01-12T11:00:00.000Z'),
+			},
+			new UniqueEntityID('related-plan'),
+		)
+		const planWithMissingRelations = makePlan(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: new UniqueEntityID('missing-task'),
+				categoryId: new UniqueEntityID('missing-category'),
+				startsAt: new Date('2026-01-12T12:00:00.000Z'),
+				endsAt: new Date('2026-01-12T13:00:00.000Z'),
+			},
+			new UniqueEntityID('missing-relations-plan'),
+		)
+		const planWithForeignRelations = makePlan(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: foreignTask.id,
+				categoryId: foreignCategory.id,
+				startsAt: new Date('2026-01-12T14:00:00.000Z'),
+				endsAt: new Date('2026-01-12T15:00:00.000Z'),
+			},
+			new UniqueEntityID('foreign-relations-plan'),
+		)
 
 		await tasksRepository.create(task)
+		await tasksRepository.create(foreignTask)
 		await categoriesRepository.create(category)
+		await categoriesRepository.create(foreignCategory)
 		await plansRepository.create(relatedPlan)
 		await plansRepository.create(planWithMissingRelations)
+		await plansRepository.create(planWithForeignRelations)
 
 		const result = await sut.execute({ userId: 'user-1', ...range })
 
-		expect(result.value?.data[0].task).toEqual({ id: task.id, title: 'Prepare release' })
+		if (result.isLeft()) throw result.value
+		expect(result.value?.data[0]).toBeInstanceOf(PlanData)
+		expect(result.value?.data[0]).toMatchObject({
+			id: 'related-plan',
+			taskId: 'task-1',
+			categoryId: 'category-1',
+			title: 'Release planning',
+			description: 'Plan the next release',
+			startsAt: new Date('2026-01-12T10:00:00.000Z'),
+			endsAt: new Date('2026-01-12T11:00:00.000Z'),
+			confirmedAt: null,
+		})
+		expect(result.value?.data[0].task).toEqual({ id: 'task-1', title: 'Prepare release' })
 		expect(result.value?.data[0].category).toEqual({
-			id: category.id,
+			id: 'category-1',
 			name: 'Development',
 			color: 'blue',
 		})
+		expect(result.value?.data[1]).toMatchObject({
+			taskId: 'missing-task',
+			categoryId: 'missing-category',
+		})
 		expect(result.value?.data[1].task).toBeNull()
 		expect(result.value?.data[1].category).toBeNull()
+		expect(result.value?.data[2]).toMatchObject({
+			taskId: 'foreign-task',
+			categoryId: 'foreign-category',
+		})
+		expect(result.value?.data[2].task).toBeNull()
+		expect(result.value?.data[2].category).toBeNull()
 	})
 
 	it('should apply OR within filter facets and AND between them', async () => {
@@ -184,22 +239,25 @@ describe('Fetch plans [USE CASE]', () => {
 			filters: { withoutCategory: true },
 		})
 
-		expect(byMultipleTasks.value?.data.map(({ plan }) => plan.id.toString())).toEqual([
+		if (byMultipleTasks.isLeft()) throw byMultipleTasks.value
+		if (byTaskOrWithoutTaskAndCategory.isLeft()) {
+			throw byTaskOrWithoutTaskAndCategory.value
+		}
+		if (withoutCategory.isLeft()) throw withoutCategory.value
+		expect(byMultipleTasks.value?.data.map((plan) => plan.id)).toEqual([
 			'plan-1',
 			'plan-2',
 			'plan-4',
 		])
-		expect(
-			byTaskOrWithoutTaskAndCategory.value?.data.map(({ plan }) => plan.id.toString()),
-		).toEqual(['plan-1', 'plan-3'])
-		expect(withoutCategory.value?.data.map(({ plan }) => plan.id.toString())).toEqual([
-			'plan-4',
-			'plan-5',
+		expect(byTaskOrWithoutTaskAndCategory.value?.data.map((plan) => plan.id)).toEqual([
+			'plan-1',
+			'plan-3',
 		])
+		expect(withoutCategory.value?.data.map((plan) => plan.id)).toEqual(['plan-4', 'plan-5'])
 	})
 
 	it('should reject equal, inverted or invalid date ranges', async () => {
-		const fetchPlans = vi.spyOn(plansRepository, 'fetchAllByUserId')
+		const fetchPlans = vi.spyOn(plansRepository, 'fetchAllWithDataByUserId')
 
 		const equalRange = await sut.execute({
 			userId: 'user-1',

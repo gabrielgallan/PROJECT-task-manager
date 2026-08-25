@@ -4,6 +4,7 @@ import { makeWorkLog } from 'test/unit/factories/make-work-logs'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -18,9 +19,8 @@ let sut: GetCategoryDeletionImpactUseCase
 
 describe('Get category deletion impact [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
-		workLogsRepository = new InMemoryWorkLogsRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(plansRepository, workLogsRepository)
+		;({ plansRepository, workLogsRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
 		sut = new GetCategoryDeletionImpactUseCase(categoriesRepository)
 	})

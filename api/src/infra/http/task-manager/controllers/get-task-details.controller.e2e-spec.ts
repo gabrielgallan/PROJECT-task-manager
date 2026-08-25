@@ -9,14 +9,14 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Get category deletion impact [E2E]', () => {
+describe('Get task details [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
 	let sessionTokenHasher: SessionTokenHasher
 
 	let userId: string
-	let categoryId: string
+	let taskId: string
 	let sessionToken: string
 
 	beforeAll(async () => {
@@ -35,8 +35,10 @@ describe('Get category deletion impact [E2E]', () => {
 		await app.init()
 
 		userId = UUIDGenerator(1)[0]
-		categoryId = UUIDGenerator(1)[0]
+		taskId = UUIDGenerator(1)[0]
 		sessionToken = sessionTokenGenerator.generate()
+
+		vi.useFakeTimers()
 
 		await prisma.user.create({
 			data: {
@@ -50,39 +52,42 @@ describe('Get category deletion impact [E2E]', () => {
 						expiresAt: addDays(new Date(), 30),
 					},
 				},
-				categories: {
+				tasks: {
 					create: {
-						id: categoryId,
-						name: 'Work Meeting',
-						color: 'blue',
+						id: taskId,
+						title: 'Implement auth feature',
+						status: 'IN_PROGRESS',
+						priority: 'HIGH',
 						plans: {
 							createMany: {
 								data: [
 									{
 										userId,
-										title: 'Integrator Meeting',
-										startsAt: new Date(),
-										endsAt: new Date(),
+										title: 'Add JWT guard',
+										startsAt: new Date(2026, 0, 12, 9, 0, 0),
+										endsAt: new Date(2026, 0, 12, 10, 0, 0),
+									},
+									{
+										userId,
+										title: 'Configure JWT public and private keys',
+										startsAt: new Date(2026, 0, 13, 9, 0, 0),
+										endsAt: new Date(2026, 0, 13, 10, 0, 0),
+									},
+									{
+										userId,
+										title: 'Add token in cookies http-only',
+										startsAt: new Date(2026, 0, 13, 13, 0, 0),
+										endsAt: new Date(2026, 0, 13, 14, 0, 0),
 									},
 								],
 							},
 						},
 						workLogs: {
-							createMany: {
-								data: [
-									{
-										userId,
-										title: 'Guide Review',
-										startsAt: new Date(),
-										endsAt: new Date(),
-									},
-									{
-										userId,
-										title: 'Auth feat',
-										startsAt: new Date(),
-										endsAt: new Date(),
-									},
-								],
+							create: {
+								userId,
+								title: 'Add users password hashing feat',
+								startsAt: new Date(2026, 0, 13, 14, 0, 0),
+								endsAt: new Date(2026, 0, 13, 15, 0, 0),
 							},
 						},
 					},
@@ -91,16 +96,22 @@ describe('Get category deletion impact [E2E]', () => {
 		})
 	})
 
-	it('[GET] /api/categories/:categoryId/deletion-impact', async () => {
+	afterEach(() => {
+		vi.useRealTimers()
+	})
+
+	it('[GET] /api/tasks/:taskId', async () => {
 		const response = await request(app.getHttpServer())
-			.get(`/api/categories/${categoryId}/deletion-impact`)
+			.get(`/api/tasks/${taskId}`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.expect(200)
 
-		expect(response.body).toMatchObject({
-			plansCount: 1,
-			workLogsCount: 2,
+		expect(response.body.data.summary).toMatchObject({
+			plannedMinutes: 180,
+			loggedMinutes: 60,
 		})
+
+		expect(response.body.data.activity).toHaveLength(4)
 	})
 
 	afterAll(async () => {

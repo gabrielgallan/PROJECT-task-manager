@@ -7,6 +7,7 @@ import {
 } from '@/domain/task-manager/application/repositories/work-logs-repository'
 import { WorkLog } from '@/domain/task-manager/enterprise/entities/work-log'
 import { PrismaWorkLogMapper } from '../mappers/prisma-work-log-mapper'
+import { PrismaWorkLogDataMapper } from '../mappers/vo/prisma-work-log-data-mapper'
 import { PrismaService } from '../prisma.service'
 
 @Injectable()
@@ -46,7 +47,7 @@ export class PrismaWorkLogsRepository implements WorkLogsRepository {
 		return workLog ? PrismaWorkLogMapper.toDomain(workLog) : null
 	}
 
-	async fetchAllByUserId(
+	async fetchAllWithDataByUserId(
 		userId: string,
 		{ from, to }: WorkLogDateRangeInput,
 		filters?: WorkLogFilterInput,
@@ -54,9 +55,13 @@ export class PrismaWorkLogsRepository implements WorkLogsRepository {
 		const workLogs = await this.prisma.workLog.findMany({
 			where: this.buildWhere(userId, from, to, filters),
 			orderBy: [{ startsAt: 'asc' }, { id: 'asc' }],
+			include: {
+				task: { select: { id: true, title: true, userId: true } },
+				category: { select: { id: true, name: true, color: true, userId: true } },
+			},
 		})
 
-		return workLogs.map(PrismaWorkLogMapper.toDomain)
+		return workLogs.map(PrismaWorkLogDataMapper.toDomain)
 	}
 
 	async fetchAllByTaskId(userId: string, taskId: string) {

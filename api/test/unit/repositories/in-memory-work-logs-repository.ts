@@ -3,9 +3,17 @@ import {
 	WorkLogFilterInput,
 	WorkLogsRepository,
 } from '@/domain/task-manager/application/repositories/work-logs-repository'
+import { WorkLogData } from '@/domain/task-manager/enterprise/entities/value-objects/work-log-data'
 import { WorkLog } from '@/domain/task-manager/enterprise/entities/work-log'
+import type { InMemoryCategoriesRepository } from './in-memory-categories-repository'
+import type { InMemoryTasksRepository } from './in-memory-tasks-repository'
 
 export class InMemoryWorkLogsRepository implements WorkLogsRepository {
+	constructor(
+		private tasksRepository: InMemoryTasksRepository,
+		private categoriesRepositoryProvider: () => InMemoryCategoriesRepository,
+	) {}
+
 	public items: WorkLog[] = []
 
 	async create(workLog: WorkLog) {
@@ -36,7 +44,7 @@ export class InMemoryWorkLogsRepository implements WorkLogsRepository {
 		return workLog ?? null
 	}
 
-	async fetchAllByUserId(
+	async fetchAllWithDataByUserId(
 		userId: string,
 		{ from, to }: WorkLogDateRangeInput,
 		filters?: WorkLogFilterInput,
@@ -70,14 +78,19 @@ export class InMemoryWorkLogsRepository implements WorkLogsRepository {
 			})
 		}
 
-		return workLogs.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
+		return workLogs
+			.sort(
+				(a, b) =>
+					a.startsAt.getTime() - b.startsAt.getTime() ||
+					a.id.toString().localeCompare(b.id.toString()),
+			)
+			.map((workLog) => this.toWorkLogData(workLog))
 	}
 
 	async fetchAllByTaskId(userId: string, taskId: string) {
 		return this.items
 			.filter(
-				(workLog) =>
-					workLog.userId.toString() === userId && workLog.taskId?.toString() === taskId,
+				(workLog) => workLog.userId.toString() === userId && workLog.taskId?.toString() === taskId,
 			)
 			.sort(
 				(a, b) =>
@@ -100,5 +113,37 @@ export class InMemoryWorkLogsRepository implements WorkLogsRepository {
 		this.items = this.items.filter((w) => w.id.toString() !== workLog.id.toString())
 
 		return
+	}
+
+	private toWorkLogData(workLog: WorkLog) {
+		const taskId = workLog.taskId
+		const categoryId = workLog.categoryId
+		const task = taskId
+			? this.tasksRepository.items.find(
+					(item) => item.id.equals(taskId) && item.userId.toString() === workLog.userId.toString(),
+				)
+			: undefined
+		const category = categoryId
+			? this.categoriesRepositoryProvider().items.find(
+					(item) =>
+						item.id.equals(categoryId) && item.userId.toString() === workLog.userId.toString(),
+				)
+			: undefined
+
+		return WorkLogData.create({
+			id: workLog.id.toString(),
+			taskId: workLog.taskId?.toString() ?? null,
+			categoryId: workLog.categoryId?.toString() ?? null,
+			task: task ? { id: task.id.toString(), title: task.title } : null,
+			category: category
+				? { id: category.id.toString(), name: category.name, color: category.color }
+				: null,
+			title: workLog.title,
+			description: workLog.description ?? null,
+			startsAt: workLog.startsAt,
+			endsAt: workLog.endsAt,
+			createdAt: workLog.createdAt,
+			updatedAt: workLog.updatedAt ?? null,
+		})
 	}
 }

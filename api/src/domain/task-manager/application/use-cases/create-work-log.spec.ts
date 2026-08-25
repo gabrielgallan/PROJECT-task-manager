@@ -2,9 +2,9 @@ import { makeCategory } from 'test/unit/factories/make-category'
 import { makeTask } from 'test/unit/factories/make-tasks'
 import { makeWorkLog } from 'test/unit/factories/make-work-logs'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
-import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -20,12 +20,8 @@ let sut: CreateWorkLogUseCase
 
 describe('Create work-log [USE CASE]', () => {
 	beforeEach(() => {
-		workLogsRepository = new InMemoryWorkLogsRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			new InMemoryPlansRepository(),
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ workLogsRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
 		sut = new CreateWorkLogUseCase(workLogsRepository, tasksRepository, categoriesRepository)
 

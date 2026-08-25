@@ -3,7 +3,7 @@ import { makeTask } from 'test/unit/factories/make-tasks'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
-import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -18,12 +18,8 @@ let sut: CreatePlanUseCase
 
 describe('Create plan [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			plansRepository,
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ plansRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
 		sut = new CreatePlanUseCase(plansRepository, tasksRepository, categoriesRepository)
 	})

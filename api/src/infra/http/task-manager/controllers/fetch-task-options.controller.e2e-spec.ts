@@ -87,7 +87,7 @@ describe('Fetch task options [E2E]', () => {
 			.get('/api/tasks/options')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.query({
-				q: 'task',
+				q: 'feat',
 				limit: 5,
 			})
 			.expect(200)
@@ -98,7 +98,7 @@ describe('Fetch task options [E2E]', () => {
 			.get('/api/tasks/options')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.query({
-				q: 'task',
+				q: 'feat',
 				limit: 5,
 				cursor: response1.body.meta.nextCursor,
 			})

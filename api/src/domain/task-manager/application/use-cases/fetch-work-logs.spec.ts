@@ -2,10 +2,11 @@ import { makeCategory } from 'test/unit/factories/make-category'
 import { makeTask } from 'test/unit/factories/make-tasks'
 import { makeWorkLog } from 'test/unit/factories/make-work-logs'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
-import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
+import { WorkLogData } from '../../enterprise/entities/value-objects/work-log-data'
 import { InvalidDatetimeError } from './errors/invalid-datetime-error'
 import { FetchWorkLogsUseCase } from './fetch-work-logs'
 
@@ -22,18 +23,10 @@ const range = {
 
 describe('Fetch work logs [USE CASE]', () => {
 	beforeEach(() => {
-		workLogsRepository = new InMemoryWorkLogsRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			new InMemoryPlansRepository(),
-			workLogsRepository,
-		)
+		;({ workLogsRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
-		sut = new FetchWorkLogsUseCase(
-			workLogsRepository,
-			tasksRepository,
-			categoriesRepository,
-		)
+		sut = new FetchWorkLogsUseCase(workLogsRepository)
 	})
 
 	it('should fetch overlapping user work logs ordered by start time', async () => {
@@ -101,7 +94,8 @@ describe('Fetch work logs [USE CASE]', () => {
 		const result = await sut.execute({ userId: 'user-1', ...range })
 
 		expect(result.isRight()).toBe(true)
-		expect(result.value?.data.map(({ workLog }) => workLog.id.toString())).toEqual([
+		if (result.isLeft()) throw result.value
+		expect(result.value?.data.map((workLog) => workLog.id)).toEqual([
 			'spanning-range',
 			'starting-before-range',
 			'contained',
@@ -118,36 +112,90 @@ describe('Fetch work logs [USE CASE]', () => {
 			{ userId: new UniqueEntityID('user-1'), name: 'Development', color: 'blue' },
 			new UniqueEntityID('category-1'),
 		)
-		const relatedWorkLog = makeWorkLog({
-			userId: new UniqueEntityID('user-1'),
-			taskId: task.id,
-			categoryId: category.id,
-			startsAt: new Date('2026-01-12T10:00:00.000Z'),
-			endsAt: new Date('2026-01-12T11:00:00.000Z'),
-		})
-		const workLogWithMissingRelations = makeWorkLog({
-			userId: new UniqueEntityID('user-1'),
-			taskId: new UniqueEntityID('missing-task'),
-			categoryId: new UniqueEntityID('missing-category'),
-			startsAt: new Date('2026-01-12T12:00:00.000Z'),
-			endsAt: new Date('2026-01-12T13:00:00.000Z'),
-		})
+		const foreignTask = makeTask(
+			{ userId: new UniqueEntityID('user-2') },
+			new UniqueEntityID('foreign-task'),
+		)
+		const foreignCategory = makeCategory(
+			{ userId: new UniqueEntityID('user-2') },
+			new UniqueEntityID('foreign-category'),
+		)
+		const relatedWorkLog = makeWorkLog(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: task.id,
+				categoryId: category.id,
+				title: 'Pull request review',
+				description: 'Review the authentication changes',
+				startsAt: new Date('2026-01-12T10:00:00.000Z'),
+				endsAt: new Date('2026-01-12T11:00:00.000Z'),
+				createdAt: new Date('2026-01-12T11:00:00.000Z'),
+				updatedAt: null,
+			},
+			new UniqueEntityID('related-work-log'),
+		)
+		const workLogWithMissingRelations = makeWorkLog(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: new UniqueEntityID('missing-task'),
+				categoryId: new UniqueEntityID('missing-category'),
+				startsAt: new Date('2026-01-12T12:00:00.000Z'),
+				endsAt: new Date('2026-01-12T13:00:00.000Z'),
+			},
+			new UniqueEntityID('missing-relations-work-log'),
+		)
+		const workLogWithForeignRelations = makeWorkLog(
+			{
+				userId: new UniqueEntityID('user-1'),
+				taskId: foreignTask.id,
+				categoryId: foreignCategory.id,
+				startsAt: new Date('2026-01-12T14:00:00.000Z'),
+				endsAt: new Date('2026-01-12T15:00:00.000Z'),
+			},
+			new UniqueEntityID('foreign-relations-work-log'),
+		)
 
 		await tasksRepository.create(task)
+		await tasksRepository.create(foreignTask)
 		await categoriesRepository.create(category)
+		await categoriesRepository.create(foreignCategory)
 		await workLogsRepository.create(relatedWorkLog)
 		await workLogsRepository.create(workLogWithMissingRelations)
+		await workLogsRepository.create(workLogWithForeignRelations)
 
 		const result = await sut.execute({ userId: 'user-1', ...range })
 
-		expect(result.value?.data[0].task).toEqual({ id: task.id, title: 'Review pull request' })
+		if (result.isLeft()) throw result.value
+		expect(result.value?.data[0]).toBeInstanceOf(WorkLogData)
+		expect(result.value?.data[0]).toMatchObject({
+			id: 'related-work-log',
+			taskId: 'task-1',
+			categoryId: 'category-1',
+			title: 'Pull request review',
+			description: 'Review the authentication changes',
+			startsAt: new Date('2026-01-12T10:00:00.000Z'),
+			endsAt: new Date('2026-01-12T11:00:00.000Z'),
+			createdAt: new Date('2026-01-12T11:00:00.000Z'),
+			updatedAt: null,
+		})
+		expect(result.value?.data[0].task).toEqual({ id: 'task-1', title: 'Review pull request' })
 		expect(result.value?.data[0].category).toEqual({
-			id: category.id,
+			id: 'category-1',
 			name: 'Development',
 			color: 'blue',
 		})
+		expect(result.value?.data[1]).toMatchObject({
+			taskId: 'missing-task',
+			categoryId: 'missing-category',
+		})
 		expect(result.value?.data[1].task).toBeNull()
 		expect(result.value?.data[1].category).toBeNull()
+		expect(result.value?.data[2]).toMatchObject({
+			taskId: 'foreign-task',
+			categoryId: 'foreign-category',
+		})
+		expect(result.value?.data[2].task).toBeNull()
+		expect(result.value?.data[2].category).toBeNull()
 	})
 
 	it('should apply OR within filter facets and AND between them', async () => {
@@ -194,24 +242,28 @@ describe('Fetch work logs [USE CASE]', () => {
 			filters: { withoutCategory: true },
 		})
 
-		expect(byMultipleTasks.value?.data.map(({ workLog }) => workLog.id.toString())).toEqual([
+		if (byMultipleTasks.isLeft()) throw byMultipleTasks.value
+		if (byTaskOrWithoutTaskAndCategory.isLeft()) {
+			throw byTaskOrWithoutTaskAndCategory.value
+		}
+		if (withoutCategory.isLeft()) throw withoutCategory.value
+		expect(byMultipleTasks.value?.data.map((workLog) => workLog.id)).toEqual([
 			'work-log-1',
 			'work-log-2',
 			'work-log-4',
 		])
-		expect(
-			byTaskOrWithoutTaskAndCategory.value?.data.map(({ workLog }) =>
-				workLog.id.toString(),
-			),
-		).toEqual(['work-log-1', 'work-log-3'])
-		expect(withoutCategory.value?.data.map(({ workLog }) => workLog.id.toString())).toEqual([
+		expect(byTaskOrWithoutTaskAndCategory.value?.data.map((workLog) => workLog.id)).toEqual([
+			'work-log-1',
+			'work-log-3',
+		])
+		expect(withoutCategory.value?.data.map((workLog) => workLog.id)).toEqual([
 			'work-log-4',
 			'work-log-5',
 		])
 	})
 
 	it('should reject equal, inverted or invalid date ranges', async () => {
-		const fetchWorkLogs = vi.spyOn(workLogsRepository, 'fetchAllByUserId')
+		const fetchWorkLogs = vi.spyOn(workLogsRepository, 'fetchAllWithDataByUserId')
 
 		const equalRange = await sut.execute({
 			userId: 'user-1',

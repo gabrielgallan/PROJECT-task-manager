@@ -4,7 +4,7 @@ import { makeTask } from 'test/unit/factories/make-tasks'
 import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryTasksRepository } from 'test/unit/repositories/in-memory-tasks-repository'
-import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -19,12 +19,8 @@ let sut: EditPlanUseCase
 
 describe('Edit plan [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
-		tasksRepository = new InMemoryTasksRepository()
-		categoriesRepository = new InMemoryCategoriesRepository(
-			plansRepository,
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ plansRepository, tasksRepository, categoriesRepository } =
+			makeInMemoryTaskManagerRepositories())
 
 		sut = new EditPlanUseCase(plansRepository, tasksRepository, categoriesRepository)
 	})
@@ -72,10 +68,7 @@ describe('Edit plan [USE CASE]', () => {
 		const missing = await sut.execute({ userId: 'user-1', planId: 'plan-1' })
 
 		await plansRepository.create(
-			makePlan(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('plan-1'),
-			),
+			makePlan({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('plan-1')),
 		)
 
 		const anotherUser = await sut.execute({ userId: 'user-1', planId: 'plan-1' })
@@ -103,10 +96,7 @@ describe('Edit plan [USE CASE]', () => {
 		})
 
 		await tasksRepository.create(
-			makeTask(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('task-1'),
-			),
+			makeTask({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('task-1')),
 		)
 
 		const anotherUserTask = await sut.execute({
@@ -121,10 +111,7 @@ describe('Edit plan [USE CASE]', () => {
 		})
 
 		await categoriesRepository.create(
-			makeCategory(
-				{ userId: new UniqueEntityID('user-2') },
-				new UniqueEntityID('category-1'),
-			),
+			makeCategory({ userId: new UniqueEntityID('user-2') }, new UniqueEntityID('category-1')),
 		)
 
 		const anotherUserCategory = await sut.execute({
@@ -163,16 +150,10 @@ describe('Edit plan [USE CASE]', () => {
 
 	it('should assign and clear optional relations', async () => {
 		await tasksRepository.create(
-			makeTask(
-				{ userId: new UniqueEntityID('user-1') },
-				new UniqueEntityID('task-1'),
-			),
+			makeTask({ userId: new UniqueEntityID('user-1') }, new UniqueEntityID('task-1')),
 		)
 		await categoriesRepository.create(
-			makeCategory(
-				{ userId: new UniqueEntityID('user-1') },
-				new UniqueEntityID('category-1'),
-			),
+			makeCategory({ userId: new UniqueEntityID('user-1') }, new UniqueEntityID('category-1')),
 		)
 		await plansRepository.create(
 			makePlan(

@@ -1,3 +1,4 @@
+import type { WorkLogData } from '../../enterprise/entities/value-objects/work-log-data'
 import type { WorkLog } from '../../enterprise/entities/work-log'
 
 export type WorkLogDateRangeInput = {
@@ -21,11 +22,11 @@ export abstract class WorkLogsRepository {
 		excludeWorkLogId?: string,
 	): Promise<WorkLog | null>
 	abstract findById(workLogId: string): Promise<WorkLog | null>
-	abstract fetchAllByUserId(
+	abstract fetchAllWithDataByUserId(
 		userId: string,
 		range: WorkLogDateRangeInput,
 		filters?: WorkLogFilterInput,
-	): Promise<WorkLog[]>
+	): Promise<WorkLogData[]>
 	abstract fetchAllByTaskId(userId: string, taskId: string): Promise<WorkLog[]>
 	abstract save(workLog: WorkLog): Promise<void>
 	abstract delete(workLog: WorkLog): Promise<void>

@@ -1,8 +1,5 @@
-import {
-	InMemoryCategoriesRepository,
-} from 'test/unit/repositories/in-memory-categories-repository'
-import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
-import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { InMemoryCategoriesRepository } from 'test/unit/repositories/in-memory-categories-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { CATEGORY_COLORS } from '../../enterprise/entities/category'
 import { CreateCategoryUseCase } from './create-category'
 import { InvalidCategoryError } from './errors/invalid-category-error'
@@ -13,10 +10,7 @@ let sut: CreateCategoryUseCase
 
 describe('Create category [USE CASE]', () => {
 	beforeEach(() => {
-		categoriesRepository = new InMemoryCategoriesRepository(
-			new InMemoryPlansRepository(),
-			new InMemoryWorkLogsRepository(),
-		)
+		;({ categoriesRepository } = makeInMemoryTaskManagerRepositories())
 		sut = new CreateCategoryUseCase(categoriesRepository)
 	})
 

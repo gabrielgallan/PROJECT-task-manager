@@ -2,6 +2,7 @@ import { makePlan } from 'test/unit/factories/make-plan'
 import { makeWorkLog } from 'test/unit/factories/make-work-logs'
 import { InMemoryPlansRepository } from 'test/unit/repositories/in-memory-plans-repository'
 import { InMemoryWorkLogsRepository } from 'test/unit/repositories/in-memory-work-logs-repository'
+import { makeInMemoryTaskManagerRepositories } from 'test/unit/repositories/make-in-memory-task-manager-repositories'
 import { UniqueEntityID } from '@/core/entities/unique-entity-id'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
@@ -17,8 +18,7 @@ let sut: ConfirmPlanUseCase
 
 describe('Confirm plan [USE CASE]', () => {
 	beforeEach(() => {
-		plansRepository = new InMemoryPlansRepository()
-		workLogsRepository = new InMemoryWorkLogsRepository()
+		;({ plansRepository, workLogsRepository } = makeInMemoryTaskManagerRepositories())
 
 		sut = new ConfirmPlanUseCase(plansRepository, workLogsRepository)
 	})
