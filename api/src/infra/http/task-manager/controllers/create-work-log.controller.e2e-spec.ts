@@ -83,7 +83,7 @@ describe('Create work-log [E2E]', () => {
 				categoryId,
 				startsAt: new Date(2026, 0, 12, 15, 30, 0).toISOString(),
 				endsAt: new Date(2026, 0, 12, 16, 30, 0).toISOString(),
-				timeZone: 'America_SaoPaulo',
+				timeZone: 'America/Sao_Paulo',
 			})
 			.expect(201)
 	})

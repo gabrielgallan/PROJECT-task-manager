@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger'
 import type { TaskPriority, TaskStatus } from '@/domain/task-manager/enterprise/entities/task'
 
 export class TaskDto {
+	@ApiProperty()
 	id!: string
 
 	@ApiProperty()

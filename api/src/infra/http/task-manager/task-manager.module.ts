@@ -20,11 +20,14 @@ import { CreateTaskController } from './controllers/create-task.controller'
 import { CreateWorkLogController } from './controllers/create-work-log.controller'
 import { DeleteCategoryController } from './controllers/delete-category.controller'
 import { DeleteTaskController } from './controllers/delete-task.controller'
+import { DeleteWorkLogController } from './controllers/delete-work-log.controller'
 import { EditCategoryController } from './controllers/edit-category.controller'
 import { EditTaskController } from './controllers/edit-task.controller'
+import { EditWorkLogController } from './controllers/edit-work-log.controller'
 import { FetchCategoriesController } from './controllers/fetch-categories.controller'
 import { FetchTaskOptionsController } from './controllers/fetch-task-options.controller'
 import { FetchTasksController } from './controllers/fetch-tasks.controller'
+import { FetchWorkLogsController } from './controllers/fetch-work-logs.controller'
 import { GetCategoryDeletionImpactController } from './controllers/get-category-deletion-impact.controller'
 import { GetTaskDetailsController } from './controllers/get-task-details.controller'
 
@@ -43,9 +46,9 @@ import { GetTaskDetailsController } from './controllers/get-task-details.control
 		DeleteCategoryController,
 		GetCategoryDeletionImpactController,
 		CreateWorkLogController,
-		// FetchWorkLogsController,
-		// EditWorkLogController,
-		// DeleteWorkLogController,
+		FetchWorkLogsController,
+		EditWorkLogController,
+		DeleteWorkLogController,
 	],
 	providers: [
 		FetchTaskOptionsUseCase,

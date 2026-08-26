@@ -11,6 +11,7 @@ import { FetchWorkLogsUseCase } from '@/domain/task-manager/application/use-case
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { WorkLogPresenter } from '../presenters/work-log-presenter'
 import { FetchWorkLogsDto, fetchWorkLogsSchema } from './dto/fetch-work-logs.dto'
 
 @Controller('/api/work-logs')
@@ -26,13 +27,18 @@ export class FetchWorkLogsController {
 		@Query(new ZodValidationPipe(fetchWorkLogsSchema))
 		query: FetchWorkLogsDto,
 	) {
-		const { from, to, filters } = query
+		const { from, to, taskId, categoryId, withoutTask, withoutCategory } = query
 
 		const result = await this.fetchWorkLogs.execute({
 			userId: user.id,
 			from,
 			to,
-			filters,
+			filters: {
+				taskIds: taskId,
+				categoryIds: categoryId,
+				withoutTask,
+				withoutCategory,
+			},
 		})
 
 		if (result.isLeft()) {
@@ -48,7 +54,7 @@ export class FetchWorkLogsController {
 		}
 
 		return {
-			data: result.value.data,
+			data: result.value.data.map(WorkLogPresenter.toHTTP),
 		}
 	}
 }

@@ -65,6 +65,6 @@ export class CreateWorkLogController {
 			}
 		}
 
-		return body
+		return
 	}
 }
