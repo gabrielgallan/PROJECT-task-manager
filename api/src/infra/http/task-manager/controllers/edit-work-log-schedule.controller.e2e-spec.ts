@@ -9,15 +9,13 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Edit work-log [E2E]', () => {
+describe('Edit work-log schedule [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
 	let sessionTokenHasher: SessionTokenHasher
 
 	let userId: string
-	let taskId: string
-	let categoryId: string
 	let workLogId: string
 	let sessionToken: string
 
@@ -37,8 +35,6 @@ describe('Edit work-log [E2E]', () => {
 		await app.init()
 
 		userId = UUIDGenerator(1)[0]
-		taskId = UUIDGenerator(1)[0]
-		categoryId = UUIDGenerator(1)[0]
 		workLogId = UUIDGenerator(1)[0]
 		sessionToken = sessionTokenGenerator.generate()
 
@@ -54,19 +50,6 @@ describe('Edit work-log [E2E]', () => {
 						expiresAt: addDays(new Date(), 30),
 					},
 				},
-				tasks: {
-					create: {
-						id: taskId,
-						title: 'Review Auto Guide',
-					},
-				},
-				categories: {
-					create: {
-						id: categoryId,
-						name: 'Guides',
-						color: 'green',
-					},
-				},
 				workLogs: {
 					create: {
 						id: workLogId,
@@ -79,26 +62,53 @@ describe('Edit work-log [E2E]', () => {
 		})
 	})
 
-	it('[PATCH] /api/work-logs/:workLogId', async () => {
+	it('[PATCH] /api/work-logs/:workLogId/schedule', async () => {
 		await request(app.getHttpServer())
-			.patch(`/api/work-logs/${workLogId}`)
+			.patch(`/api/work-logs/${workLogId}/schedule`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
-				title: '[REVIEW]: Review Auto Guide - part 1',
-				taskId,
-				categoryId,
-				startsAt: new Date(2026, 0, 12, 9, 0, 0).toISOString(),
-				endsAt: new Date(2026, 0, 12, 11, 30, 0).toISOString(),
+				startsAt: new Date(2026, 0, 12, 14, 0, 0).toISOString(),
+				endsAt: new Date(2026, 0, 12, 15, 30, 0).toISOString(),
 				timeZone: 'America/Sao_Paulo',
 			})
 			.expect(204)
 
 		const workLog = await prisma.workLog.findUnique({ where: { id: workLogId } })
 
-		expect(workLog?.title).toBe('[REVIEW]: Review Auto Guide - part 1')
-		expect(workLog?.taskId).toBe(taskId)
-		expect(workLog?.categoryId).toBe(categoryId)
-		expect(workLog?.endsAt).toEqual(new Date(2026, 0, 12, 11, 30, 0))
+		expect(workLog?.startsAt).toEqual(new Date(2026, 0, 12, 14, 0, 0))
+		expect(workLog?.endsAt).toEqual(new Date(2026, 0, 12, 15, 30, 0))
+		expect(workLog?.title).toBe('[REVIEW]: Review Auto Guide')
+	})
+
+	it('[PATCH] /api/work-logs/:workLogId/schedule returns 404 for a work log owned by another user', async () => {
+		const [otherUserId, otherWorkLogId] = UUIDGenerator(2)
+
+		await prisma.user.create({
+			data: {
+				id: otherUserId,
+				name: 'Jane Doe',
+				email: 'janedoe@email.com',
+				jobTitle: 'Designer',
+				workLogs: {
+					create: {
+						id: otherWorkLogId,
+						title: '[DOCS]: Update APP docs',
+						startsAt: new Date(2026, 0, 12, 9, 0, 0),
+						endsAt: new Date(2026, 0, 12, 10, 0, 0),
+					},
+				},
+			},
+		})
+
+		await request(app.getHttpServer())
+			.patch(`/api/work-logs/${otherWorkLogId}/schedule`)
+			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
+			.send({
+				startsAt: new Date(2026, 0, 12, 16, 0, 0).toISOString(),
+				endsAt: new Date(2026, 0, 12, 17, 0, 0).toISOString(),
+				timeZone: 'America/Sao_Paulo',
+			})
+			.expect(404)
 	})
 
 	afterAll(async () => {

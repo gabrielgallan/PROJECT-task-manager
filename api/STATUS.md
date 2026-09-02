@@ -21,7 +21,8 @@ All routes use the `/api` prefix. All non-public resources belong to the authent
 - The Task Manager domain contains entities, repository ports, and unit-tested use cases for part of Tasks, Categories, Plans, and Work Logs.
 - Task Manager has Prisma models, mappers, registered production repositories, and an applied migration (`20260823193737_add_task_man`).
 - Tasks are complete: every route is registered in `TaskManagerModule` with its use case, is protected by the global session guard, is documented with Swagger, uses presenters, maps ownership to `404`, and has controller E2E coverage. The frontend must be aligned to the implemented `GET /api/tasks` query contract.
-- Categories and Work Logs also have HTTP controllers, DTOs, presenters, module wiring, and E2E coverage; their sections below still describe the previous review and need their own pass.
+- Work Logs are complete: all five routes are registered in `TaskManagerModule`, protected by the global session guard, documented with Swagger, presented through `WorkLogPresenter`, mapping ownership to `404`, with controller E2E coverage.
+- Categories have HTTP controllers, DTOs, presenters, module wiring, and E2E coverage; that section still describes the previous review and needs its own pass.
 - Dashboard, Reports, notification settings, and calendar preferences exist only in the frontend prototype.
 
 ## Shared contract
@@ -216,7 +217,7 @@ The decisions behind the current shape of these routes are recorded in `docs/spe
 - [ ] Frontend: consume the implemented `GET /api/tasks` contract (`search`, repeated facet values, `page` with `limit`, `sortBy` with `sortDir`) and decide how Board and Timeline request the complete filtered result.
 - [ ] Add E2E coverage for the relation cleanup performed by `DELETE /api/tasks/:taskId`.
 - [ ] Decorate `TaskOptionDto` and `TaskDetailsDto` with `@ApiProperty` so their routes publish full response schemas instead of a description only.
-- [ ] Apply the same uniform `404` ownership mapping to the Category and Work Log controllers, which still answer `401`.
+- [ ] Apply the same uniform `404` ownership mapping to the Category controllers, which still answer `401`.
 
 ## Categories and local calendar preferences
 
@@ -294,31 +295,31 @@ Recording a Plan as done must reject a confirmed Plan, a future interval, an int
 
 A Work Log is completed work. It contains `id`, `title`, optional `description`, `startsAt`, `endsAt`, optional `taskId`, optional `categoryId`, `createdAt`, and `updatedAt`.
 
-- [ ] `GET /api/work-logs` — calendar range and filter query
+- [x] `GET /api/work-logs` — calendar range and filter query
   - [x] Domain: `FetchWorkLogsUseCase`, range, filters, ordering, and related summaries
-  - [ ] HTTP
-  - [ ] Persistence/infra: Work Log schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit coverage for ownership, range overlap, filters, ordering, and summaries
-- [ ] `POST /api/work-logs` — create a Work Log
+  - [x] HTTP: protected controller, Zod query DTO with required `from`/`to`, faceted `taskId`/`categoryId` plus `withoutTask`/`withoutCategory`, `WorkLogPresenter`, Swagger documentation, and module wiring
+  - [x] Persistence/infra: Work Log schema, mapper, and repository are implemented, registered, and migrated; the Prisma repository builds OR-within-facet and AND-between-facet filters and orders by `startsAt`
+  - [x] Tests: unit coverage for ownership, range overlap, filters, ordering, and summaries; controller E2E coverage for the range query
+- [x] `POST /api/work-logs` — create a Work Log
   - [x] Domain: `CreateWorkLogUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Work Log schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success, overlap, invalid timezone, and UTC/user-calendar-day coverage; relation ownership coverage remains necessary
-- [ ] `PATCH /api/work-logs/:workLogId` — edit content and optional relations
+  - [x] HTTP: protected controller, Zod DTO, interval/timezone error mapping, Swagger documentation, uniform `404` for a missing or foreign relation, and `201` returning the created Work Log under `data`
+  - [x] Persistence/infra: Work Log schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success, overlap, invalid timezone, relation ownership, missing relation, and UTC/user-calendar-day coverage; controller E2E coverage asserting both the response body and the persisted Work Log
+- [x] `PATCH /api/work-logs/:workLogId` — edit content and optional relations
   - [x] Domain: `EditWorkLogUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Work Log schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success, invalid timezone, and self-exclusion overlap regression coverage; broader validation and ownership coverage remain necessary
-- [ ] `PATCH /api/work-logs/:workLogId/schedule` — move or resize a Work Log
+  - [x] HTTP: protected controller, UUID param DTO, partial body validation with a required `timeZone`, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Work Log schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success, invalid timezone, missing/foreign work log, relation ownership, interval validation, relation switching, and self-exclusion overlap regression coverage; controller E2E editing coverage
+- [x] `PATCH /api/work-logs/:workLogId/schedule` — move or resize a Work Log
   - [x] Domain: reuses `EditWorkLogUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Work Log schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: initial rescheduling success coverage through `EditWorkLogUseCase`
-- [ ] `DELETE /api/work-logs/:workLogId` — delete a Work Log
+  - [x] HTTP: `EditWorkLogScheduleController` with optional `startsAt`/`endsAt` and a required `timeZone`, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Work Log schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: rescheduling coverage through `EditWorkLogUseCase`; controller E2E coverage for moving an interval and for the `404` returned for another user's Work Log
+- [x] `DELETE /api/work-logs/:workLogId` — delete a Work Log
   - [x] Domain: `DeleteWorkLogUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Work Log schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success, not-found, and ownership coverage
+  - [x] HTTP: protected controller, UUID param DTO, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Work Log schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success, not-found, and ownership coverage; controller E2E deletion coverage
 
 `GET /api/work-logs` requires `from` and `to`, accepts the same Task/Category filters as Plans, orders by start time, and includes Task and Category summaries.
 
@@ -329,7 +330,19 @@ Creation, editing, and rescheduling must enforce all of these rules:
 - end is not in the future;
 - the half-open interval does not overlap another Work Log owned by the user.
 
-The overlap response must identify the conflicting Work Log so the frontend can produce an actionable error. Suggested “Log now” ranges and untracked-minute calculations remain client-side derived behavior and do not need endpoints.
+All four rules are enforced by `CreateWorkLogUseCase` and `EditWorkLogUseCase`, and the edit path excludes the edited Work Log from its own overlap check.
+
+A violated rule returns `400` carrying the use-case message; the overlap error reports the conflict without identifying the conflicting Work Log. Suggested “Log now” ranges and untracked-minute calculations remain client-side derived behavior and do not need endpoints.
+
+Every Work Log route maps both `ResourceNotFoundError` and `NotAllowedError` to a `404`, so a Work Log owned by another user is indistinguishable from a missing one; on `POST /api/work-logs` that same `404` reports a missing or foreign referenced Task or Category. `timeZone` is required on both write routes because the use case revalidates the calendar day of the resulting interval on every write.
+
+`POST /api/work-logs` returns the created Work Log under `data` with its raw `taskId`/`categoryId`, presented by `WorkLogPresenter.toHTTPCreated`. The `task`/`category` summaries belong to the fetch payload, which builds them from the `WorkLogData` value object.
+
+The decisions behind the current shape of these routes are recorded in `docs/specs/02-work-logs-http-contract-refinement.md`.
+
+### Work Logs follow-up
+
+- [ ] Decide whether `timeZone` can become optional on the write routes when no date is sent, which today forces the client to supply it to change only a title.
 
 ## Reports
 

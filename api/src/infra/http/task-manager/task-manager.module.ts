@@ -25,6 +25,7 @@ import { EditCategoryController } from './controllers/edit-category.controller'
 import { EditTaskScheduleController } from './controllers/edit-task-schedule.controller'
 import { EditTaskStatusController } from './controllers/edit-task-status.controller'
 import { EditTaskController } from './controllers/edit-task.controller'
+import { EditWorkLogScheduleController } from './controllers/edit-work-log-schedule.controller'
 import { EditWorkLogController } from './controllers/edit-work-log.controller'
 import { FetchCategoriesController } from './controllers/fetch-categories.controller'
 import { FetchTaskOptionsController } from './controllers/fetch-task-options.controller'
@@ -52,6 +53,7 @@ import { GetTaskDetailsController } from './controllers/get-task-details.control
 		CreateWorkLogController,
 		FetchWorkLogsController,
 		EditWorkLogController,
+		EditWorkLogScheduleController,
 		DeleteWorkLogController,
 	],
 	providers: [

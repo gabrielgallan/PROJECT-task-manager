@@ -6,9 +6,15 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 	Param,
-	Put,
-	UnauthorizedException,
+	Patch,
 } from '@nestjs/common'
+import {
+	ApiBadRequestResponse,
+	ApiNoContentResponse,
+	ApiNotFoundResponse,
+	ApiOperation,
+	ApiTags,
+} from '@nestjs/swagger'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { EditWorkLogUseCase } from '@/domain/task-manager/application/use-cases/edit-work-log'
@@ -16,6 +22,7 @@ import { InvalidDatetimeError } from '@/domain/task-manager/application/use-case
 import { InvalidTimeZoneError } from '@/domain/task-manager/application/use-cases/errors/invalid-time-zone-error'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
 import {
 	EditWorkLogDto,
@@ -24,11 +31,19 @@ import {
 	editWorkLogSchema,
 } from './dto/edit-work-log.dto'
 
+@ApiTags('Work Logs')
 @Controller('/api/work-logs/:workLogId')
 export class EditWorkLogController {
 	constructor(private editWorkLog: EditWorkLogUseCase) {}
 
-	@Put()
+	@ApiOperation({ summary: 'edit work log' })
+	@ApiNoContentResponse({ description: 'Work log edited successfully' })
+	@ApiBadRequestResponse({
+		description: 'Invalid interval, time zone or overlapping work log',
+		type: ApiErrorResponseDto,
+	})
+	@ApiNotFoundResponse({ description: 'Work log not found', type: ApiErrorResponseDto })
+	@Patch()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()
@@ -59,14 +74,10 @@ export class EditWorkLogController {
 
 			switch (error.constructor) {
 				case ResourceNotFoundError:
-					throw new NotFoundException(error.message)
-
 				case NotAllowedError:
-					throw new UnauthorizedException(error.message)
+					throw new NotFoundException('Work log not found')
 
 				case InvalidDatetimeError:
-					throw new BadRequestException(error.message)
-
 				case InvalidTimeZoneError:
 					throw new BadRequestException(error.message)
 

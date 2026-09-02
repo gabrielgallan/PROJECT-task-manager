@@ -74,7 +74,7 @@ describe('Create work-log [E2E]', () => {
 	it('[POST] /api/work-logs', async () => {
 		vi.setSystemTime(new Date(2026, 0, 13, 12))
 
-		await request(app.getHttpServer())
+		const response = await request(app.getHttpServer())
 			.post('/api/work-logs')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
@@ -86,6 +86,17 @@ describe('Create work-log [E2E]', () => {
 				timeZone: 'America/Sao_Paulo',
 			})
 			.expect(201)
+
+		const workLog = await prisma.workLog.findUnique({ where: { id: response.body.data.id } })
+
+		expect(response.body.data).toMatchObject({
+			title: '[REVIEW]: Review Auto Guide - part 1',
+			taskId,
+			categoryId,
+		})
+
+		expect(workLog?.title).toBe('[REVIEW]: Review Auto Guide - part 1')
+		expect(workLog?.endsAt).toEqual(new Date(2026, 0, 12, 16, 30, 0))
 	})
 
 	afterAll(async () => {

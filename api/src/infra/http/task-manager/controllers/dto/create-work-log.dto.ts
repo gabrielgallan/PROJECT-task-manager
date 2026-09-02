@@ -1,5 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger'
 import { createZodDto } from 'nestjs-zod'
 import { z } from 'zod'
+import { CreatedWorkLogDto } from '../../dtos/created-work-log.dto'
 
 export const createWorkLogSchema = z.object({
 	taskId: z.uuid().optional(),
@@ -12,3 +14,10 @@ export const createWorkLogSchema = z.object({
 })
 
 export class CreateWorkLogDto extends createZodDto(createWorkLogSchema) {}
+
+export class CreateWorkLogResponseDto {
+	@ApiProperty({
+		type: CreatedWorkLogDto,
+	})
+	data!: CreatedWorkLogDto
+}
