@@ -1,6 +1,6 @@
 # Backend Status
 
-Last reviewed: 2026-08-23.
+Last reviewed: 2026-09-01.
 
 This document is the canonical inventory of backend coverage required by the current frontend prototype. It describes the implementation that exists today and the remaining work; it is not evidence that an unchecked contract has already been finalized.
 
@@ -19,9 +19,9 @@ All routes use the `/api` prefix. All non-public resources belong to the authent
 
 - Identity is implemented end to end for the routes listed below.
 - The Task Manager domain contains entities, repository ports, and unit-tested use cases for part of Tasks, Categories, Plans, and Work Logs.
-- Task Manager has Prisma models, mappers, and registered production repositories; the database migration remains pending.
-- `GET /api/tasks` has an initial controller, DTO, presenter, and use case, but it is not operational: its module has no use-case or repository providers, and the controller is incorrectly public while expecting `CurrentUser`.
-- Work Logs have fetch, create, edit/reschedule, and delete use cases with initial unit coverage, but no HTTP or persistence wiring.
+- Task Manager has Prisma models, mappers, registered production repositories, and an applied migration (`20260823193737_add_task_man`).
+- Tasks are complete: every route is registered in `TaskManagerModule` with its use case, is protected by the global session guard, is documented with Swagger, uses presenters, maps ownership to `404`, and has controller E2E coverage. The frontend must be aligned to the implemented `GET /api/tasks` query contract.
+- Categories and Work Logs also have HTTP controllers, DTOs, presenters, module wiring, and E2E coverage; their sections below still describe the previous review and need their own pass.
 - Dashboard, Reports, notification settings, and calendar preferences exist only in the frontend prototype.
 
 ## Shared contract
@@ -149,23 +149,23 @@ A Task has `id`, `title`, optional `description`, `status`, `priority`, optional
 
 ### Queries
 
-- [ ] `GET /api/tasks` — filtered, sorted, and optionally paginated Task collection
+- [x] `GET /api/tasks` — filtered, sorted, and optionally paginated Task collection
   - [x] Domain: `FetchTasksUseCase`, filter/sort inputs, and repository port
-  - [ ] HTTP: initial controller and DTO exist, but authentication, module providers, presentation, and the frontend query contract are incomplete
-  - [ ] Persistence/infra: Task schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit coverage for user scoping, faceted filters, normalized title/description search, deterministic sorting, null due dates, and pagination; no E2E coverage
-- [ ] `GET /api/tasks/options` — cursor-based `id` and `title` options for comboboxes
+  - [x] HTTP: protected controller, Zod query DTO, Swagger documentation, `TaskPresenter`, and module wiring
+  - [x] Persistence/infra: Task schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit coverage for user scoping, faceted filters, normalized title/description search, deterministic sorting, null due dates, and pagination; controller E2E coverage for status and priority filters
+- [x] `GET /api/tasks/options` — cursor-based `id` and `title` options for comboboxes
   - [x] Domain: `FetchTaskOptionsUseCase`, normalized title search, deterministic ordering, and cursor contract
-  - [x] HTTP: authenticated controller, Zod query DTO, opaque cursor codec, and presenter are wired; Swagger and E2E coverage remain pending
+  - [x] HTTP: authenticated controller, Zod query DTO, opaque cursor codec, presenter, and Swagger documentation
   - [x] Persistence/infra: Prisma repository selects owned `id`/`title` options and applies normalized cursor pagination in memory
-  - [x] Tests: unit coverage for ownership, all statuses, normalized search, deterministic ordering, cursor pages, removed cursor records, and empty results; no E2E coverage
-- [ ] `GET /api/tasks/:taskId` — Task details, planned/logged totals, and combined activity
+  - [x] Tests: unit coverage for ownership, all statuses, normalized search, deterministic ordering, cursor pages, removed cursor records, and empty results; controller E2E coverage for search and cursor paging
+- [x] `GET /api/tasks/:taskId` — Task details, planned/logged totals, and combined activity
   - [x] Domain: `GetTaskDetailsUseCase`, ownership, duration totals, and deterministic combined activity
-  - [x] HTTP: authenticated controller, UUID param DTO, uniform `404`, and details presenter are wired; Swagger and E2E coverage remain pending
+  - [x] HTTP: authenticated controller, UUID param DTO, uniform `404`, details presenter, and Swagger documentation
   - [x] Persistence/infra: Plan and Work Log repositories fetch full owned history by Task using the applied schema and migration
-  - [x] Tests: unit coverage for totals, confirmation state, activity ordering, empty history, ownership, and not-found behavior; no E2E coverage
+  - [x] Tests: unit coverage for totals, confirmation state, activity ordering, empty history, ownership, and not-found behavior; controller E2E coverage for summary totals and activity
 
-The listing contract required by the frontend uses `q`, comma-separated `status` and `priority`, `sort=field:direction`, and `page`. The default page size is 10. Board and Timeline require the complete filtered result, currently represented by `page=all` in the planned contract.
+The implemented listing contract is the canonical one: `search`, repeated uppercase `status` and `priority` values, `page` with `limit`, and `sortBy` with `sortDir`. `page` and `limit` must be sent together, as must `sortBy` and `sortDir`; sending only one side of either pair returns `400`. Aligning the frontend to this contract — including how Board and Timeline request the complete filtered result — is a frontend follow-up.
 
 Required ordering behavior:
 
@@ -175,37 +175,48 @@ Required ordering behavior:
 - a missing due date sorts last in both directions;
 - ties use title ascending without reversing the tie-breaker.
 
-The current HTTP draft instead accepts `search`, repeated uppercase status/priority values, `limit`, `sortBy`, and `sortDir`; it also returns raw use-case data rather than applying the existing presenter. Resolve this before marking the route complete.
+Query parsing lives in `parsePaginationQuery` and `parseTaskSortQuery` under `src/infra/http/task-manager/utils`, and the response is presented by `TaskPresenter`.
 
 ### Commands
 
-- [ ] `POST /api/tasks` — create a Task
+- [x] `POST /api/tasks` — create a Task
   - [x] Domain: `CreateTaskUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Task schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success coverage
-- [ ] `PATCH /api/tasks/:taskId` — edit general Task data
+  - [x] HTTP: protected controller, Zod DTO with `BACKLOG`/`LOW` defaults, Swagger documentation, and `201` returning the created Task under `data`
+  - [x] Persistence/infra: Task schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success coverage and controller E2E coverage asserting both the response body and the persisted Task
+- [x] `PATCH /api/tasks/:taskId` — edit general Task data
   - [x] Domain: `EditTaskUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Task schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success, not-found, and ownership coverage
-- [ ] `PATCH /api/tasks/:taskId/status` — move a Task between Board columns
-  - [x] Domain: decide whether to reuse `EditTaskUseCase` or expose a focused command
-  - [ ] HTTP
-  - [ ] Persistence/infra: Task schema, mapper, and repository are implemented and registered; migration pending
-  - [ ] Tests
-- [ ] `PATCH /api/tasks/:taskId/schedule` — change planned start and due date
-  - [x] Domain: decide whether to reuse `EditTaskUseCase` or expose a focused command
-  - [ ] HTTP
-  - [ ] Persistence/infra: Task schema, mapper, and repository are implemented and registered; migration pending
-  - [ ] Tests
+  - [x] HTTP: protected controller, UUID param DTO, partial body validation, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Task schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success, not-found, and ownership coverage; controller E2E coverage asserting the partial update
+- [x] `PATCH /api/tasks/:taskId/status` — move a Task between Board columns
+  - [x] Domain: reuses `EditTaskUseCase`
+  - [x] HTTP: `EditTaskStatusController` with a required `status` body, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Task schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: controller E2E coverage for the status change, untouched sibling fields, and the `404` returned for another user's Task
+- [x] `PATCH /api/tasks/:taskId/schedule` — change planned start and due date
+  - [x] Domain: reuses `EditTaskUseCase`
+  - [x] HTTP: `EditTaskScheduleController` with nullable `startDate`/`dueDate`, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Task schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: controller E2E coverage for setting both dates and for clearing one with `null`
 - [ ] `DELETE /api/tasks/:taskId` — delete a Task and clear related references
   - [x] Domain: `DeleteTaskUseCase` deletes the owned Task
-  - [ ] HTTP
-  - [ ] Persistence/infra: `ON DELETE SET NULL` is modeled and the Task repository is registered; migration pending
-  - [x] Tests: unit not-found and ownership coverage; no relation cleanup coverage
+  - [x] HTTP: protected controller, UUID param DTO, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: `ON DELETE SET NULL` is modeled and migrated for `plans.task_id` and `work_logs.task_id`
+  - [ ] Tests: unit not-found and ownership coverage plus controller E2E deletion coverage; no coverage asserting that related Plans and Work Logs survive with a cleared `taskId`
 
 Task details return combined Plan/Work Log activity ordered by descending start time. Each activity entry exposes `kind: 'plan' | 'work-log'`; only Plan entries may expose `isConfirmed`.
+
+Every Task route maps both `ResourceNotFoundError` and `NotAllowedError` to `404 Task not found`, so a Task owned by another user is indistinguishable from a missing one. Editable dates follow a three-state contract handled by `parseEditableDate`: an absent field keeps the current value, `null` clears it, and a date string replaces it.
+
+The decisions behind the current shape of these routes are recorded in `docs/specs/01-tasks-http-contract-refinement.md`.
+
+### Tasks follow-up
+
+- [ ] Frontend: consume the implemented `GET /api/tasks` contract (`search`, repeated facet values, `page` with `limit`, `sortBy` with `sortDir`) and decide how Board and Timeline request the complete filtered result.
+- [ ] Add E2E coverage for the relation cleanup performed by `DELETE /api/tasks/:taskId`.
+- [ ] Decorate `TaskOptionDto` and `TaskDetailsDto` with `@ApiProperty` so their routes publish full response schemas instead of a description only.
+- [ ] Apply the same uniform `404` ownership mapping to the Category and Work Log controllers, which still answer `401`.
 
 ## Categories and local calendar preferences
 

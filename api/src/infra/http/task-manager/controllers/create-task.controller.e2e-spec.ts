@@ -51,7 +51,7 @@ describe('Crate task [E2E]', () => {
 			},
 		})
 
-		await request(app.getHttpServer())
+		const response = await request(app.getHttpServer())
 			.post('/api/tasks')
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
@@ -67,6 +67,13 @@ describe('Crate task [E2E]', () => {
 			where: {
 				userId,
 			},
+		})
+
+		expect(response.body.data).toMatchObject({
+			id: task?.id,
+			title: 'Fix auth feature',
+			status: 'BACKLOG',
+			priority: 'MEDIUM',
 		})
 
 		expect(task?.title).toBe('Fix auth feature')

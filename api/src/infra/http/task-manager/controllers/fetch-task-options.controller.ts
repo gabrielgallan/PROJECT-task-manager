@@ -6,6 +6,7 @@ import {
 	InternalServerErrorException,
 	Query,
 } from '@nestjs/common'
+import { ApiBadRequestResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import type {
 	TaskOptionsCursor,
 } from '@/domain/task-manager/application/repositories/tasks-repository'
@@ -14,6 +15,7 @@ import {
 } from '@/domain/task-manager/application/use-cases/fetch-task-options'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
 import { TaskOptionPresenter } from '../presenters/task-option-presenter'
 import {
@@ -22,10 +24,14 @@ import {
 } from '../utils/task-options-cursor'
 import { FetchTaskOptionsDto, fetchTaskOptionsSchema } from './dto/fetch-task-options.dto'
 
+@ApiTags('Tasks')
 @Controller('/api/tasks/options')
 export class FetchTaskOptionsController {
 	constructor(private fetchTaskOptions: FetchTaskOptionsUseCase) {}
 
+	@ApiOperation({ summary: 'fetch task options for comboboxes' })
+	@ApiOkResponse({ description: 'Task options fetched successfully' })
+	@ApiBadRequestResponse({ description: 'Invalid task options cursor', type: ApiErrorResponseDto })
 	@Get()
 	@HttpCode(200)
 	async handle(

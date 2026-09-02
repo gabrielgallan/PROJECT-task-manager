@@ -22,6 +22,8 @@ import { DeleteCategoryController } from './controllers/delete-category.controll
 import { DeleteTaskController } from './controllers/delete-task.controller'
 import { DeleteWorkLogController } from './controllers/delete-work-log.controller'
 import { EditCategoryController } from './controllers/edit-category.controller'
+import { EditTaskScheduleController } from './controllers/edit-task-schedule.controller'
+import { EditTaskStatusController } from './controllers/edit-task-status.controller'
 import { EditTaskController } from './controllers/edit-task.controller'
 import { EditWorkLogController } from './controllers/edit-work-log.controller'
 import { FetchCategoriesController } from './controllers/fetch-categories.controller'
@@ -39,6 +41,8 @@ import { GetTaskDetailsController } from './controllers/get-task-details.control
 		FetchTasksController,
 		CreateTaskController,
 		EditTaskController,
+		EditTaskStatusController,
+		EditTaskScheduleController,
 		DeleteTaskController,
 		FetchCategoriesController,
 		CreateCategoryController,

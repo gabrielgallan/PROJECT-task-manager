@@ -1,6 +1,7 @@
+import { ApiProperty } from '@nestjs/swagger'
 import { createZodDto } from 'nestjs-zod'
 import z from 'zod'
-
+import { TaskDto } from '../../dtos/task.dto'
 import { taskPrioritySchema, taskStatusSchema } from './fetch-tasks.dto'
 
 export const createTaskSchema = z.object({
@@ -13,3 +14,10 @@ export const createTaskSchema = z.object({
 })
 
 export class CreateTaskDto extends createZodDto(createTaskSchema) {}
+
+export class CreateTaskResponseDto {
+	@ApiProperty({
+		type: TaskDto,
+	})
+	data!: TaskDto
+}

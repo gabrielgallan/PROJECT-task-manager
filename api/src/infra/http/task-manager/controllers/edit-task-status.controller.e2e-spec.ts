@@ -9,7 +9,7 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Edit task [E2E]', () => {
+describe('Edit task status [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
@@ -54,7 +54,7 @@ describe('Edit task [E2E]', () => {
 					create: {
 						id: taskId,
 						title: 'Fix auth feat',
-						status: 'IN_PROGRESS',
+						status: 'BACKLOG',
 						priority: 'HIGH',
 					},
 				},
@@ -62,21 +62,47 @@ describe('Edit task [E2E]', () => {
 		})
 	})
 
-	it('[PATCH] /api/tasks/:taskId', async () => {
+	it('[PATCH] /api/tasks/:taskId/status', async () => {
 		await request(app.getHttpServer())
-			.patch(`/api/tasks/${taskId}`)
+			.patch(`/api/tasks/${taskId}/status`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
-				title: 'FIXED: Fix auth feat',
 				status: 'DONE',
 			})
 			.expect(204)
 
 		const task = await prisma.task.findUnique({ where: { id: taskId } })
 
-		expect(task?.title).toBe('FIXED: Fix auth feat')
 		expect(task?.status).toBe('DONE')
+		expect(task?.title).toBe('Fix auth feat')
 		expect(task?.priority).toBe('HIGH')
+	})
+
+	it('[PATCH] /api/tasks/:taskId/status returns 404 for a task owned by another user', async () => {
+		const [otherUserId, otherTaskId] = UUIDGenerator(2)
+
+		await prisma.user.create({
+			data: {
+				id: otherUserId,
+				name: 'Jane Doe',
+				email: 'janedoe@email.com',
+				jobTitle: 'Designer',
+				tasks: {
+					create: {
+						id: otherTaskId,
+						title: 'Redesign landing page',
+					},
+				},
+			},
+		})
+
+		await request(app.getHttpServer())
+			.patch(`/api/tasks/${otherTaskId}/status`)
+			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
+			.send({
+				status: 'DONE',
+			})
+			.expect(404)
 	})
 
 	afterAll(async () => {

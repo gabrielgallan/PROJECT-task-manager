@@ -9,7 +9,7 @@ import { AppModule } from '@/infra/app.module'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
 import { PrismaService } from '@/infra/database/prisma/prisma.service'
 
-describe('Edit task [E2E]', () => {
+describe('Edit task schedule [E2E]', () => {
 	let app: INestApplication
 	let prisma: PrismaService
 	let sessionTokenGenerator: SessionTokenGenerator
@@ -62,21 +62,36 @@ describe('Edit task [E2E]', () => {
 		})
 	})
 
-	it('[PATCH] /api/tasks/:taskId', async () => {
+	it('[PATCH] /api/tasks/:taskId/schedule', async () => {
 		await request(app.getHttpServer())
-			.patch(`/api/tasks/${taskId}`)
+			.patch(`/api/tasks/${taskId}/schedule`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
-				title: 'FIXED: Fix auth feat',
-				status: 'DONE',
+				startDate: '2026-08-26',
+				dueDate: '2026-08-28',
 			})
 			.expect(204)
 
 		const task = await prisma.task.findUnique({ where: { id: taskId } })
 
-		expect(task?.title).toBe('FIXED: Fix auth feat')
-		expect(task?.status).toBe('DONE')
-		expect(task?.priority).toBe('HIGH')
+		expect(task?.startDate).toEqual(new Date('2026-08-26'))
+		expect(task?.dueDate).toEqual(new Date('2026-08-28'))
+		expect(task?.status).toBe('IN_PROGRESS')
+	})
+
+	it('[PATCH] /api/tasks/:taskId/schedule clears a date sent as null', async () => {
+		await request(app.getHttpServer())
+			.patch(`/api/tasks/${taskId}/schedule`)
+			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
+			.send({
+				dueDate: null,
+			})
+			.expect(204)
+
+		const task = await prisma.task.findUnique({ where: { id: taskId } })
+
+		expect(task?.dueDate).toBeNull()
+		expect(task?.startDate).toEqual(new Date('2026-08-26'))
 	})
 
 	afterAll(async () => {

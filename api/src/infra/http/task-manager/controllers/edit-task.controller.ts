@@ -5,15 +5,17 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 	Param,
-	Put,
-	UnauthorizedException,
+	Patch,
 } from '@nestjs/common'
+import { ApiNoContentResponse, ApiNotFoundResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { EditTaskUseCase } from '@/domain/task-manager/application/use-cases/edit-task'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { parseEditableDate } from '../utils/parse-editable-date'
 import {
 	EditTaskDto,
 	EditTaskParamDto,
@@ -21,11 +23,15 @@ import {
 	editTaskSchema,
 } from './dto/edit-task.dto'
 
+@ApiTags('Tasks')
 @Controller('/api/tasks/:taskId')
 export class EditTaskController {
 	constructor(private editTask: EditTaskUseCase) {}
 
-	@Put()
+	@ApiOperation({ summary: 'edit task' })
+	@ApiNoContentResponse({ description: 'Task edited successfully' })
+	@ApiNotFoundResponse({ description: 'Task not found', type: ApiErrorResponseDto })
+	@Patch()
 	@HttpCode(204)
 	async handle(
 		@CurrentUser()
@@ -46,8 +52,8 @@ export class EditTaskController {
 			description,
 			status,
 			priority,
-			startDate: startDate ? new Date(startDate) : undefined,
-			dueDate: dueDate ? new Date(dueDate) : undefined,
+			startDate: parseEditableDate(startDate),
+			dueDate: parseEditableDate(dueDate),
 		})
 
 		if (result.isLeft()) {
@@ -55,10 +61,8 @@ export class EditTaskController {
 
 			switch (error.constructor) {
 				case ResourceNotFoundError:
-					throw new NotFoundException(error.message)
-
 				case NotAllowedError:
-					throw new UnauthorizedException(error.message)
+					throw new NotFoundException('Task not found')
 
 				default:
 					throw new InternalServerErrorException()

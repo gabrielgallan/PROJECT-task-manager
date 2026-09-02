@@ -6,19 +6,25 @@ import {
 	NotFoundException,
 	Param,
 } from '@nestjs/common'
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { GetTaskDetailsUseCase } from '@/domain/task-manager/application/use-cases/get-task-details'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
 import { TaskDetailsPresenter } from '../presenters/task-details-presenter'
 import { GetTaskDetailsDto, getTaskDetailsSchema } from './dto/get-task-details.dto'
 
+@ApiTags('Tasks')
 @Controller('/api/tasks/:taskId')
 export class GetTaskDetailsController {
 	constructor(private getTaskDetails: GetTaskDetailsUseCase) {}
 
+	@ApiOperation({ summary: 'get task details' })
+	@ApiOkResponse({ description: 'Task details fetched successfully' })
+	@ApiNotFoundResponse({ description: 'Task not found', type: ApiErrorResponseDto })
 	@Get()
 	@HttpCode(200)
 	async handle(

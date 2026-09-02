@@ -1,14 +1,19 @@
 import { Body, Controller, HttpCode, InternalServerErrorException, Post } from '@nestjs/common'
+import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CreateTaskUseCase } from '@/domain/task-manager/application/use-cases/create-task'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
-import { CreateTaskDto, createTaskSchema } from './dto/create-task.dto'
+import { TaskPresenter } from '../presenters/task-presenter'
+import { CreateTaskDto, CreateTaskResponseDto, createTaskSchema } from './dto/create-task.dto'
 
+@ApiTags('Tasks')
 @Controller('/api/tasks')
 export class CreateTaskController {
 	constructor(private createTask: CreateTaskUseCase) {}
 
+	@ApiOperation({ summary: 'create task' })
+	@ApiCreatedResponse({ description: 'Task created successfully', type: CreateTaskResponseDto })
 	@Post()
 	@HttpCode(201)
 	async handle(
@@ -34,6 +39,6 @@ export class CreateTaskController {
 			throw new InternalServerErrorException()
 		}
 
-		return
+		return { data: TaskPresenter.toHTTP(result.value.task) }
 	}
 }
