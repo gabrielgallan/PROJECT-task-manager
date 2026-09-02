@@ -22,7 +22,7 @@ All routes use the `/api` prefix. All non-public resources belong to the authent
 - Task Manager has Prisma models, mappers, registered production repositories, and an applied migration (`20260823193737_add_task_man`).
 - Tasks are complete: every route is registered in `TaskManagerModule` with its use case, is protected by the global session guard, is documented with Swagger, uses presenters, maps ownership to `404`, and has controller E2E coverage. The frontend must be aligned to the implemented `GET /api/tasks` query contract.
 - Work Logs are complete: all five routes are registered in `TaskManagerModule`, protected by the global session guard, documented with Swagger, presented through `WorkLogPresenter`, mapping ownership to `404`, with controller E2E coverage.
-- Categories have HTTP controllers, DTOs, presenters, module wiring, and E2E coverage; that section still describes the previous review and needs its own pass.
+- Categories are complete: all five routes are registered in `TaskManagerModule`, protected by the global session guard, documented with Swagger, presented through `CategoryPresenter`, mapping ownership to `404`, with controller E2E coverage including the relation cleanup.
 - Dashboard, Reports, notification settings, and calendar preferences exist only in the frontend prototype.
 
 ## Shared contract
@@ -217,40 +217,46 @@ The decisions behind the current shape of these routes are recorded in `docs/spe
 - [ ] Frontend: consume the implemented `GET /api/tasks` contract (`search`, repeated facet values, `page` with `limit`, `sortBy` with `sortDir`) and decide how Board and Timeline request the complete filtered result.
 - [ ] Add E2E coverage for the relation cleanup performed by `DELETE /api/tasks/:taskId`.
 - [ ] Decorate `TaskOptionDto` and `TaskDetailsDto` with `@ApiProperty` so their routes publish full response schemas instead of a description only.
-- [ ] Apply the same uniform `404` ownership mapping to the Category controllers, which still answer `401`.
+- [ ] Add E2E coverage for the relation cleanup performed by `DELETE /api/tasks/:taskId`, mirroring the Category coverage.
 
 ## Categories and local calendar preferences
 
 Category names are normalized to Unicode NFC, trimmed, and have internal whitespace compacted. They retain case and accents and must contain 1–40 characters after normalization. Name uniqueness is not required in this version. Allowed colors are `red`, `orange`, `amber`, `yellow`, `lime`, `green`, `emerald`, `teal`, `cyan`, `sky`, `blue`, `indigo`, `violet`, `purple`, `fuchsia`, `pink`, `rose`, and `slate`.
 
-- [ ] `GET /api/categories` — list all user Categories ordered by name
+- [x] `GET /api/categories` — list all user Categories ordered by name
   - [x] Domain: `FetchCategoriesUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Category schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit user-scoping coverage
-- [ ] `GET /api/categories/:categoryId/deletion-impact` — count affected Plans and Work Logs
+  - [x] HTTP: protected controller, `CategoryPresenter`, Swagger documentation, and module wiring
+  - [x] Persistence/infra: Category schema, mapper, and repository are implemented, registered, and migrated; the Prisma repository orders by `name`
+  - [x] Tests: unit user-scoping coverage; controller E2E listing coverage
+- [x] `GET /api/categories/:categoryId/deletion-impact` — count affected Plans and Work Logs
   - [x] Domain: `GetCategoryDeletionImpactUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Category schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests
-- [ ] `POST /api/categories` — create a Category
+  - [x] HTTP: protected controller, its own UUID param DTO, Swagger documentation, uniform `404`, and counts returned under `data`
+  - [x] Persistence/infra: the Prisma repository counts related Plans and Work Logs in a single transaction
+  - [x] Tests: unit coverage; controller E2E coverage asserting both counts
+- [x] `POST /api/categories` — create a Category
   - [x] Domain: `CreateCategoryUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Category schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit coverage for normalization, name limits, and every allowed or rejected color
-- [ ] `PATCH /api/categories/:categoryId` — edit name or color
+  - [x] HTTP: protected controller, Zod DTO restating the color enum and the 1–40 name limit, `InvalidCategoryError` mapped to `400`, Swagger documentation, and `201` returning the created Category under `data`
+  - [x] Persistence/infra: Category schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit coverage for normalization, name limits, and every allowed or rejected color; controller E2E coverage asserting both the response body and the persisted Category
+- [x] `PATCH /api/categories/:categoryId` — edit name or color
   - [x] Domain: `EditCategoryUseCase`
-  - [ ] HTTP
-  - [ ] Persistence/infra: Category schema, mapper, and repository are implemented and registered; migration pending
-  - [x] Tests: unit success, normalization, validation, not-found, and ownership coverage
-- [ ] `DELETE /api/categories/:categoryId` — delete a Category and clear related references
+  - [x] HTTP: protected controller, UUID param DTO, partial body validation, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: Category schema, mapper, and repository are implemented, registered, and migrated
+  - [x] Tests: unit success, normalization, validation, not-found, and ownership coverage; controller E2E editing coverage
+- [x] `DELETE /api/categories/:categoryId` — delete a Category and clear related references
   - [x] Domain: `DeleteCategoryUseCase` deletes the owned Category
-  - [ ] HTTP
-  - [ ] Persistence/infra: `ON DELETE SET NULL` is modeled and the Category repository is registered; migration pending
-  - [x] Tests: unit not-found and ownership coverage; no relation cleanup coverage
+  - [x] HTTP: protected controller, UUID param DTO, Swagger documentation, uniform `404`, and `204`
+  - [x] Persistence/infra: `ON DELETE SET NULL` is modeled and migrated for `plans.category_id` and `work_logs.category_id`
+  - [x] Tests: unit not-found and ownership coverage; controller E2E coverage asserting the deletion and that related Plans and Work Logs survive with a cleared `categoryId`
 `uncategorizedColor` is a frontend-only preference and will be persisted in `localStorage`. It does not require domain use cases, HTTP routes, or backend persistence. The current frontend store still keeps it only in memory, so adding local persistence remains a frontend follow-up outside this backend inventory.
 
 Changing a Category color immediately affects related calendar items because color is resolved through the Category and is not copied to Plans or Work Logs. Category CRUD, ownership, relations, filters, and summaries remain backend responsibilities.
+
+Name normalization, the 1–40 character limit, and the allowed color list are enforced by `CreateCategoryUseCase` and `EditCategoryUseCase` and surface as `400`. The Zod DTOs now restate the same rules, so a malformed name or an unknown color is rejected at the boundary and the enum is published in Swagger; `categoryColorSchema` reuses the `CATEGORY_COLORS` constant exported by the Category entity rather than restating it.
+
+Every Category route maps both `ResourceNotFoundError` and `NotAllowedError` to `404 Category not found`, so a Category owned by another user is indistinguishable from a missing one.
+
+The decisions behind the current shape of these routes are recorded in `docs/specs/03-categories-http-contract-refinement.md`.
 
 ## Plans
 

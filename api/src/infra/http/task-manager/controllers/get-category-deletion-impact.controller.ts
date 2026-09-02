@@ -5,28 +5,40 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 	Param,
-	UnauthorizedException,
 } from '@nestjs/common'
+import { ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { NotAllowedError } from '@/core/shared/errors/not-allowed-error'
 import { ResourceNotFoundError } from '@/core/shared/errors/resource-not-found-error'
 import { GetCategoryDeletionImpactUseCase } from '@/domain/task-manager/application/use-cases/get-category-deletion-impact'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
-import { DeleteCategoryParamDto, deleteCategoryParamSchema } from './dto/delete-category.dto'
+import {
+	GetCategoryDeletionImpactParamDto,
+	GetCategoryDeletionImpactResponseDto,
+	getCategoryDeletionImpactParamSchema,
+} from './dto/get-category-deletion-impact.dto'
 
+@ApiTags('Categories')
 @Controller('/api/categories/:categoryId/deletion-impact')
 export class GetCategoryDeletionImpactController {
 	constructor(private getCategoryDeletionImpact: GetCategoryDeletionImpactUseCase) {}
 
+	@ApiOperation({ summary: 'count plans and work logs affected by a category deletion' })
+	@ApiOkResponse({
+		description: 'Category deletion impact fetched successfully',
+		type: GetCategoryDeletionImpactResponseDto,
+	})
+	@ApiNotFoundResponse({ description: 'Category not found', type: ApiErrorResponseDto })
 	@Get()
 	@HttpCode(200)
 	async handle(
 		@CurrentUser()
 		user: UserPayload,
 
-		@Param(new ZodValidationPipe(deleteCategoryParamSchema))
-		param: DeleteCategoryParamDto,
+		@Param(new ZodValidationPipe(getCategoryDeletionImpactParamSchema))
+		param: GetCategoryDeletionImpactParamDto,
 	) {
 		const result = await this.getCategoryDeletionImpact.execute({
 			userId: user.id,
@@ -38,16 +50,14 @@ export class GetCategoryDeletionImpactController {
 
 			switch (error.constructor) {
 				case ResourceNotFoundError:
-					throw new NotFoundException(error.message)
-
 				case NotAllowedError:
-					throw new UnauthorizedException(error.message)
+					throw new NotFoundException('Category not found')
 
 				default:
 					throw new InternalServerErrorException()
 			}
 		}
 
-		return result.value
+		return { data: result.value }
 	}
 }

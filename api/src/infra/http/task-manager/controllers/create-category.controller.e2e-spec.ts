@@ -53,7 +53,7 @@ describe('Create category [E2E]', () => {
 	})
 
 	it('[POST] /api/categories', async () => {
-		await request(app.getHttpServer())
+		const response = await request(app.getHttpServer())
 			.post(`/api/categories`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
@@ -63,6 +63,12 @@ describe('Create category [E2E]', () => {
 			.expect(201)
 
 		const category = await prisma.category.findFirst({ where: { userId } })
+
+		expect(response.body.data).toMatchObject({
+			id: category?.id,
+			name: 'Work Meeting',
+			color: 'blue',
+		})
 
 		expect(category?.name).toBe('Work Meeting')
 		expect(category?.color).toBe('blue')

@@ -97,7 +97,7 @@ describe('Get category deletion impact [E2E]', () => {
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.expect(200)
 
-		expect(response.body).toMatchObject({
+		expect(response.body.data).toMatchObject({
 			plansCount: 1,
 			workLogsCount: 2,
 		})

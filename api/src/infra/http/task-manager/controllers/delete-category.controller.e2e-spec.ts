@@ -17,6 +17,8 @@ describe('Delete category [E2E]', () => {
 
 	let userId: string
 	let categoryId: string
+	let planId: string
+	let workLogId: string
 	let sessionToken: string
 
 	beforeAll(async () => {
@@ -36,6 +38,8 @@ describe('Delete category [E2E]', () => {
 
 		userId = UUIDGenerator(1)[0]
 		categoryId = UUIDGenerator(1)[0]
+		planId = UUIDGenerator(1)[0]
+		workLogId = UUIDGenerator(1)[0]
 		sessionToken = sessionTokenGenerator.generate()
 
 		await prisma.user.create({
@@ -55,6 +59,24 @@ describe('Delete category [E2E]', () => {
 						id: categoryId,
 						name: 'Work Meeting',
 						color: 'blue',
+						plans: {
+							create: {
+								id: planId,
+								userId,
+								title: 'Integrator Meeting',
+								startsAt: new Date(2026, 0, 12, 9, 0, 0),
+								endsAt: new Date(2026, 0, 12, 10, 0, 0),
+							},
+						},
+						workLogs: {
+							create: {
+								id: workLogId,
+								userId,
+								title: 'Guide Review',
+								startsAt: new Date(2026, 0, 12, 10, 0, 0),
+								endsAt: new Date(2026, 0, 12, 11, 0, 0),
+							},
+						},
 					},
 				},
 			},
@@ -69,7 +91,14 @@ describe('Delete category [E2E]', () => {
 
 		const category = await prisma.category.findUnique({ where: { id: categoryId } })
 
+		const plan = await prisma.plan.findUnique({ where: { id: planId } })
+
+		const workLog = await prisma.workLog.findUnique({ where: { id: workLogId } })
+
 		expect(category).toBeNull()
+
+		expect(plan?.categoryId).toBeNull()
+		expect(workLog?.categoryId).toBeNull()
 	})
 
 	afterAll(async () => {

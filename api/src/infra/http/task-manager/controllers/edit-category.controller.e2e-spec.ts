@@ -61,9 +61,9 @@ describe('Delete category [E2E]', () => {
 		})
 	})
 
-	it('[PUT] /api/categories/:categoryId', async () => {
+	it('[PATCH] /api/categories/:categoryId', async () => {
 		await request(app.getHttpServer())
-			.put(`/api/categories/${categoryId}`)
+			.patch(`/api/categories/${categoryId}`)
 			.set('Cookie', `${SESSION_COOKIE_NAME}=${sessionToken}`)
 			.send({
 				name: 'Development',

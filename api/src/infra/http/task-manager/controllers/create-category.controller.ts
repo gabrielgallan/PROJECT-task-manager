@@ -6,17 +6,36 @@ import {
 	InternalServerErrorException,
 	Post,
 } from '@nestjs/common'
+import {
+	ApiBadRequestResponse,
+	ApiCreatedResponse,
+	ApiOperation,
+	ApiTags,
+} from '@nestjs/swagger'
 import { CreateCategoryUseCase } from '@/domain/task-manager/application/use-cases/create-category'
 import { InvalidCategoryError } from '@/domain/task-manager/application/use-cases/errors/invalid-category-error'
 import { CurrentUser } from '@/infra/auth/current-user.decorator'
 import { type UserPayload } from '@/infra/auth/user-payload'
+import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
-import { CreateCategoryDto, createCategorySchema } from './dto/create-cateogory.dto'
+import { CategoryPresenter } from '../presenters/category-presenter'
+import {
+	CreateCategoryDto,
+	CreateCategoryResponseDto,
+	createCategorySchema,
+} from './dto/create-category.dto'
 
+@ApiTags('Categories')
 @Controller('/api/categories')
 export class CreateCategoryController {
 	constructor(private createCategory: CreateCategoryUseCase) {}
 
+	@ApiOperation({ summary: 'create category' })
+	@ApiCreatedResponse({
+		description: 'Category created successfully',
+		type: CreateCategoryResponseDto,
+	})
+	@ApiBadRequestResponse({ description: 'Invalid category name or color', type: ApiErrorResponseDto })
 	@Post()
 	@HttpCode(201)
 	async handle(
@@ -46,6 +65,6 @@ export class CreateCategoryController {
 			}
 		}
 
-		return
+		return { data: CategoryPresenter.toHTTP(result.value.category) }
 	}
 }
