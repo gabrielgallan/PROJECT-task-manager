@@ -2,10 +2,14 @@ import { ApiProperty } from '@nestjs/swagger'
 import type { TaskPriority, TaskStatus } from '@/domain/task-manager/enterprise/entities/task'
 
 export class TaskDto {
-	@ApiProperty()
+	@ApiProperty({
+		example: 'task-uuid',
+	})
 	id!: string
 
-	@ApiProperty()
+	@ApiProperty({
+		example: 'Implement new feature',
+	})
 	title!: string
 
 	@ApiProperty({
@@ -13,18 +17,24 @@ export class TaskDto {
 	})
 	description!: string | null
 
-	@ApiProperty()
+	@ApiProperty({
+		enum: ['BACKLOG', 'IN_PROGRESS', 'DONE'],
+	})
 	status!: TaskStatus
 
-	@ApiProperty()
+	@ApiProperty({
+		enum: ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'],
+	})
 	priority!: TaskPriority
 
 	@ApiProperty({
+		example: '2023-01-01T00:00:00.000Z',
 		nullable: true,
 	})
 	startDate!: Date | null
 
 	@ApiProperty({
+		example: '2023-01-31T23:59:59.999Z',
 		nullable: true,
 	})
 	dueDate!: Date | null
@@ -32,6 +42,7 @@ export class TaskDto {
 	createdAt!: Date
 
 	@ApiProperty({
+		example: '2023-01-01T00:00:00.000Z',
 		nullable: true,
 	})
 	updatedAt!: Date | null
