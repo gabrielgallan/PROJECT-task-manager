@@ -1,6 +1,6 @@
 # 04 — Plans HTTP controllers
 
-Status: planned
+Status: implemented
 Scope: `src/infra/http/task-manager` (Plan routes only) and `api/STATUS.md`
 Created: 2026-09-01
 
@@ -189,3 +189,5 @@ Also run `npx biome check src/infra/http/task-manager` and `npx tsc --noEmit`,
 checking that no new error appears under `src/infra`.
 
 `STATUS.md` is updated to the resulting state in the implementation commit.
+
+Result: unit `143 passed (34 files)`, E2E `44 passed (37 files)`.

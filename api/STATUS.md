@@ -23,7 +23,7 @@ All routes use the `/api` prefix. All non-public resources belong to the authent
 - Tasks are complete: every route is registered in `TaskManagerModule` with its use case, is protected by the global session guard, is documented with Swagger, uses presenters, maps ownership to `404`, and has controller E2E coverage. The frontend must be aligned to the implemented `GET /api/tasks` query contract.
 - Work Logs are complete: all five routes are registered in `TaskManagerModule`, protected by the global session guard, documented with Swagger, presented through `WorkLogPresenter`, mapping ownership to `404`, with controller E2E coverage.
 - Categories are complete: all five routes are registered in `TaskManagerModule`, protected by the global session guard, documented with Swagger, presented through `CategoryPresenter`, mapping ownership to `404`, with controller E2E coverage including the relation cleanup.
-- Plans are the only Task Manager domain with no HTTP layer: the use cases, Prisma repository, and unit coverage exist, but no controller, DTO, or presenter does, and none of the five use cases is registered in `TaskManagerModule`. The routes are specified in `docs/specs/04-plans-http-controllers.md`, pending implementation.
+- Plans are complete: all six routes are registered in `TaskManagerModule` with their use cases, protected by the global session guard, documented with Swagger, presented through `PlanPresenter`, mapping ownership to `404`, with controller E2E coverage. `record-as-done` is still not atomic.
 - Dashboard, Reports, notification settings, and calendar preferences exist only in the frontend prototype.
 
 ## Shared contract
@@ -263,36 +263,36 @@ The decisions behind the current shape of these routes are recorded in `docs/spe
 
 A Plan is intended time. It may be in the future and may cross midnight. Its model contains `id`, `title`, optional `description`, `startsAt`, `endsAt`, optional `taskId`, optional `categoryId`, optional `confirmedAt`, `createdAt`, and `updatedAt`. Its end must be after its start.
 
-- [ ] `GET /api/plans` — calendar range and filter query
+- [x] `GET /api/plans` — calendar range and filter query
   - [x] Domain: `FetchPlansUseCase`, range, filters, ordering, and related summaries
-  - [ ] HTTP: no controller, DTO, or presenter; `FetchPlansUseCase` is not registered in `TaskManagerModule`
+  - [x] HTTP: protected controller, Zod query DTO with required `from`/`to`, faceted `taskId`/`categoryId` plus `withoutTask`/`withoutCategory`, `PlanPresenter`, Swagger documentation, and module wiring
   - [x] Persistence/infra: Plan schema, mapper, and repository are implemented, registered, and migrated; the Prisma repository builds OR-within-facet and AND-between-facet filters and orders by `startsAt`
-  - [x] Tests: unit coverage for ownership, range overlap, filters, ordering, and summaries
-- [ ] `POST /api/plans` — create a Plan
+  - [x] Tests: unit coverage for ownership, range overlap, filters, ordering, and summaries; controller E2E coverage for the range query and the Task/Category summaries
+- [x] `POST /api/plans` — create a Plan
   - [x] Domain: `CreatePlanUseCase`, including date and referenced-resource ownership checks
-  - [ ] HTTP: no controller or DTO; `CreatePlanUseCase` is not registered in `TaskManagerModule`
+  - [x] HTTP: protected controller, Zod DTO, Swagger documentation, uniform `404` for a missing or foreign relation, and `201` returning the created Plan under `data`
   - [x] Persistence/infra: Plan schema, mapper, and repository are implemented, registered, and migrated
-  - [x] Tests: unit success, invalid interval, Task ownership, and Category ownership coverage
-- [ ] `PATCH /api/plans/:planId` — edit content and optional relations
+  - [x] Tests: unit success, invalid interval, Task ownership, and Category ownership coverage; controller E2E coverage for a future interval and for the `404` returned for another user's Task
+- [x] `PATCH /api/plans/:planId` — edit content and optional relations
   - [x] Domain: `EditPlanUseCase`
-  - [ ] HTTP: no controller or DTO; `EditPlanUseCase` is not registered in `TaskManagerModule`
+  - [x] HTTP: protected controller, UUID param DTO, partial body validation with nullable relations, Swagger documentation, uniform `404`, and `204`
   - [x] Persistence/infra: Plan schema, mapper, and repository are implemented, registered, and migrated
-  - [x] Tests: unit success, missing/foreign plan, relation ownership, invalid interval, relation assignment and clearing, and preservation of omitted fields
-- [ ] `PATCH /api/plans/:planId/schedule` — move or resize a Plan
+  - [x] Tests: unit success, missing/foreign plan, relation ownership, invalid interval, relation assignment and clearing, and preservation of omitted fields; controller E2E coverage for the partial update and for clearing a relation with `null`
+- [x] `PATCH /api/plans/:planId/schedule` — move or resize a Plan
   - [x] Domain: reuses `EditPlanUseCase`
-  - [ ] HTTP: no focused route
+  - [x] HTTP: `EditPlanScheduleController` with optional `startsAt`/`endsAt` and no timezone, Swagger documentation, uniform `404`, and `204`
   - [x] Persistence/infra: Plan schema, mapper, and repository are implemented, registered, and migrated
-  - [ ] Tests: rescheduling coverage through `EditPlanUseCase`; no route-level coverage
-- [ ] `DELETE /api/plans/:planId` — delete a Plan
+  - [x] Tests: rescheduling coverage through `EditPlanUseCase`; controller E2E coverage for moving an interval and for the `404` returned for another user's Plan
+- [x] `DELETE /api/plans/:planId` — delete a Plan
   - [x] Domain: `DeletePlanUseCase`
-  - [ ] HTTP: no controller or DTO; `DeletePlanUseCase` is not registered in `TaskManagerModule`
+  - [x] HTTP: protected controller, UUID param DTO, Swagger documentation, uniform `404`, and `204`
   - [x] Persistence/infra: Plan schema, mapper, and repository are implemented, registered, and migrated
-  - [x] Tests: unit success, not-found, and ownership coverage
+  - [x] Tests: unit success, not-found, and ownership coverage; controller E2E deletion coverage
 - [ ] `POST /api/plans/:planId/record-as-done` — create a Work Log and confirm the Plan atomically
   - [x] Domain: `ConfirmPlanUseCase`
-  - [ ] HTTP: no controller or DTO; `ConfirmPlanUseCase` is not registered in `TaskManagerModule`
+  - [x] HTTP: protected controller, UUID param DTO, required `timeZone`, Swagger documentation, uniform `404`, `409` for an already confirmed Plan, and `204`
   - [ ] Persistence/infra: repositories are registered and migrated, but the use case creates the Work Log and saves the Plan in two separate awaits, so the operation is not atomic
-  - [x] Tests: unit success, invalid timezone, user-calendar-day, invalid interval, future interval, overlapping work log, missing/foreign plan, and already-confirmed coverage with side-effect assertions; transaction rollback coverage remains necessary
+  - [x] Tests: unit success, invalid timezone, user-calendar-day, invalid interval, future interval, overlapping work log, missing/foreign plan, and already-confirmed coverage with side-effect assertions; controller E2E coverage asserting `confirmedAt`, the created Work Log, and the `409` on a second request; transaction rollback coverage remains necessary
 
 `GET /api/plans` requires `from` and `to`, accepts Task/Category filters plus `withoutTask` and `withoutCategory`, orders by start time, and includes Task and Category summaries.
 
@@ -300,7 +300,9 @@ Recording a Plan as done must reject a confirmed Plan, a future interval, an int
 
 Unlike Work Logs, Plans carry no timezone, calendar-day, future or overlap rule on create and edit — only `endsAt > startsAt`. `timeZone` is required on `record-as-done` alone, where intended time becomes completed work.
 
-The HTTP contract for these six routes is specified in `docs/specs/04-plans-http-controllers.md`; the implementation is pending.
+Every Plan route maps both `ResourceNotFoundError` and `NotAllowedError` to a `404`, so a Plan owned by another user is indistinguishable from a missing one; on `POST /api/plans` that same `404` reports a missing or foreign referenced Task or Category. `record-as-done` answers `409` when the Plan is already confirmed, and `204` on success, since `ConfirmPlanUseCase` returns no resource.
+
+The decisions behind the current shape of these routes are recorded in `docs/specs/04-plans-http-controllers.md`.
 
 ### Plans follow-up
 
