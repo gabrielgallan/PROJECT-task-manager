@@ -98,7 +98,7 @@ export function getDashboardDeadlineMetrics(
 	const overdueThreshold = subDays(dayStart, 7)
 	const nextWeekStart = startOfDay(addDays(dayStart, 1))
 	const nextWeekEnd = endOfDay(addDays(dayStart, 7))
-	const activeTasks = tasks.filter((task) => task.status !== 'done' && task.dueDate)
+	const activeTasks = tasks.filter((task) => task.status !== 'DONE' && task.dueDate)
 	const overdueTasks = activeTasks.filter((task) =>
 		isBefore(startOfDay(task.dueDate as Date), dayStart),
 	)
@@ -108,9 +108,7 @@ export function getDashboardDeadlineMetrics(
 		overdueForMoreThan7DaysCount: overdueTasks.filter((task) =>
 			isBefore(startOfDay(task.dueDate as Date), overdueThreshold),
 		).length,
-		dueTodayCount: activeTasks.filter((task) =>
-			isSameDay(task.dueDate as Date, dayStart),
-		).length,
+		dueTodayCount: activeTasks.filter((task) => isSameDay(task.dueDate as Date, dayStart)).length,
 		dueNext7DaysCount: activeTasks.filter((task) => {
 			const dueDate = task.dueDate as Date
 			return dueDate >= nextWeekStart && dueDate <= nextWeekEnd
@@ -191,9 +189,7 @@ export function buildTodayPlanInsight(
 				startDate,
 				endDate,
 				durationMinutes: getIntervalMinutes(startDate, endDate),
-				taskTitle: plan.taskId
-					? taskMap.get(plan.taskId)?.title ?? 'Unknown task'
-					: undefined,
+				taskTitle: plan.taskId ? (taskMap.get(plan.taskId)?.title ?? 'Unknown task') : undefined,
 				state: getTodayPlanState(plan, startDate, endDate, now),
 			}
 		})

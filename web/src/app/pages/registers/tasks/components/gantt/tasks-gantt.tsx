@@ -121,7 +121,7 @@ export function TasksGantt({
 											key={feature.id}
 											feature={feature}
 											onSelectItem={selectTaskById}
-											className={feature.task.status === 'done' ? 'opacity-50' : undefined}
+											className={feature.task.status === 'DONE' ? 'opacity-50' : undefined}
 										/>
 									))}
 								</GanttSidebarGroup>
@@ -142,7 +142,7 @@ export function TasksGantt({
 												className={cn([
 													// Short tasks collapse to a few pixels on the wider ranges.
 													'[&>div]:min-w-6',
-													feature.task.status === 'done' && 'opacity-50',
+													feature.task.status === 'DONE' && 'opacity-50',
 												])}
 											>
 												<TaskGanttBar task={feature.task} />

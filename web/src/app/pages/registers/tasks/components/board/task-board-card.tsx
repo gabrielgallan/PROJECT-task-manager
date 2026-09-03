@@ -30,7 +30,7 @@ interface ITaskBoardCardProps {
 export function TaskBoardCard({ card, onDetails, ...actions }: ITaskBoardCardProps) {
 	const { task } = card
 
-	const isDone = task.status === 'done'
+	const isDone = task.status === 'DONE'
 	const isLate = isTaskLate(task)
 	const isDueSoon = isTaskDueSoon(task)
 

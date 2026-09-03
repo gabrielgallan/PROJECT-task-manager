@@ -20,7 +20,7 @@ interface ITasksTableRowProps {
 }
 
 export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps) {
-	const isDone = task.status === 'done'
+	const isDone = task.status === 'DONE'
 	const isLate = isTaskLate(task)
 	const isNearDueDate = isTaskDueSoon(task)
 

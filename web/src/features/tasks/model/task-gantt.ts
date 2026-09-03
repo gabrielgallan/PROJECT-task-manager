@@ -7,13 +7,13 @@ import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
  * both views readable in the same way.
  */
 export const TASK_STATUS_META: Record<TaskStatus, GanttStatus> = {
-	backlog: { id: 'backlog', name: 'Backlog', color: '#62748e' },
-	in_progress: { id: 'in_progress', name: 'In progress', color: '#f59e0b' },
-	done: { id: 'done', name: 'Done', color: '#10b981' },
+	BACKLOG: { id: 'BACKLOG', name: 'Backlog', color: '#62748e' },
+	IN_PROGRESS: { id: 'IN_PROGRESS', name: 'In progress', color: '#f59e0b' },
+	DONE: { id: 'DONE', name: 'Done', color: '#10b981' },
 }
 
 /** Work in flight first, finished work last. */
-const TASK_STATUS_ORDER: TaskStatus[] = ['in_progress', 'backlog', 'done']
+const TASK_STATUS_ORDER: TaskStatus[] = ['IN_PROGRESS', 'BACKLOG', 'DONE']
 
 export type TaskGanttFeature = GanttFeature & {
 	task: Task

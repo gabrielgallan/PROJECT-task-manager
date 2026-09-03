@@ -9,7 +9,7 @@ interface ITaskGanttBarProps {
 }
 
 export function TaskGanttBar({ task }: ITaskGanttBarProps) {
-	const isLate = task.status !== 'done' && !!task.dueDate && task.dueDate < new Date()
+	const isLate = task.status !== 'DONE' && !!task.dueDate && task.dueDate < new Date()
 
 	return (
 		<>

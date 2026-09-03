@@ -96,7 +96,7 @@ function TaskForm({ task }: ITaskFormProps) {
 				<div className="grid gap-4 sm:grid-cols-2">
 					<Field>
 						<FieldLabel htmlFor="task-status">Status</FieldLabel>
-						<Select defaultValue={task?.status ?? 'backlog'}>
+						<Select defaultValue={task?.status ?? 'BACKLOG'}>
 							<SelectTrigger id="task-status" className="w-full">
 								<SelectValue>
 									{(value: TaskStatus) => {
@@ -131,7 +131,7 @@ function TaskForm({ task }: ITaskFormProps) {
 
 					<Field>
 						<FieldLabel htmlFor="task-priority">Priority</FieldLabel>
-						<Select defaultValue={task?.priority ?? 'medium'}>
+						<Select defaultValue={task?.priority ?? 'MEDIUM'}>
 							<SelectTrigger id="task-priority" className="w-full">
 								<SelectValue>
 									{(value: TaskPriority) => (

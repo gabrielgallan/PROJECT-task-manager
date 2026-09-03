@@ -1,6 +1,6 @@
-export type TaskStatus = 'backlog' | 'in_progress' | 'done'
+export type TaskStatus = 'BACKLOG' | 'IN_PROGRESS' | 'DONE'
 
-export type TaskPriority = 'low' | 'medium' | 'high' | 'critical'
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'
 
 export interface Task {
 	id: string

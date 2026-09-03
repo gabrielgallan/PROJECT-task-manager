@@ -35,11 +35,11 @@ const SHOWCASE_COLUMNS: IShowcaseColumn[] = TASK_STATUSES.map((status) => ({
 
 /** The board itself is the pitch: every card is a step into the product. */
 const SHOWCASE_CARDS: IShowcaseCard[] = [
-	{ id: 'create-account', name: 'Create your account', column: 'backlog' },
-	{ id: 'register-tasks', name: 'Start registering your tasks', column: 'backlog' },
-	{ id: 'plan-week', name: 'Plan your week', column: 'in_progress' },
-	{ id: 'track-hours', name: 'Track the hours you work', column: 'in_progress' },
-	{ id: 'manage-flow', name: 'Manage your workflow', column: 'done' },
+	{ id: 'create-account', name: 'Create your account', column: 'BACKLOG' },
+	{ id: 'register-tasks', name: 'Start registering your tasks', column: 'BACKLOG' },
+	{ id: 'plan-week', name: 'Plan your week', column: 'IN_PROGRESS' },
+	{ id: 'track-hours', name: 'Track the hours you work', column: 'IN_PROGRESS' },
+	{ id: 'manage-flow', name: 'Manage your workflow', column: 'DONE' },
 ]
 
 export function ProductShowcase() {

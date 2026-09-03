@@ -44,7 +44,7 @@ export function WhereTimeWentCard({ insight, className }: WhereTimeWentCardProps
 															aria-label={statusLabel}
 															className={cn(
 																'size-1.5 shrink-0 rounded-full',
-																item.status === 'done' ? 'bg-emerald-500' : 'bg-amber-500',
+																item.status === 'DONE' ? 'bg-emerald-500' : 'bg-amber-500',
 															)}
 															role="img"
 														/>

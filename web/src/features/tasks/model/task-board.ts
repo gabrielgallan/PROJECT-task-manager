@@ -82,10 +82,10 @@ export function buildTaskBoard(
 	return statuses.map((status) => {
 		const matched = tasks
 			.filter((task) => task.status === status)
-			.sort(status === 'done' ? byRecentUpdate : byDueDate)
+			.sort(status === 'DONE' ? byRecentUpdate : byDueDate)
 
 		const visible =
-			status === 'done' && !showAllDone ? matched.slice(0, DONE_PREVIEW_LIMIT) : matched
+			status === 'DONE' && !showAllDone ? matched.slice(0, DONE_PREVIEW_LIMIT) : matched
 
 		return {
 			id: status,

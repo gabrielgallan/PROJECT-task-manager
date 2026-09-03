@@ -10,11 +10,11 @@ const DUE_SOON_DAYS = 7
  * work never counts as late: the date stopped being a commitment.
  */
 export function isTaskLate(task: Task): boolean {
-	return task.status !== 'done' && !!task.dueDate && task.dueDate < new Date()
+	return task.status !== 'DONE' && !!task.dueDate && task.dueDate < new Date()
 }
 
 export function isTaskDueSoon(task: Task): boolean {
-	if (task.status === 'done' || !task.dueDate) {
+	if (task.status === 'DONE' || !task.dueDate) {
 		return false
 	}
 

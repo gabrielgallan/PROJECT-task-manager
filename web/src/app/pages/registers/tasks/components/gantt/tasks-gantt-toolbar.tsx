@@ -23,7 +23,11 @@ import {
 } from '@/components/ui/popover'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TASK_PRIORITIES, TASK_PRIORITY_COLOR } from '@/features/tasks/model/task-priority'
+import {
+	TASK_PRIORITIES,
+	TASK_PRIORITY_COLOR,
+	TASK_PRIORITY_LABEL,
+} from '@/features/tasks/model/task-priority'
 import type { Task } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
 
@@ -89,7 +93,7 @@ function PriorityLegend() {
 			{TASK_PRIORITIES.map((priority) => (
 				<span key={priority} className="flex items-center gap-1">
 					<span className={cn(['block size-1.5 rounded-xs', TASK_PRIORITY_COLOR[priority]])} />
-					<span className="capitalize max-lg:sr-only">{priority}</span>
+					<span className="max-lg:sr-only">{TASK_PRIORITY_LABEL[priority]}</span>
 				</span>
 			))}
 		</div>
