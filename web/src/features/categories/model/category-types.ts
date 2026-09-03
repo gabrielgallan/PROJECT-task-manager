@@ -9,3 +9,8 @@ export interface ICategory {
 export interface ICategoryPreferences {
 	uncategorizedColor: TCategoryColor
 }
+
+export type TCategoryDialogState =
+	| { mode: 'closed' }
+	| { mode: 'create' }
+	| { mode: 'edit'; category: ICategory }

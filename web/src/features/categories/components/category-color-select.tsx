@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import {
 	Select,
 	SelectContent,
@@ -21,6 +22,8 @@ interface ICategoryColorSelectProps {
 	invalid?: boolean
 	disabled?: boolean
 	className?: string
+	ref?: Ref<HTMLButtonElement>
+	'aria-describedby'?: string
 }
 
 export function CategoryColorSelect({
@@ -31,6 +34,8 @@ export function CategoryColorSelect({
 	invalid,
 	disabled,
 	className,
+	ref,
+	'aria-describedby': describedBy,
 }: ICategoryColorSelectProps) {
 	return (
 		<Select
@@ -39,9 +44,11 @@ export function CategoryColorSelect({
 			onValueChange={(next) => next && onChange(next as TCategoryColor)}
 		>
 			<SelectTrigger
+				ref={ref}
 				id={id}
 				className={cn('w-full', className)}
 				aria-invalid={invalid}
+				aria-describedby={describedBy}
 				onBlur={onBlur}
 			>
 				<SelectValue>

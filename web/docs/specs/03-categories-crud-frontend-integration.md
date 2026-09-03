@@ -1,6 +1,6 @@
 # SPEC 03 — Integração do CRUD de Categories no frontend
 
-Status: especificação para implementação futura. Esta entrega altera somente este documento.
+Status: implementada. Resultados de verificação registrados na seção 11.
 Data: 2026-09-03.
 
 ## 1. Objetivo e escopo
@@ -497,3 +497,50 @@ ampla neste escopo; verificar contratos e fluxos sem testes que apenas repitam o
 Executar `pnpm --dir web run typecheck` após implementar. Executar build se houver
 mudança que afete o bundle, conforme `web/AGENTS.md`. A validação desta entrega é
 documental: revisão dos contratos, coerência dos fluxos e diff restrito a esta SPEC.
+
+## 11. Implementação e verificação — 2026-09-03
+
+Implementados os cinco contratos HTTP, hooks de consulta/mutação, formulários e diálogos
+assíncronos, cache por geração de sessão e adaptador de leitura dos consumidores existentes.
+Identity recebeu somente a extensão da limpeza de queries/mutations de Categories.
+Os dados de categorias não são mais inicializados com mocks; a preferência de cor permanece local.
+
+Validação funcional executada em Chromium headless com Playwright temporário, utilizando
+o frontend e a API locais. Contas sintéticas foram criadas para a verificação e removidas
+ao terminar. Não foram adicionadas dependências ou infraestrutura de testes ao projeto.
+
+Foram aprovados 22 grupos de verificação:
+
+- Listagem autenticada vazia, carregamento sem vazio falso, erro inicial e recuperação.
+- POST real com ID do servidor, normalização, nomes duplicados e persistência após reload.
+- PATCH apenas do nome ou da cor, bloqueio sem alterações e resposta `204` sem parse de JSON.
+- Nome vazio, espaços e excesso de caracteres com erros locais e associação ARIA; limites
+  de 1/40 caracteres e mensagem do enum de cor conferidos no schema.
+- `400` com `fieldErrors` somente no Alert geral, preservação do rascunho e falha de rede.
+- Bloqueio de submit repetido, Cancel e Escape durante escrita.
+- Escrita concluída com falha posterior do GET: sucesso preservado e retry apenas de leitura.
+- Impacto real com Plan e Work Log vinculados; DELETE preserva ambos, consultados depois
+  pela API com `category: null` (o presenter de listagem expõe a relação, não `categoryId`).
+- Impacto zero, reabertura exigindo nova consulta, falha/retry e cancelamento da request.
+- Falha de DELETE preservando categoria; `404` na edição ou impacto sem logout e sem loop.
+- Logout removendo queries/mutations; resposta de escrita atrasada sem afetar a próxima conta.
+- `401` confirmando expiração pelo fluxo existente de Identity.
+- Formulário mobile, fechamento por teclado, preferência sem escrita HTTP e rascunho
+  preservado durante refetch. Nenhuma exceção de runtime nos fluxos executados.
+
+Verificação estática e de produção:
+
+- `pnpm --dir web run typecheck`: aprovado. O comando atual usa o tsconfig raiz com
+  referências e não percorre, sozinho, os arquivos do projeto React.
+- `pnpm --dir web exec tsc --noEmit -p tsconfig.app.json`: mesmos nove diagnósticos
+  preexistentes da verificação anterior às alterações; nenhum diagnóstico nos arquivos
+  de Categories ou nos demais arquivos modificados. Os erros existentes estão em
+  `product-showcase.tsx` (seis), `task-board-card.tsx`, `tasks-board.tsx` e
+  `radial-metric-card.tsx`; suas correções ficaram fora deste escopo.
+- `pnpm --dir web run build`: aprovado, com aviso de bundle maior que 500 kB.
+- Biome nos arquivos TypeScript alterados e `git diff --check`: aprovados.
+
+Limites: os demais módulos continuam com dados de protótipo. A verificação de relações
+persistidas usou a API diretamente; não representa integração HTTP de Plans/Work Logs.
+As verificações de navegador foram executadas nesta entrega e não constituem uma suíte
+de regressão instalada no repositório.

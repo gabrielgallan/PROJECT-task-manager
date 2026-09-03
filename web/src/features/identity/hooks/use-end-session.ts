@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getProfile } from '@/api/get-profile'
 import { signOut } from '@/api/sign-out'
+import { categoryKeys } from '@/features/categories/model/category-query-keys'
 import { profileQueryKey, sessionsQueryKey } from '../model/identity'
 import { getHttpStatus, getIdentityError } from '../model/identity-errors'
 
@@ -32,11 +33,16 @@ async function clearIdentity(client: QueryClient) {
 	await Promise.all([
 		client.cancelQueries({ queryKey: profileQueryKey, exact: true }),
 		client.cancelQueries({ queryKey: sessionsQueryKey, exact: true }),
+		client.cancelQueries({ queryKey: categoryKeys.all }),
 	])
 	client.removeQueries({ queryKey: profileQueryKey, exact: true })
 	client.removeQueries({ queryKey: sessionsQueryKey, exact: true })
+	client.removeQueries({ queryKey: categoryKeys.all })
 	const mutations = client.getMutationCache()
 	for (const mutation of mutations.findAll({ mutationKey: ['identity'] })) {
+		mutations.remove(mutation)
+	}
+	for (const mutation of mutations.findAll({ mutationKey: categoryKeys.all })) {
 		mutations.remove(mutation)
 	}
 }

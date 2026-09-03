@@ -1,6 +1,5 @@
 import { Pencil, Plus, Tags, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -22,61 +21,29 @@ import {
 } from '@/components/ui/item'
 import { CategoryColorSelect } from '@/features/categories/components/category-color-select'
 import { CATEGORY_COLOR_LABELS, CATEGORY_DOT } from '@/features/categories/model/category-colors'
-import type { ICategory } from '@/features/categories/model/category-types'
-import { useCategories } from '@/features/categories/store/categories-store'
-import { usePlans } from '@/features/plans/store/plans-store'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { cn } from '@/lib/utils'
-import { CategoryDialog, type TCategoryDialogState } from './category-dialog'
+import { useCategoriesSettings } from '../hooks/use-categories-settings'
+import { CategoryDialog } from './category-dialog'
 import { DeleteCategoryDialog } from './delete-category-dialog'
 
 export function CategoriesSettings() {
 	const {
 		categories,
 		uncategorizedColor,
-		addCategory,
-		updateCategory,
-		removeCategory,
-		setUncategorizedColor,
-	} = useCategories()
-	const { plans, clearCategory: clearPlanCategory } = usePlans()
-	const { workLogs, clearCategory: clearWorkLogCategory } = useWorkLogs()
-	const [dialog, setDialog] = useState<TCategoryDialogState>({ mode: 'closed' })
-	const [deleteTarget, setDeleteTarget] = useState<ICategory | null>(null)
-
-	const usage = useMemo(() => {
-		if (!deleteTarget) return { planCount: 0, workLogCount: 0 }
-
-		return {
-			planCount: plans.filter((plan) => plan.categoryId === deleteTarget.id).length,
-			workLogCount: workLogs.filter((workLog) => workLog.categoryId === deleteTarget.id).length,
-		}
-	}, [deleteTarget, plans, workLogs])
-
-	const closeDialog = () => setDialog({ mode: 'closed' })
-
-	const createCategory = (category: ICategory) => {
-		addCategory(category)
-		closeDialog()
-		toast.success('Category created')
-	}
-
-	const saveCategory = (category: ICategory) => {
-		updateCategory(category)
-		closeDialog()
-		toast.success('Category updated')
-	}
-
-	const deleteCategory = (category: ICategory) => {
-		clearPlanCategory(category.id)
-		clearWorkLogCategory(category.id)
-		removeCategory(category.id)
-		setDeleteTarget(null)
-		toast.success('Category deleted', {
-			description: 'Associated plans and work logs are now uncategorized.',
-		})
-	}
-
+		changeFallbackColor,
+		dialog,
+		setDialog,
+		closeDialog,
+		deleteTarget,
+		setDeleteTarget,
+		data,
+		isPending,
+		isFetching,
+		error,
+		refetch,
+		busy,
+		generation,
+	} = useCategoriesSettings()
 	return (
 		<>
 			<Card className="bg-transparent ring-transparent">
@@ -86,7 +53,7 @@ export function CategoriesSettings() {
 						Use categories to color plans and work logs consistently.
 					</CardDescription>
 					<CardAction>
-						<Button size="sm" onClick={() => setDialog({ mode: 'create' })}>
+						<Button size="sm" disabled={busy} onClick={() => setDialog({ mode: 'create' })}>
 							<Plus />
 							New category
 						</Button>
@@ -107,15 +74,40 @@ export function CategoriesSettings() {
 								id="uncategorized-color"
 								className="sm:w-44"
 								value={uncategorizedColor}
-								onChange={(color) => {
-									setUncategorizedColor(color)
-									toast.success('Fallback color updated')
-								}}
+								onChange={changeFallbackColor}
 							/>
 						</div>
 					</Field>
 
 					<FieldSeparator />
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription>
+								{data && (
+									<span>Categories could not be refreshed. Displayed items may be outdated. </span>
+								)}
+								{error}
+							</AlertDescription>
+							<Button
+								variant="outline"
+								size="sm"
+								disabled={isFetching || busy}
+								onClick={() => void refetch()}
+							>
+								Try again
+							</Button>
+						</Alert>
+					)}
+					{isPending && !data && (
+						<p role="status" className="text-sm text-muted-foreground">
+							Loading categories…
+						</p>
+					)}
+					{isFetching && data && (
+						<p role="status" className="text-sm text-muted-foreground">
+							Refreshing categories…
+						</p>
+					)}
 
 					{categories.length > 0 ? (
 						<ItemGroup className="gap-2">
@@ -132,6 +124,7 @@ export function CategoriesSettings() {
 										<Button
 											variant="ghost"
 											size="icon-sm"
+											disabled={busy}
 											aria-label={`Edit ${category.name}`}
 											onClick={() => setDialog({ mode: 'edit', category })}
 										>
@@ -141,6 +134,7 @@ export function CategoriesSettings() {
 											variant="ghost"
 											size="icon-sm"
 											className="text-destructive hover:text-destructive"
+											disabled={busy}
 											aria-label={`Delete ${category.name}`}
 											onClick={() => setDeleteTarget(category)}
 										>
@@ -150,7 +144,7 @@ export function CategoriesSettings() {
 								</Item>
 							))}
 						</ItemGroup>
-					) : (
+					) : data && !error ? (
 						<Item variant="muted" className="justify-center py-8 text-center">
 							<ItemMedia>
 								<Tags className="size-5 text-muted-foreground" />
@@ -162,24 +156,18 @@ export function CategoriesSettings() {
 								</ItemDescription>
 							</ItemContent>
 						</Item>
-					)}
+					) : null}
 				</CardContent>
 			</Card>
 
-			<CategoryDialog
-				state={dialog}
-				categories={categories}
-				onClose={closeDialog}
-				onCreate={createCategory}
-				onUpdate={saveCategory}
-			/>
-			<DeleteCategoryDialog
-				category={deleteTarget}
-				planCount={usage.planCount}
-				workLogCount={usage.workLogCount}
-				onOpenChange={(open) => !open && setDeleteTarget(null)}
-				onConfirm={deleteCategory}
-			/>
+			<CategoryDialog key={generation} state={dialog} onClose={closeDialog} />
+			{deleteTarget && (
+				<DeleteCategoryDialog
+					key={`${generation}:${deleteTarget.id}`}
+					category={deleteTarget}
+					onClose={() => setDeleteTarget(null)}
+				/>
+			)}
 		</>
 	)
 }
