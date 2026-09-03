@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AccountSettings } from '@/app/pages/settings/components/account-settings'
 import { CategoriesSettings } from '@/app/pages/settings/components/categories-settings'
 import { SecuritySettings } from '@/app/pages/settings/components/security-settings'
 import { SETTINGS_TAB_VALUES, SETTINGS_TABS, type TSettingsTab } from '@/app/pages/settings/config'
-import { PROFILE_MOCK } from '@/app/pages/settings/model/profile-settings'
 import { BrowserTitle } from '@/components/browser-title'
-import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Item } from '@/components/ui/item'
 import {
 	Select,
@@ -16,6 +15,8 @@ import {
 	SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useProfile } from '@/features/identity/hooks/use-profile'
+import { getDisplayName, getUserInitials } from '@/features/identity/model/identity'
 import { NotificationsSettings } from './components/notifications-settings'
 import { SystemSettings } from './components/system-settings'
 
@@ -27,7 +28,8 @@ function isSettingsTab(value: string | null): value is TSettingsTab {
 
 export function SettingsPage() {
 	const [searchParams, setSearchParams] = useSearchParams()
-	const [profile, setProfile] = useState(PROFILE_MOCK)
+	const { data } = useProfile()
+	const profile = data?.profile
 
 	const tabParam = searchParams.get(TAB_SEARCH_PARAM)
 
@@ -65,6 +67,8 @@ export function SettingsPage() {
 		)
 	}
 
+	if (!profile) return null
+
 	return (
 		<>
 			<BrowserTitle title="Settings" />
@@ -79,17 +83,14 @@ export function SettingsPage() {
 					<aside className="space-y-2">
 						<Item className="flex items-center gap-2 bg-muted">
 							<Avatar size="lg">
-								<AvatarImage src={profile.avatarUrl} alt={profile.name} />
-								<AvatarFallback className="text-base">GG</AvatarFallback>
-
-								<AvatarBadge className="bg-teal-400 dark:bg-teal-500" />
+								<AvatarImage src={profile.avatarUrl || undefined} alt={getDisplayName(profile)} />
+								<AvatarFallback className="text-base">{getUserInitials(profile)}</AvatarFallback>
 							</Avatar>
 
 							<div className="flex flex-col">
-								<p className="truncate font-medium">{profile.name}</p>
+								<p className="truncate font-medium">{getDisplayName(profile)}</p>
 								<p className="truncate text-xs text-muted-foreground">
-									@{profile.username}
-									{profile.jobTitle ? ` / ${profile.jobTitle}` : ''}
+									{profile.jobTitle ?? profile.email}
 								</p>
 							</div>
 						</Item>
@@ -143,7 +144,7 @@ export function SettingsPage() {
 					</aside>
 
 					<TabsContent className="min-w-0 w-full" value="profile">
-						<AccountSettings profile={profile} onProfileChange={setProfile} />
+						<AccountSettings profile={profile} />
 					</TabsContent>
 
 					<TabsContent className="min-w-0 w-full" value="notifications">
@@ -151,7 +152,7 @@ export function SettingsPage() {
 					</TabsContent>
 
 					<TabsContent className="min-w-0 w-full" value="security">
-						<SecuritySettings />
+						<SecuritySettings profile={profile} active={activeTab === 'security'} />
 					</TabsContent>
 
 					<TabsContent className="min-w-0 w-full" value="categories">

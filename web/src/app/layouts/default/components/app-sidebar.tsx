@@ -15,15 +15,11 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import type { IdentityProfile } from '@/features/identity/model/identity'
 import { NavUser } from './nav-user'
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-	user: {
-		name: string | null
-		email: string
-		avatarUrl: string | null
-		jobTitle: string | null
-	}
+	user: IdentityProfile
 }
 
 export function AppSidebar({ user, ...props }: AppSidebarProps) {

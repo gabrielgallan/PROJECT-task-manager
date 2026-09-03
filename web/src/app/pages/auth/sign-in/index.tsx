@@ -1,138 +1,112 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { HTTPError } from 'ky'
-import { AlertTriangle, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FaGithub, FaGoogle } from 'react-icons/fa'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { z } from 'zod'
+import { Link, useSearchParams } from 'react-router-dom'
 import { authenticate } from '@/api/authenticate'
 import { BrowserTitle } from '@/components/browser-title'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const signInFormSchema = z.object({
-	email: z.email('Provide a valid email address'),
-	password: z.string().min(1, 'Provide a valid password'),
-})
-
-type SignInFormType = z.infer<typeof signInFormSchema>
+import { useEndSession } from '@/features/identity/hooks/use-end-session'
+import { authEmailPath } from '@/features/identity/model/identity'
+import { getIdentityError, getValidationErrors } from '@/features/identity/model/identity-errors'
+import { type SignInValues, signInSchema } from '@/features/identity/model/identity-forms'
 
 export function SignInPage() {
-	const [searchParams] = useSearchParams()
+	const [params] = useSearchParams()
 	const [error, setError] = useState<string | null>(null)
-	const navigate = useNavigate()
-
+	const { afterSignIn, capture, busy } = useEndSession()
 	const {
-		watch,
 		register,
 		handleSubmit,
-		formState: { isSubmitting, errors },
-	} = useForm<SignInFormType>({
-		resolver: zodResolver(signInFormSchema),
-		defaultValues: {
-			email: searchParams.get('email') ?? '',
-		},
+		watch,
+		setError: setFieldError,
+		formState: { errors, isSubmitting },
+	} = useForm<SignInValues>({
+		resolver: zodResolver(signInSchema),
+		defaultValues: { email: params.get('email') ?? '', password: '' },
 	})
-
-	const email = watch('email')
-
-	const { mutateAsync: signIn } = useMutation({
+	const mutation = useMutation({
+		mutationKey: ['identity', 'login'],
 		mutationFn: authenticate,
+		retry: false,
+		networkMode: 'always',
+		gcTime: 0,
 	})
-
-	async function handleSignIn(data: SignInFormType) {
+	async function submit(values: SignInValues) {
+		if (mutation.isPending || busy) return
+		const current = capture()
+		setError(null)
 		try {
-			await signIn(data)
-
-			navigate('/')
-		} catch (error) {
-			if (error instanceof HTTPError) {
-				setError(error.data.message)
-			} else {
-				setError('An error occurred')
+			await mutation.mutateAsync(values)
+			if (current()) await afterSignIn()
+		} catch (failure) {
+			if (!current()) return
+			for (const [field, message] of Object.entries(getValidationErrors(failure))) {
+				if (field === 'email' || field === 'password') setFieldError(field, { message })
 			}
+			setError(getIdentityError(failure, 'login'))
 		}
 	}
-
 	return (
 		<>
 			<BrowserTitle title="Sign In" />
-			<form onSubmit={handleSubmit(handleSignIn)}>
-				<div className="w-85 flex flex-col justify-center gap-6">
-					<div className="space-y-2 text-center">
-						<h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
-					</div>
-
+			<form className="w-full max-w-93 px-4 py-8" onSubmit={handleSubmit(submit)} noValidate>
+				<div className="flex flex-col gap-6">
+					<h1 className="text-center text-2xl font-semibold tracking-tight">Sign In</h1>
 					{error && (
-						<Alert className="bg-rose-400/10 text-rose-500 border-none">
-							<AlertTriangle className="size-4" />
-							<AlertTitle>Sign In failed!</AlertTitle>
-							<AlertDescription>
-								<p className="text-rose-500/90">{error}</p>
-							</AlertDescription>
+						<Alert variant="destructive">
+							<AlertDescription>{error}</AlertDescription>
 						</Alert>
 					)}
-
 					<div className="space-y-2">
 						<Label htmlFor="email">Email</Label>
-						<Input id="email" {...register('email')} aria-invalid={errors.email !== undefined} />
-
+						<Input
+							id="email"
+							type="email"
+							autoComplete="email"
+							{...register('email')}
+							aria-invalid={!!errors.email}
+							aria-describedby={errors.email ? 'email-error' : undefined}
+						/>
 						{errors.email && (
-							<p className="text-xs font-medium text-rose-500">{errors.email.message}</p>
+							<p id="email-error" className="text-sm text-destructive">
+								{errors.email.message}
+							</p>
 						)}
 					</div>
-
 					<div className="space-y-2">
-						<div className="flex items-center justify-between">
+						<div className="flex items-center justify-between gap-2">
 							<Label htmlFor="password">Password</Label>
-
-							<Link to={`/auth/forgot-password?email=${email}`}>
-								<span className="text-xs text-muted-foreground hover:underline">
-									Forgot your password?
-								</span>
+							<Link
+								className="text-xs underline"
+								to={authEmailPath('/auth/forgot-password', watch('email'))}
+							>
+								Forgot your password?
 							</Link>
 						</div>
-
 						<Input
 							id="password"
 							type="password"
+							autoComplete="current-password"
 							{...register('password')}
-							aria-invalid={errors.password !== undefined}
+							aria-invalid={!!errors.password}
+							aria-describedby={errors.password ? 'password-error' : undefined}
 						/>
-
 						{errors.password && (
-							<p className="text-xs font-medium text-rose-500">{errors.password.message}</p>
+							<p id="password-error" className="text-sm text-destructive">
+								{errors.password.message}
+							</p>
 						)}
 					</div>
-
-					<Button className="cursor-pointer py-5" type="submit">
-						{isSubmitting ? <Loader2 className="animate-spin" /> : 'Login'}
+					<Button type="submit" disabled={isSubmitting || busy}>
+						{isSubmitting || busy ? 'Signing in…' : 'Login'}
 					</Button>
-
-					<Field>
-						<FieldSeparator>Or continue with</FieldSeparator>
-					</Field>
-
-					<div className="space-y-4 text-center">
-						<div className="grid grid-cols-2 gap-2">
-							<Button variant="secondary" className="cursor-pointer py-5" type="button">
-								<FaGithub className="size-4" />
-							</Button>
-
-							<Button variant="secondary" className="cursor-pointer py-5" type="button">
-								<FaGoogle className="size-4" />
-							</Button>
-						</div>
-
-						<Link to="/auth/sign-up" className="font-medium text-sm underline hover:opacity-90">
-							Don't have account ?
-						</Link>
-					</div>
+					<Link className="text-center text-sm underline" to="/auth/sign-up">
+						Don't have an account?
+					</Link>
 				</div>
 			</form>
 		</>

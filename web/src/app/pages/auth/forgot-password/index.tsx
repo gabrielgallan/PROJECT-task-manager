@@ -1,76 +1,111 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
-import z from 'zod'
+import { requestPasswordRecover } from '@/api/request-password-recover'
 import { BrowserTitle } from '@/components/browser-title'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const forgotPasswordFormSchema = z.object({
-	email: z.email('Provide a valid email address'),
-})
-
-type ForgotPasswordFormType = z.infer<typeof forgotPasswordFormSchema>
+import { useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
+import { authEmailPath } from '@/features/identity/model/identity'
+import { getIdentityError } from '@/features/identity/model/identity-errors'
+import { type RecoveryValues, recoverySchema } from '@/features/identity/model/identity-forms'
 
 export function ForgotPasswordPage() {
-	const [searchParams] = useSearchParams()
-
+	const [params] = useSearchParams()
+	const { capture, busy } = useIdentityLifecycle()
+	const [sentEmail, setSentEmail] = useState<string | null>(null)
+	const [error, setError] = useState<string | null>(null)
 	const {
-		watch,
 		register,
 		handleSubmit,
-		formState: { isSubmitting, errors },
-	} = useForm<ForgotPasswordFormType>({
-		resolver: zodResolver(forgotPasswordFormSchema),
-		defaultValues: {
-			email: searchParams.get('email') ?? '',
-		},
+		watch,
+		formState: { errors, isSubmitting },
+	} = useForm<RecoveryValues>({
+		resolver: zodResolver(recoverySchema),
+		defaultValues: { email: params.get('email') ?? '' },
 	})
-
-	const email = watch('email')
-
-	async function handleRequestPasswordRecover(data: ForgotPasswordFormType) {
-		console.log(data)
+	const mutation = useMutation({
+		mutationKey: ['identity', 'recovery'],
+		mutationFn: requestPasswordRecover,
+		retry: false,
+		networkMode: 'always',
+		gcTime: 0,
+	})
+	async function submit(values: RecoveryValues) {
+		if (mutation.isPending || busy) return
+		const current = capture()
+		setError(null)
+		try {
+			await mutation.mutateAsync(values)
+			if (current()) setSentEmail(values.email)
+		} catch (failure) {
+			if (current()) setError(getIdentityError(failure, 'recovery'))
+		}
 	}
-
+	const pending = isSubmitting || mutation.isPending || busy
 	return (
 		<>
-			<BrowserTitle title="Forgot your password" />
-			<form onSubmit={handleSubmit(handleRequestPasswordRecover)}>
-				<div className="w-85 flex flex-col items-center gap-6">
-					<div className="space-y-2 text-center">
-						<h1 className="text-2xl font-semibold tracking-tight">Send a code to your email</h1>
-					</div>
-
-					<div className="space-y-2 w-full">
-						<Label htmlFor="email">Email</Label>
-
-						<Input
-							id="email"
-							type="text"
-							{...register('email')}
-							aria-invalid={errors.email !== undefined}
-						/>
-
-						{errors.email && (
-							<p className="text-xs font-medium text-rose-500">{errors.email.message}</p>
-						)}
-					</div>
-
-					<Button className="py-5 w-full" type="submit">
-						{isSubmitting ? <Loader2 className="animate-spin" /> : 'Send'}
-					</Button>
-
-					<Link
-						to={`/auth/sign-in?email=${email}`}
-						className="font-medium text-sm underline hover:opacity-90"
-					>
-						Sign in instead
-					</Link>
-				</div>
-			</form>
+			<BrowserTitle title="Reset your password" />
+			<div className="flex w-full max-w-93 flex-col gap-6 px-4 py-8">
+				<h1 className="text-center text-2xl font-semibold tracking-tight">Reset your password</h1>
+				{error && (
+					<Alert variant="destructive">
+						<AlertDescription>{error}</AlertDescription>
+					</Alert>
+				)}
+				{sentEmail ? (
+					<>
+						<p role="status" className="break-words text-sm">
+							A recovery link was sent to {sentEmail}. Check your inbox.
+						</p>
+						<Button disabled={pending} onClick={() => void submit({ email: sentEmail })}>
+							{pending ? 'Sending…' : 'Resend link'}
+						</Button>
+						<Button
+							variant="outline"
+							disabled={pending}
+							onClick={() => {
+								setSentEmail(null)
+								setError(null)
+							}}
+						>
+							Use another email
+						</Button>
+					</>
+				) : (
+					<form className="space-y-6" onSubmit={handleSubmit(submit)} noValidate>
+						<div className="space-y-2">
+							<Label htmlFor="email">Email</Label>
+							<Input
+								id="email"
+								type="email"
+								autoComplete="email"
+								{...register('email')}
+								aria-invalid={!!errors.email}
+								aria-describedby={errors.email ? 'email-error' : undefined}
+							/>
+							{errors.email && (
+								<p id="email-error" className="text-sm text-destructive">
+									{errors.email.message}
+								</p>
+							)}
+						</div>
+						<Button className="w-full" type="submit" disabled={pending}>
+							{pending ? 'Sending…' : 'Send recovery link'}
+						</Button>
+					</form>
+				)}
+				<Link
+					className="text-center text-sm underline"
+					to={authEmailPath('/auth/sign-in', sentEmail ?? watch('email'))}
+				>
+					Sign in instead
+				</Link>
+			</div>
 		</>
 	)
 }

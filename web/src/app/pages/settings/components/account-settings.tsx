@@ -1,137 +1,147 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Trash2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
-import { z } from 'zod'
-import type { IUserProfileSettings } from '@/app/pages/settings/model/profile-settings'
+import { editProfile } from '@/api/edit-profile'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-	Field,
-	FieldDescription,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { useEndSession } from '@/features/identity/hooks/use-end-session'
+import { type IdentityProfile, profileQueryKey } from '@/features/identity/model/identity'
+import { getIdentityError, getValidationErrors } from '@/features/identity/model/identity-errors'
+import {
+	getProfileChanges,
+	type ProfileValues,
+	profileFormValues,
+	profileSchema,
+} from '@/features/identity/model/identity-forms'
+import { AvatarSettings } from './avatar-settings'
+import { DeleteAccountDialog } from './delete-account-dialog'
 
-const userProfileSchema = z.object({
-	name: z.string().trim().min(1, 'Enter a display name'),
-	email: z.email('Enter a valid email address'),
-	username: z.string().trim().min(1, 'Enter a username'),
-	jobTitle: z.string().trim().max(60, 'Keep the job title under 60 characters'),
-})
-
-type UserProfileType = z.infer<typeof userProfileSchema>
-
-interface AccountSettingsProps {
-	profile: IUserProfileSettings
-	onProfileChange: (profile: IUserProfileSettings) => void
-}
-
-export function AccountSettings({ profile, onProfileChange }: AccountSettingsProps) {
+export function AccountSettings({ profile }: { profile: IdentityProfile }) {
+	const { client, capture, revalidateSession, busy } = useEndSession()
+	const original = useRef(profileFormValues(profile))
+	const [error, setError] = useState<string | null>(null)
 	const {
 		register,
 		handleSubmit,
 		reset,
+		watch,
+		setError: setFieldError,
 		formState: { errors, isDirty, isSubmitting },
-	} = useForm<UserProfileType>({
-		resolver: zodResolver(userProfileSchema),
-		defaultValues: {
-			name: profile.name,
-			email: profile.email,
-			username: profile.username,
-			jobTitle: profile.jobTitle,
-		},
+	} = useForm<ProfileValues>({
+		resolver: zodResolver(profileSchema),
+		defaultValues: original.current,
 	})
-
-	const handleSave = (values: UserProfileType) => {
-		const nextProfile = { ...profile, ...values }
-
-		onProfileChange(nextProfile)
-
+	const mutation = useMutation({
+		mutationKey: ['identity', 'edit-profile'],
+		mutationFn: editProfile,
+		retry: false,
+		networkMode: 'always',
+		gcTime: 0,
+	})
+	useEffect(() => {
+		if (isDirty || isSubmitting) return
+		const values = { name: profile.name ?? '', jobTitle: profile.jobTitle ?? '' }
+		original.current = values
 		reset(values)
-
-		toast.success('Profile updated')
+	}, [profile.name, profile.jobTitle, isDirty, isSubmitting, reset])
+	const hasChanges = Object.keys(getProfileChanges(watch(), original.current)).length > 0
+	async function submit(values: ProfileValues) {
+		const changes = getProfileChanges(values, original.current)
+		if (!Object.keys(changes).length || mutation.isPending || busy) return
+		const current = capture()
+		setError(null)
+		try {
+			await mutation.mutateAsync(changes)
+			if (!current()) return
+			await client.cancelQueries({ queryKey: profileQueryKey, exact: true })
+			if (!current()) return
+			client.setQueryData<{ profile: IdentityProfile }>(profileQueryKey, (previous) =>
+				previous ? { profile: { ...previous.profile, ...changes } } : previous,
+			)
+			const saved = { name: values.name.trim(), jobTitle: values.jobTitle.trim() }
+			original.current = saved
+			reset(saved)
+			toast.success('Profile updated')
+			void client.invalidateQueries({ queryKey: profileQueryKey })
+		} catch (failure) {
+			if (!current() || (await revalidateSession(failure)) || !current()) return
+			for (const [field, message] of Object.entries(getValidationErrors(failure))) {
+				if (field === 'name' || field === 'jobTitle') setFieldError(field, { message })
+			}
+			setError(getIdentityError(failure, 'profile'))
+		}
 	}
-
 	return (
 		<Card className="bg-transparent ring-transparent">
 			<CardHeader>
 				<CardTitle className="text-lg">Account</CardTitle>
 			</CardHeader>
-
-			<CardContent className="space-y-4">
-				<form id="profile-settings-form" onSubmit={handleSubmit(handleSave)}>
-					<div className="flex flex-col gap-4">
-						<FieldSet>
-							<FieldLegend variant="legend">Profile</FieldLegend>
-							<FieldGroup className="grid gap-4 md:grid-cols-2">
-								<Field data-invalid={errors.name !== undefined}>
-									<FieldLabel htmlFor="profile-name">Display Name</FieldLabel>
-									<Input
-										id="profile-name"
-										aria-invalid={errors.name !== undefined}
-										{...register('name')}
-									/>
-									<FieldError errors={[errors.name]} />
-								</Field>
-
-								<Field data-invalid={errors.jobTitle !== undefined}>
-									<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
-									<Input
-										id="profile-job-title"
-										placeholder="e.g. Developer"
-										aria-invalid={errors.jobTitle !== undefined}
-										{...register('jobTitle')}
-									/>
-									<FieldError errors={[errors.jobTitle]} />
-								</Field>
-
-								<Field data-invalid={errors.email !== undefined}>
-									<FieldLabel htmlFor="profile-email">Email</FieldLabel>
-									<Input
-										id="profile-email"
-										type="email"
-										aria-invalid={errors.email !== undefined}
-										{...register('email')}
-									/>
-									<FieldError errors={[errors.email]} />
-								</Field>
-							</FieldGroup>
-						</FieldSet>
-
-						<Button type="submit" disabled={!isDirty || isSubmitting} className="ml-auto">
-							Save
+			<CardContent className="space-y-6">
+				<AvatarSettings profile={profile} />
+				<Separator />
+				<form className="space-y-4" onSubmit={handleSubmit(submit)} noValidate>
+					<h2 className="font-medium">Profile</h2>
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					)}
+					<fieldset disabled={isSubmitting || busy} className="grid gap-4 md:grid-cols-2">
+						{(
+							[
+								{ key: 'name', label: 'Display name' },
+								{ key: 'jobTitle', label: 'Job title' },
+							] as const
+						).map((field) => (
+							<div className="space-y-2" key={field.key}>
+								<Label htmlFor={`profile-${field.key}`}>{field.label}</Label>
+								<Input
+									id={`profile-${field.key}`}
+									{...register(field.key)}
+									aria-invalid={!!errors[field.key]}
+									aria-describedby={errors[field.key] ? `${field.key}-error` : undefined}
+								/>
+								{errors[field.key] && (
+									<p id={`${field.key}-error`} className="text-sm text-destructive">
+										{errors[field.key]?.message}
+									</p>
+								)}
+							</div>
+						))}
+						<div className="space-y-2 md:col-span-2">
+							<Label htmlFor="profile-email">Email</Label>
+							<Input
+								id="profile-email"
+								type="email"
+								value={profile.email}
+								readOnly
+								aria-describedby="email-description"
+							/>
+							<p id="email-description" className="text-sm text-muted-foreground">
+								Your email cannot be changed here.
+							</p>
+						</div>
+					</fieldset>
+					<div className="flex justify-end">
+						<Button type="submit" disabled={!hasChanges || isSubmitting || busy}>
+							{isSubmitting ? 'Saving…' : 'Save'}
 						</Button>
 					</div>
 				</form>
-
 				<Separator />
-
-				<FieldSet>
-					<FieldLegend variant="legend">Danger zone</FieldLegend>
-					<FieldDescription>Irreversible account actions</FieldDescription>
-
-					<FieldGroup>
-						<Field>
-							<div className="flex items-center justify-between">
-								<div>
-									<FieldLabel>Delete account</FieldLabel>
-									<FieldDescription>Permanently remove your account and all data</FieldDescription>
-								</div>
-
-								<Button variant="destructive">
-									<Trash2 />
-									Delete
-								</Button>
-							</div>
-						</Field>
-					</FieldGroup>
-				</FieldSet>
+				<div className="space-y-3">
+					<h2 className="font-medium">Danger zone</h2>
+					<p className="text-sm text-muted-foreground">
+						Permanently delete your account and its data stored on the server.
+					</p>
+					<DeleteAccountDialog email={profile.email} />
+				</div>
 			</CardContent>
 		</Card>
 	)

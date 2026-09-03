@@ -1,15 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
 import { Bot, Search, Settings, Workflow } from 'lucide-react'
-import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { getProfile } from '@/api/get-profile'
+import { useEffect, useState } from 'react'
+import { Navigate, Outlet, useNavigate } from 'react-router-dom'
 import { AppCommand, useAppCommand } from '@/app/layouts/default/components/app-command'
 import { MobileBottomNav } from '@/app/layouts/default/components/mobile-botton-nav'
 import { APP_NAVIGATION_ITEMS } from '@/app/navigation'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useEndSession } from '@/features/identity/hooks/use-end-session'
+import { useProfile } from '@/features/identity/hooks/use-profile'
+import { getHttpStatus } from '@/features/identity/model/identity-errors'
 import { AiChat } from './components/ai-chat'
 import { AppSidebar } from './components/app-sidebar'
 import { MobileNavUser } from './components/mobile-nav-user'
@@ -35,15 +37,35 @@ function DefaultLayoutContent() {
 	const { openCommand } = useAppCommand()
 	const [aiChatIsOpen, setAiChatIsOpen] = useState<boolean>(false)
 
-	const { data, error } = useQuery({
-		queryKey: ['user:profile'],
-		queryFn: getProfile,
-	})
+	const { data, error, refetch, isFetching } = useProfile()
+	const { endSession, busy, ended } = useEndSession()
+	const unauthorized = getHttpStatus(error) === 401
 
-	if (error || !data) {
-		toast.error('You are not logged in. Please sign in to continue.')
+	useEffect(() => {
+		if (unauthorized && !ended) void endSession()
+	}, [unauthorized, ended, endSession])
 
-		navigate('/auth/sign-in')
+	if (ended) return busy ? null : <Navigate to="/auth/sign-in" replace />
+	if (unauthorized) return null
+	if (!data) {
+		return (
+			<div className="mx-auto flex min-h-svh w-full max-w-5xl flex-col gap-4 p-6">
+				{error ? (
+					<Alert variant="destructive">
+						<AlertDescription>Unable to load your profile. Please try again.</AlertDescription>
+						<Button disabled={isFetching || busy} onClick={() => void refetch()}>
+							Try again
+						</Button>
+					</Alert>
+				) : (
+					<div role="status" aria-label="Loading your profile" className="space-y-4">
+						<Skeleton className="h-12 w-48" />
+						<Skeleton className="h-64 w-full" />
+						<span className="sr-only">Loading your profile…</span>
+					</div>
+				)}
+			</div>
+		)
 	}
 
 	return (
@@ -60,6 +82,14 @@ function DefaultLayoutContent() {
 
 			<SidebarInset className="min-h-0 overflow-hidden">
 				<div className="flex min-h-0 flex-1 flex-col">
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription>Your profile could not be refreshed.</AlertDescription>
+							<Button disabled={isFetching || busy} onClick={() => void refetch()}>
+								Try again
+							</Button>
+						</Alert>
+					)}
 					{/* Desktop */}
 					<header className="hidden md:flex shrink-0 items-center border-b px-4 py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
 						<div className="flex w-full items-center gap-3">
@@ -99,7 +129,7 @@ function DefaultLayoutContent() {
 							</Button>
 						</div>
 
-						<MobileNavUser />
+						<MobileNavUser user={data.profile} />
 					</header>
 
 					<div className="styled-scrollbar flex min-h-0 flex-1 flex-col">

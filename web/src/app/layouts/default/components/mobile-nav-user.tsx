@@ -1,7 +1,5 @@
 import { ChevronDown, LogOut } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -9,43 +7,36 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useEndSession } from '@/features/identity/hooks/use-end-session'
+import {
+	getDisplayName,
+	getUserInitials,
+	type IdentityProfile,
+} from '@/features/identity/model/identity'
 
-export function MobileNavUser() {
-	const navigate = useNavigate()
-
-	function handleSignOut() {
-		navigate('/auth/sign-in')
-	}
-
+export function MobileNavUser({ user }: { user: IdentityProfile }) {
+	const { handleSignOut, busy } = useEndSession()
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger>
-				<div className="flex items-center">
-					<Button variant="ghost" size="icon-xs">
-						<ChevronDown />
-					</Button>
-
-					<Avatar>
-						<AvatarImage src="https://github.com/gabrielgallan.png" alt="gabrielgallan" />
-						<AvatarFallback>GG</AvatarFallback>
-					</Avatar>
-				</div>
+			<DropdownMenuTrigger
+				className="flex items-center gap-2 rounded-lg p-1"
+				aria-label="Account menu"
+			>
+				<ChevronDown className="size-4" />
+				<Avatar>
+					<AvatarImage src={user.avatarUrl || undefined} alt={getDisplayName(user)} />
+					<AvatarFallback>{getUserInitials(user)}</AvatarFallback>
+				</Avatar>
 			</DropdownMenuTrigger>
-
-			<DropdownMenuContent>
-				<DropdownMenuItem>
-					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-medium">Gabriel Gallan</span>
-
-						<span className="truncate text-xs text-muted-foreground">@gabrielgallan</span>
-					</div>
-				</DropdownMenuItem>
-
+			<DropdownMenuContent align="end">
+				<div className="grid max-w-64 gap-1 px-2 py-2 text-sm">
+					<span className="truncate font-medium">{getDisplayName(user)}</span>
+					<span className="truncate text-xs text-muted-foreground">{user.email}</span>
+				</div>
 				<DropdownMenuSeparator />
-
-				<DropdownMenuItem onClick={handleSignOut}>
+				<DropdownMenuItem disabled={busy} onClick={() => void handleSignOut()}>
 					<LogOut />
-					Log out
+					{busy ? 'Signing out…' : 'Log out'}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

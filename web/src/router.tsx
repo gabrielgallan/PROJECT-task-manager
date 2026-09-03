@@ -5,6 +5,7 @@ import { NotFoundPage } from './app/pages/404'
 import { DashboardPage } from './app/pages/analytics/dashboard'
 import { ReportsPage } from './app/pages/analytics/reports'
 import { ForgotPasswordPage } from './app/pages/auth/forgot-password'
+import { ResetPasswordPage } from './app/pages/auth/reset-password'
 import { SignInPage } from './app/pages/auth/sign-in'
 import { SignUpPage } from './app/pages/auth/sign-up'
 import { ErrorPage } from './app/pages/error'
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
 					{ path: 'sign-in', element: <SignInPage /> },
 					{ path: 'sign-up', element: <SignUpPage /> },
 					{ path: 'forgot-password', element: <ForgotPasswordPage /> },
+					{ path: 'reset-password', element: <ResetPasswordPage /> },
 				],
 			},
 			{

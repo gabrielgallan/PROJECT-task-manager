@@ -1,113 +1,117 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { FaGithub, FaGoogle } from 'react-icons/fa'
-import { Link } from 'react-router-dom'
-import z from 'zod'
+import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { register as registerAccount } from '@/api/register'
 import { BrowserTitle } from '@/components/browser-title'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const signUpFormSchema = z.object({
-	name: z.string().optional(),
-	email: z.email('Provide a valid email address'),
-	password: z.string().min(6, 'Password must have 6 charaters'),
-})
-
-type SignUpFormType = z.infer<typeof signUpFormSchema>
+import { useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
+import { authEmailPath } from '@/features/identity/model/identity'
+import {
+	getHttpStatus,
+	getIdentityError,
+	getValidationErrors,
+} from '@/features/identity/model/identity-errors'
+import { type SignUpValues, signUpSchema } from '@/features/identity/model/identity-forms'
 
 export function SignUpPage() {
+	const navigate = useNavigate()
+	const { capture, busy } = useIdentityLifecycle()
+	const [error, setError] = useState<string | null>(null)
 	const {
 		register,
 		handleSubmit,
-		formState: { isSubmitting, errors },
-	} = useForm<SignUpFormType>({
-		resolver: zodResolver(signUpFormSchema),
+		setError: setFieldError,
+		reset,
+		formState: { errors, isSubmitting },
+	} = useForm<SignUpValues>({
+		resolver: zodResolver(signUpSchema),
+		defaultValues: { name: '', email: '', password: '' },
 	})
-
-	function handleSignUp(data: SignUpFormType) {
-		console.log(data)
+	const mutation = useMutation({
+		mutationKey: ['identity', 'register'],
+		mutationFn: registerAccount,
+		retry: false,
+		networkMode: 'always',
+		gcTime: 0,
+	})
+	async function submit(values: SignUpValues) {
+		if (mutation.isPending || busy) return
+		const current = capture()
+		setError(null)
+		try {
+			await mutation.mutateAsync(values)
+			if (!current()) return
+			reset()
+			navigate(authEmailPath('/auth/sign-in', values.email), { replace: true })
+			toast.success('Account created. Sign in to continue.')
+		} catch (failure) {
+			if (!current()) return
+			for (const [field, message] of Object.entries(getValidationErrors(failure))) {
+				if (field === 'name' || field === 'email' || field === 'password')
+					setFieldError(field, { message })
+			}
+			if (getHttpStatus(failure) === 409)
+				setFieldError(
+					'email',
+					{ message: getIdentityError(failure, 'register') },
+					{ shouldFocus: true },
+				)
+			else setError(getIdentityError(failure, 'register'))
+		}
 	}
-
 	return (
 		<>
 			<BrowserTitle title="Register" />
-			<form onSubmit={handleSubmit(handleSignUp)}>
-				<div className="w-85 flex flex-col justify-center gap-6">
-					<div className="space-y-2 text-center">
-						<h1 className="text-2xl font-semibold tracking-tight">Register</h1>
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="name">Name</Label>
-
-						<Input
-							id="name"
-							type="text"
-							{...register('name')}
-							aria-invalid={errors.name !== undefined}
-						/>
-
-						{errors.name && (
-							<p className="text-xs font-medium text-rose-500">{errors.name.message}</p>
-						)}
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="email">Email</Label>
-
-						<Input
-							id="email"
-							type="email"
-							{...register('email')}
-							aria-invalid={errors.email !== undefined}
-						/>
-
-						{errors.email && (
-							<p className="text-xs font-medium text-rose-500">{errors.email.message}</p>
-						)}
-					</div>
-
-					<div className="space-y-2">
-						<Label htmlFor="password">Password</Label>
-
-						<Input
-							id="password"
-							type="password"
-							{...register('password')}
-							aria-invalid={errors.password !== undefined}
-						/>
-
-						{errors.password && (
-							<p className="text-xs font-medium text-rose-500">{errors.password.message}</p>
-						)}
-					</div>
-
-					<Button className="py-5" type="submit">
-						{isSubmitting ? <Loader2 className="animate-spin" /> : 'Register'}
-					</Button>
-
-					<Field>
-						<FieldSeparator>Or</FieldSeparator>
-					</Field>
-
-					<div className="space-y-4 text-center">
-						<div className="grid grid-cols-2 gap-2">
-							<Button variant="secondary" className="cursor-pointer py-5" type="button">
-								<FaGithub className="size-4" />
-							</Button>
-
-							<Button variant="secondary" className="cursor-pointer py-5" type="button">
-								<FaGoogle className="size-4" />
-							</Button>
+			<form className="w-full max-w-93 px-4 py-8" onSubmit={handleSubmit(submit)} noValidate>
+				<div className="flex flex-col gap-6">
+					<h1 className="text-center text-2xl font-semibold tracking-tight">Register</h1>
+					{error && (
+						<Alert variant="destructive">
+							<AlertDescription>{error}</AlertDescription>
+						</Alert>
+					)}
+					{(
+						[
+							{ key: 'name', label: 'Name', type: 'text', autocomplete: 'name' },
+							{ key: 'email', label: 'Email', type: 'email', autocomplete: 'email' },
+							{
+								key: 'password',
+								label: 'Password',
+								type: 'password',
+								autocomplete: 'new-password',
+							},
+						] as const
+					).map((field) => (
+						<div className="space-y-2" key={field.key}>
+							<Label htmlFor={field.key}>{field.label}</Label>
+							<Input
+								id={field.key}
+								type={field.type}
+								autoComplete={field.autocomplete}
+								{...register(field.key)}
+								aria-invalid={!!errors[field.key]}
+								aria-describedby={errors[field.key] ? `${field.key}-error` : undefined}
+							/>
+							{errors[field.key] && (
+								<p id={`${field.key}-error`} className="text-sm text-destructive">
+									{errors[field.key]?.message}
+								</p>
+							)}
 						</div>
-
-						<Link to="/auth/sign-in" className="font-medium text-sm underline hover:opacity-90">
-							Already have an account ?
-						</Link>
-					</div>
+					))}
+					<p className="text-sm text-muted-foreground">Use 6–18 characters for your password.</p>
+					<Button type="submit" disabled={isSubmitting || busy}>
+						{isSubmitting ? 'Creating account…' : 'Register'}
+					</Button>
+					<Link className="text-center text-sm underline" to="/auth/sign-in">
+						Already have an account?
+					</Link>
 				</div>
 			</form>
 		</>
