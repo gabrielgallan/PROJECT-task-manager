@@ -22,7 +22,10 @@ export const TASK_TRANSITIONS: Record<TaskStatus, ITaskTransition[]> = {
 		{ to: 'DONE', label: 'Mark as done', icon: CircleCheck },
 		{ to: 'BACKLOG', label: 'Move to backlog', icon: Undo2 },
 	],
-	DONE: [{ to: 'IN_PROGRESS', label: 'Reopen', icon: RotateCcw }],
+	DONE: [
+		{ to: 'IN_PROGRESS', label: 'Reopen', icon: RotateCcw },
+		{ to: 'BACKLOG', label: 'Move to backlog', icon: Undo2 },
+	],
 }
 
 /**

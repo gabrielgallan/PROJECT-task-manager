@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { CalendarDays, Info, InfoIcon, TriangleAlert } from 'lucide-react'
+import { InfoIcon, TriangleAlert } from 'lucide-react'
 import { TaskPriorityBadge } from '@/app/pages/registers/tasks/components/list/task-priority-badge'
 import { TaskActionsMenu } from '@/app/pages/registers/tasks/components/task-actions-menu'
 import { KanbanCard } from '@/components/kibo-ui/kanban'
@@ -7,15 +7,6 @@ import type { TaskBoardCard as TBoardCard } from '@/features/tasks/model/task-bo
 import { isTaskDueSoon, isTaskLate } from '@/features/tasks/model/task-due-date'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
-
-/** Late shouts, close whispers, everything else is just a date. */
-function getDueDateIcon(isLate: boolean, isDueSoon: boolean) {
-	if (isLate) {
-		return TriangleAlert
-	}
-
-	return isDueSoon ? Info : CalendarDays
-}
 
 interface ITaskBoardCardProps {
 	card: TBoardCard
@@ -33,8 +24,6 @@ export function TaskBoardCard({ card, onDetails, ...actions }: ITaskBoardCardPro
 	const isDone = task.status === 'DONE'
 	const isLate = isTaskLate(task)
 	const isDueSoon = isTaskDueSoon(task)
-
-	const _DueIcon = getDueDateIcon(isLate, isDueSoon)
 
 	return (
 		<KanbanCard

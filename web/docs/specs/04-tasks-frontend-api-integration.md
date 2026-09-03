@@ -1,6 +1,6 @@
 # SPEC 04 — Integração de Tasks do frontend com a API
 
-Status: proposta, aguardando plano de implementação.
+Status: implementada. Resultados da pré-validação registrados na seção 10.
 Data: 2026-09-03.
 
 ## 1. Objetivo e limites
@@ -736,28 +736,37 @@ Não ampliar para correções gerais ou reescrita das primitivas de Gantt/Kanban
 | CA-31 | Usar teclado/mobile e leitores de erro | Labels, foco, descrições de erro e estados disabled preservados; drag possui alternativa em menu/form |
 | CA-32 | Revisar diff e validação estática da implementação | Somente escopo da seção 8; backend e fluxos validados de Identity/Categories preservados; contratos de Tasks sem casts amplos |
 
-## 10. Verificação futura e entrega desta SPEC
+## 10. Implementação e pré-validação — 2026-09-03
 
-Validar a implementação com API autenticada e inspeção de rede. Usar uma conta
-vazia e dados suficientes para paginação, facetas, nulos e múltiplas páginas de
-options; incluir vínculos reais preparados pela API para detalhes/exclusão, pois
-Plans/Work Logs continuam locais no frontend. Registrar resultados e limitações,
-sem declarar a cobertura de vínculos comprovada apenas pelo schema ou mocks.
+Implementadas as oito operações HTTP de Tasks, os contratos e conversores tipados,
+queries e mutations por geração de sessão, formulários assíncronos e a reconciliação
+de listas, detalhes e opções. Lista, board, timeline, detalhes e seletor passaram a
+ler a API; os consumidores existentes usam um adaptador de leitura sem receber
+integração HTTP própria para Plans ou Work Logs. A exclusão confirmada limpa somente
+as referências locais correspondentes, depois do sucesso do servidor.
 
-Verificar com respostas controladas/throttling os casos de falha, dupla submissão,
-cursor inválido, refetch após sucesso, troca de filtros/IDs e mudança de sessão
-durante requests. Verificar as conversões de datas em fusos negativo e positivo.
-Não acrescentar uma infraestrutura ampla de testes ao frontend apenas para esta etapa.
+A revisão estática cobriu os 32 critérios de aceite quanto à presença e coerência dos
+fluxos no código. Em particular, foram conferidos os oito contratos, serialização de
+filtros, paginação distinta das visões completas, conversão de dias de calendário,
+suporte a nulos, transições entre todos os status, bloqueio de escritas concorrentes,
+detalhes vindos do endpoint próprio, limpeza de sessão e recuperação das páginas de
+options. Uma falha transitória ao carregar mais opções preserva os resultados e pode
+repetir a página; um `400` do cursor reinicia a busca sem cursor.
 
-Executar `pnpm --dir web run typecheck` após implementar e também
-`pnpm --dir web exec tsc --noEmit -p tsconfig.app.json`, pois o tsconfig raiz usa
-referências e o script atual, isoladamente, não verifica todos os arquivos React.
-Comparar diagnósticos preexistentes antes/depois: não introduzir novos erros nem
-corrigir problemas fora do escopo para obter resultado artificialmente limpo.
-Executar build se a mudança afetar o bundle, conforme `web/AGENTS.md`, e verificar
-`git diff --check`.
+Verificação estática e de produção executada ao finalizar a implementação:
 
-A entrega atual altera exclusivamente este documento em `web/docs/specs`, com
-revisão de aderência ao código existente e dos critérios de aceite. Não implementa
-hooks, calls ou componentes e não modifica documentação/código do backend.
-Finalizar com um único commit desta SPEC, sem push.
+- `pnpm --dir web run typecheck`: aprovado.
+- `pnpm --dir web exec tsc --noEmit -p tsconfig.app.json`: sete diagnósticos
+  preexistentes, sendo seis em `product-showcase.tsx` e um em
+  `radial-metric-card.tsx`; nenhum em arquivo alterado nesta implementação. A revisão
+  anterior da SPEC 03 já registrava esses arquivos entre os diagnósticos da base.
+- `pnpm --dir web run build`: executado como validação do bundle.
+- Biome nos arquivos finalizados e `git diff --check`: executados sem correções fora
+  do escopo.
+
+Esta foi uma pré-validação rápida, sem iniciar frontend ou API e sem inspeção manual
+de rede. Permanecem não comprovados nesta etapa os cenários que exigem uma sessão
+autenticada real, respostas controladas ou throttling, múltiplos fusos, grandes massas
+de paginação e vínculos persistidos preparados diretamente na API. O schema e os
+mocks não foram tratados como evidência desses comportamentos. Nenhuma infraestrutura
+de testes, dependência, arquivo de backend ou correção geral fora da SPEC foi adicionada.

@@ -12,5 +12,5 @@ export interface Task {
 	startDate?: Date
 	dueDate?: Date
 	createdAt: Date
-	updatedAt: Date
+	updatedAt: Date | null
 }

@@ -15,6 +15,7 @@ import {
 	TASK_TRANSITIONS,
 } from '@/features/tasks/model/task-transitions'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
+import { useTaskPending } from '@/features/tasks/hooks/use-task-pending'
 
 interface ITaskActionsMenuProps {
 	task: Task
@@ -42,10 +43,11 @@ export function TaskActionsMenu({
 	onDelete,
 }: ITaskActionsMenuProps) {
 	const transitions = TASK_TRANSITIONS[task.status]
+	const pending = useTaskPending(task.id)
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" />}>
+			<DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" disabled={pending} />}>
 				<EllipsisVertical className="size-3" />
 				<span className="sr-only">Actions for {task.title}</span>
 			</DropdownMenuTrigger>
@@ -62,7 +64,7 @@ export function TaskActionsMenu({
 					<DropdownMenuLabel>Status</DropdownMenuLabel>
 
 					{transitions.map(({ to, label, icon: Icon }) => (
-						<DropdownMenuItem key={to} onClick={() => onStatusChange(task, to)}>
+						<DropdownMenuItem key={to} disabled={pending} onClick={() => onStatusChange(task, to)}>
 							<Icon />
 							{label}
 						</DropdownMenuItem>
@@ -72,7 +74,7 @@ export function TaskActionsMenu({
 				<DropdownMenuSeparator />
 
 				<DropdownMenuGroup>
-					<DropdownMenuItem onClick={() => onEdit(task)}>
+					<DropdownMenuItem disabled={pending} onClick={() => onEdit(task)}>
 						<Pencil />
 						Edit
 					</DropdownMenuItem>
@@ -94,7 +96,7 @@ export function TaskActionsMenu({
 
 				<DropdownMenuSeparator />
 
-				<DropdownMenuItem variant="destructive" onClick={() => onDelete(task)}>
+				<DropdownMenuItem variant="destructive" disabled={pending} onClick={() => onDelete(task)}>
 					<Trash2 />
 					Delete
 				</DropdownMenuItem>

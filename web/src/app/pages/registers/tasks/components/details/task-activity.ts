@@ -1,7 +1,4 @@
-import { differenceInMinutes, isSameDay, parseISO } from 'date-fns'
-import { useMemo } from 'react'
-import { usePlans } from '@/features/plans/store/plans-store'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { differenceInMinutes, isSameDay } from 'date-fns'
 
 /**
  * What a task's schedule looks like once the two modules are flattened: an
@@ -48,44 +45,4 @@ export function groupEntriesByDay(entries: ITaskActivityEntry[]): ITaskActivityD
 
 		return days
 	}, [])
-}
-
-/**
- * The one place that knows both modules. It lives with the page, not with a
- * feature, so plans and work logs stay unaware of each other.
- */
-export function useTaskActivity(taskId: string | undefined): ITaskActivityEntry[] {
-	const { plans } = usePlans()
-	const { workLogs } = useWorkLogs()
-
-	return useMemo(() => {
-		if (!taskId) {
-			return []
-		}
-
-		const entries: ITaskActivityEntry[] = [
-			...plans
-				.filter((plan) => plan.taskId === taskId)
-				.map((plan) => ({
-					id: plan.id,
-					kind: 'plan' as const,
-					title: plan.title,
-					startDate: parseISO(plan.startDate),
-					endDate: parseISO(plan.endDate),
-					isConfirmed: !!plan.confirmedAt,
-				})),
-			...workLogs
-				.filter((workLog) => workLog.taskId === taskId)
-				.map((workLog) => ({
-					id: workLog.id,
-					kind: 'work-log' as const,
-					title: workLog.title,
-					startDate: parseISO(workLog.startDate),
-					endDate: parseISO(workLog.endDate),
-				})),
-		]
-
-		// Newest first: what is coming up leads, and recent work follows.
-		return entries.sort((a, b) => b.startDate.getTime() - a.startDate.getTime())
-	}, [plans, workLogs, taskId])
 }

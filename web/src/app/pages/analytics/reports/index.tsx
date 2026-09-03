@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { BrowserTitle } from '@/components/browser-title'
 import { useCategories } from '@/features/categories/store/categories-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
+import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 
 import { WorkLogReportPreview } from './components/work-log-report-preview'
@@ -47,7 +48,8 @@ function configsMatch(left: IWorkLogReportConfig, right: IWorkLogReportConfig) {
 
 export function ReportsPage() {
 	const { workLogs } = useWorkLogs()
-	const { tasks } = useTasks()
+	const taskSource = useTasks()
+	const { tasks } = taskSource
 	const { categories } = useCategories()
 	const defaultConfig = useMemo(() => createDefaultWorkLogReportConfig(), [])
 	const [config, setConfig] = useState<IWorkLogReportConfig>(() => ({
@@ -130,6 +132,7 @@ export function ReportsPage() {
 	return (
 		<>
 			<BrowserTitle title="Reports" />
+			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<WorkLogReportToolbar

@@ -7,6 +7,7 @@ import {
 import { BrowserTitle } from '@/components/browser-title'
 import { useCategories } from '@/features/categories/store/categories-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
+import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { useCreateAction } from '@/hooks/use-create-action'
 
@@ -16,7 +17,8 @@ const TASK_PARAM = 'task'
 export function WorkLogsPage() {
 	const [searchParams] = useSearchParams()
 	const calendarRef = useRef<WorkLogsCalendarHandle>(null)
-	const { tasks } = useTasks()
+	const taskSource = useTasks()
+	const { tasks } = taskSource
 	const { categories, uncategorizedColor } = useCategories()
 	const { workLogs, addWorkLog, updateWorkLog, removeWorkLog } = useWorkLogs()
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
@@ -34,6 +36,7 @@ export function WorkLogsPage() {
 	return (
 		<>
 			<BrowserTitle title="Work logs" />
+			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<WorkLogsCalendar

@@ -38,6 +38,11 @@ export function usePlans() {
 			),
 		[setPlans],
 	)
+	const clearTask = useCallback(
+		(taskId: string) => setPlans((previous) => previous.map((plan) =>
+			plan.taskId === taskId ? { ...plan, taskId: null } : plan)),
+		[setPlans],
+	)
 
-	return { plans, addPlan, updatePlan, removePlan, clearCategory }
+	return { plans, addPlan, updatePlan, removePlan, clearCategory, clearTask }
 }

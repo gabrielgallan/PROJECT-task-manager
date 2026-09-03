@@ -57,9 +57,9 @@ export function TasksTableRow({ task, onEdit, ...actions }: ITasksTableRowProps)
 
 			<TableCell className="text-right">
 				<span className="text-muted-foreground">
-					{formatDistanceToNowStrict(task.updatedAt, {
+					{task.updatedAt ? formatDistanceToNowStrict(task.updatedAt, {
 						addSuffix: true,
-					})}
+					}) : '—'}
 				</span>
 			</TableCell>
 

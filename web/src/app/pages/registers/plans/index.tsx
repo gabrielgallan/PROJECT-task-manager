@@ -8,6 +8,7 @@ import { PlansCalendar, type PlansCalendarHandle } from '@/features/plans/calend
 import type { IPlan } from '@/features/plans/model/plan-types'
 import { usePlans } from '@/features/plans/store/plans-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
+import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
 import { createWorkLog, validateRange } from '@/features/work-logs/model/work-log-rules'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { useCreateAction } from '@/hooks/use-create-action'
@@ -20,7 +21,8 @@ export function PlansPage() {
 	const calendarRef = useRef<PlansCalendarHandle>(null)
 	const { plans, addPlan, updatePlan, removePlan } = usePlans()
 	const { categories, uncategorizedColor } = useCategories()
-	const { tasks } = useTasks()
+	const taskSource = useTasks()
+	const { tasks } = taskSource
 	const { workLogs, addWorkLog } = useWorkLogs()
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
 
@@ -67,6 +69,7 @@ export function PlansPage() {
 	return (
 		<>
 			<BrowserTitle title="Plans" />
+			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<PlansCalendar

@@ -8,6 +8,7 @@ import {
 import { TaskPriorityBadge } from '@/app/pages/registers/tasks/components/list/task-priority-badge'
 import { TaskStatusBadge } from '@/app/pages/registers/tasks/components/list/task-status-badge'
 import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import {
 	Sheet,
@@ -25,6 +26,10 @@ import { cn } from '@/lib/utils'
 interface ITaskDetailsSheetProps {
 	task: Task | null
 	entries: ITaskActivityEntry[]
+	summary?: { plannedMinutes: number; loggedMinutes: number }
+	loading?: boolean
+	error?: string | null
+	onRetry: () => void
 	onOpenChange: (open: boolean) => void
 	onOpenPlans: (task: Task) => void
 	onOpenWorkLogs: (task: Task) => void
@@ -74,6 +79,10 @@ function ActivityRow({ entry }: { entry: ITaskActivityEntry }) {
 export function TaskDetailsSheet({
 	task,
 	entries,
+	summary,
+	loading,
+	error,
+	onRetry,
 	onOpenChange,
 	onOpenPlans,
 	onOpenWorkLogs,
@@ -83,8 +92,8 @@ export function TaskDetailsSheet({
 		return <Sheet open={false} onOpenChange={onOpenChange} />
 	}
 
-	const plannedMinutes = sumEntryMinutes(entries, 'plan')
-	const loggedMinutes = sumEntryMinutes(entries, 'work-log')
+	const plannedMinutes = summary?.plannedMinutes ?? sumEntryMinutes(entries, 'plan')
+	const loggedMinutes = summary?.loggedMinutes ?? sumEntryMinutes(entries, 'work-log')
 	const days = groupEntriesByDay(entries)
 
 	// Without a plan there is nothing to compare against, so no number is shown
@@ -116,6 +125,8 @@ export function TaskDetailsSheet({
 				</SheetHeader>
 
 				<div className="flex flex-col gap-4 px-4 pb-4">
+					{loading && <p role="status" className="text-sm text-muted-foreground">Loading details…</p>}
+					{error && <><Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert><Button variant="outline" size="sm" onClick={onRetry}>Try again</Button></>}
 					<div className="grid grid-cols-2 gap-2 text-sm">
 						<div className="flex flex-col gap-0.5">
 							<span className="text-xs text-muted-foreground">Start</span>
@@ -134,13 +145,13 @@ export function TaskDetailsSheet({
 
 					<Separator />
 
-					<div className="grid grid-cols-3 gap-2">
+					{!loading && !error && <div className="grid grid-cols-3 gap-2">
 						<SummaryTile label="Planned" value={formatMinutes(plannedMinutes)} />
 						<SummaryTile label="Logged" value={formatMinutes(loggedMinutes)} />
 						<SummaryTile label="Balance" value={balanceLabel} muted={plannedMinutes === 0} />
-					</div>
+					</div>}
 
-					<div className="flex flex-col gap-3">
+					{!loading && !error && <div className="flex flex-col gap-3">
 						<span className="text-sm font-medium">Activity</span>
 
 						{days.length === 0 ? (
@@ -185,7 +196,7 @@ export function TaskDetailsSheet({
 								</div>
 							))
 						)}
-					</div>
+					</div>}
 				</div>
 
 				<SheetFooter className="mt-auto flex-row gap-2">

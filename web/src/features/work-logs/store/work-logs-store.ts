@@ -44,6 +44,13 @@ export function useWorkLogs() {
 			),
 		[setWorkLogs],
 	)
+	const clearTask = useCallback(
+		(taskId: string) => setWorkLogs((previous) => previous.map((workLog) =>
+			workLog.taskId === taskId
+				? { ...workLog, taskId: null, updatedAt: new Date().toISOString() }
+				: workLog)),
+		[setWorkLogs],
+	)
 
-	return { workLogs, addWorkLog, updateWorkLog, removeWorkLog, clearCategory }
+	return { workLogs, addWorkLog, updateWorkLog, removeWorkLog, clearCategory, clearTask }
 }

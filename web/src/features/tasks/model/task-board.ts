@@ -56,7 +56,7 @@ function byDueDate(a: Task, b: Task): number {
 
 /** Finished work is read as history, so the latest is what matters. */
 function byRecentUpdate(a: Task, b: Task): number {
-	return b.updatedAt.getTime() - a.updatedAt.getTime()
+	return (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0)
 }
 
 export interface IBuildTaskBoardOptions {

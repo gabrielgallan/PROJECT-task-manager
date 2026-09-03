@@ -247,7 +247,7 @@ export function TasksBoard({
 							</KanbanHeader>
 
 							<KanbanCards id={column.id} className="gap-2 p-2">
-								{(card: TBoardCard) => <TaskBoardCard key={card.id} card={card} {...cardActions} />}
+								{(card: TBoardCard) => <TaskBoardCard key={card.id} card={card} onStatusChange={onStatusChange} {...cardActions} />}
 							</KanbanCards>
 
 							{isEmpty && (

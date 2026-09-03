@@ -4,6 +4,7 @@ import { BrowserTitle } from '@/components/browser-title'
 import { useCategories } from '@/features/categories/store/categories-store'
 import { usePlans } from '@/features/plans/store/plans-store'
 import { useTasks } from '@/features/tasks/store/tasks-store'
+import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
 import { buildWorkLogContributions } from '@/features/work-logs/model/work-log-contributions'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { CapacityCard } from './components/capacity-card'
@@ -23,7 +24,8 @@ import {
 } from './model/dashboard-insights'
 
 export function DashboardPage() {
-	const { tasks } = useTasks()
+	const taskSource = useTasks()
+	const { tasks } = taskSource
 	const { categories, uncategorizedColor } = useCategories()
 	const { plans } = usePlans()
 	const { workLogs } = useWorkLogs()
@@ -36,6 +38,7 @@ export function DashboardPage() {
 	return (
 		<>
 			<BrowserTitle title="Dashboard" />
+			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
 
 			<div className="styled-scrollbar flex flex-col overflow-auto p-4 gap-4">
 				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, yyyy')}</p>

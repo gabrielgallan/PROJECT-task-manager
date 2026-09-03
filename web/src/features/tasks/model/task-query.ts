@@ -100,7 +100,7 @@ function compareByField(a: Task, b: Task, field: TTaskSortField): number {
 		case 'priority':
 			return TASK_PRIORITY_RANK[a.priority] - TASK_PRIORITY_RANK[b.priority]
 		case 'updatedAt':
-			return a.updatedAt.getTime() - b.updatedAt.getTime()
+			return (a.updatedAt?.getTime() ?? 0) - (b.updatedAt?.getTime() ?? 0)
 		case 'dueDate':
 			return (a.dueDate?.getTime() ?? 0) - (b.dueDate?.getTime() ?? 0)
 	}

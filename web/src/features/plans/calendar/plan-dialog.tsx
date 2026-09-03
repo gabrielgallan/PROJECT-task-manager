@@ -175,7 +175,7 @@ export function PlanDialog({
 									<FieldLabel htmlFor="plan-task">Task</FieldLabel>
 									<TaskCombobox
 										id="plan-task"
-										tasks={tasks}
+										selectedLabel={tasks.find((task) => task.id === field.value)?.title}
 										value={field.value ?? null}
 										onChange={field.onChange}
 										onBlur={field.onBlur}

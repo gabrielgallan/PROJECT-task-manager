@@ -166,7 +166,7 @@ export function WorkLogDialog({
 									<FieldLabel htmlFor="work-log-task">Task</FieldLabel>
 									<TaskCombobox
 										id="work-log-task"
-										tasks={tasks}
+										selectedLabel={tasks.find((task) => task.id === field.value)?.title}
 										value={field.value ?? null}
 										onChange={field.onChange}
 										onBlur={field.onBlur}

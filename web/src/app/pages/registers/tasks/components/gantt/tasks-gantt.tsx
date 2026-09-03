@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 
 interface ITasksGanttProps {
 	tasks: Task[]
-	onReschedule: (task: Task, startDate: Date, dueDate: Date) => void
+	onReschedule: (task: Task, startDate: Date, dueDate: Date) => Promise<boolean>
 	onSelectTask: (task: Task) => void
 	onClearFilters?: () => void
 	isFiltered?: boolean
@@ -43,6 +43,8 @@ export function TasksGantt({
 }: ITasksGanttProps) {
 	const [range, setRange] = useState<Range>(DEFAULT_GANTT_RANGE)
 	const [zoom, setZoom] = useState(DEFAULT_GANTT_ZOOM)
+	const [pendingId, setPendingId] = useState<string | null>(null)
+	const [revisions, setRevisions] = useState<Record<string, number>>({})
 
 	const { groups, undatedTasks } = useMemo(() => buildTaskGanttData(tasks), [tasks])
 
@@ -57,14 +59,20 @@ export function TasksGantt({
 		}
 	}
 
-	const rescheduleTask = (id: string, startAt: Date, endAt: Date | null) => {
+	const rescheduleTask = async (id: string, startAt: Date, endAt: Date | null) => {
 		const task = tasks.find((item) => item.id === id)
 
 		if (!task || !endAt) {
 			return
 		}
 
-		onReschedule(task, startAt, endAt)
+		setPendingId(id)
+		try {
+			await onReschedule(task, startAt, endAt)
+		} finally {
+			setPendingId(null)
+			setRevisions((previous) => ({ ...previous, [id]: (previous[id] ?? 0) + 1 }))
+		}
 	}
 
 	const changeZoom = (value: number) => {
@@ -136,9 +144,9 @@ export function TasksGantt({
 									<GanttFeatureListGroup key={group.status}>
 										{group.features.map((feature) => (
 											<GanttFeatureItem
-												key={feature.id}
+												key={`${feature.id}-${feature.startAt.toISOString()}-${feature.endAt?.toISOString()}-${revisions[feature.id] ?? 0}`}
 												{...feature}
-												onMove={rescheduleTask}
+												onMove={pendingId === feature.id ? undefined : rescheduleTask}
 												className={cn([
 													// Short tasks collapse to a few pixels on the wider ranges.
 													'[&>div]:min-w-6',

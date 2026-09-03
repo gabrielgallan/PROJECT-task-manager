@@ -1,190 +1,70 @@
-import { format } from 'date-fns'
-import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { TasksBoard } from '@/app/pages/registers/tasks/components/board/tasks-board'
-import { DeleteTaskDialog } from '@/app/pages/registers/tasks/components/delete-task-dialog'
-import { useTaskActivity } from '@/app/pages/registers/tasks/components/details/task-activity'
-import { TaskDetailsSheet } from '@/app/pages/registers/tasks/components/details/task-details-sheet'
-import { TasksGantt } from '@/app/pages/registers/tasks/components/gantt/tasks-gantt'
-import { TasksList } from '@/app/pages/registers/tasks/components/list/tasks-list'
-import { TaskDialog } from '@/app/pages/registers/tasks/components/task-dialog'
-import { TasksToolbar } from '@/app/pages/registers/tasks/components/tasks-toolbar'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { BrowserTitle } from '@/components/browser-title'
-import { useTaskFilterDraft } from '@/features/tasks/hooks/use-task-filter-draft'
-import { useTaskQuery } from '@/features/tasks/hooks/use-task-query'
-import { applyTaskQuery, filterTasks, hasActiveTaskFilters } from '@/features/tasks/model/task-query'
-import { TASK_STATUS_LABEL } from '@/features/tasks/model/task-status'
-import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
-import { DEFAULT_TASK_VIEW, TASK_VIEW_VALUES } from '@/features/tasks/model/task-views'
-import { useTasks } from '@/features/tasks/store/tasks-store'
-import { useViewParam } from '@/hooks/use-view-param'
-import { useCreateAction } from '@/hooks/use-create-action'
-
-/** Marks which task the dialog is about; `null` means creating a new one. */
-type TEditingTask = Task | null | undefined
+import { TasksBoard } from './components/board/tasks-board'
+import { DeleteTaskDialog } from './components/delete-task-dialog'
+import type { ITaskActivityEntry } from './components/details/task-activity'
+import { TaskDetailsSheet } from './components/details/task-details-sheet'
+import { TasksGantt } from './components/gantt/tasks-gantt'
+import { TasksList } from './components/list/tasks-list'
+import { TaskDialog } from './components/task-dialog'
+import { TasksToolbar } from './components/tasks-toolbar'
+import { useTasksPage } from './hooks/use-tasks-page'
+import { getTaskError } from '@/features/tasks/model/task-errors'
 
 export function TasksPage() {
-	const [view, setView] = useViewParam(TASK_VIEW_VALUES, DEFAULT_TASK_VIEW)
-	const navigate = useNavigate()
-
-	const { tasks, changeTaskStatus, rescheduleTask, removeTask } = useTasks()
-	const { query, applyFilters, toggleSort, setPage, clearFilters } = useTaskQuery()
-
-	// The toolbar composes its filters here and only hands them to the query when
-	// the search is submitted.
+	const page = useTasksPage()
 	const {
-		draft,
-		isDirty,
-		canClear,
-		setDraftSearch,
-		toggleDraftStatus,
-		toggleDraftPriority,
-		clearDraftStatus,
-		clearDraftPriority,
-		apply,
-		clearAll,
-	} = useTaskFilterDraft({ query, onApply: applyFilters, onClear: clearFilters })
-
-	const [editingTask, setEditingTask] = useState<TEditingTask>(undefined)
-	const [deletingTask, setDeletingTask] = useState<Task | null>(null)
-	const [detailedTask, setDetailedTask] = useState<Task | null>(null)
-	const openCreateDialog = useCallback(() => setEditingTask(null), [])
-
-	useCreateAction(openCreateDialog)
-
-	const activity = useTaskActivity(detailedTask?.id)
-
-	// Only the list pages the result. The timeline and the board draw every match
-	// at once: scrolling through time, or down a column, is already their paging.
-	const result = useMemo(() => applyTaskQuery(tasks, query), [tasks, query])
-	const filteredTasks = useMemo(() => filterTasks(tasks, query), [tasks, query])
-
-	const handleStatusChange = (task: Task, status: TaskStatus) => {
-		changeTaskStatus(task.id, status)
-		toast.success(`“${task.title}” moved to ${TASK_STATUS_LABEL[status]}`)
-	}
-
-	const handleReschedule = (task: Task, startDate: Date, dueDate: Date) => {
-		rescheduleTask(task.id, startDate, dueDate)
-		toast.success(`“${task.title}” rescheduled to ${format(dueDate, 'dd MMM')}`)
-	}
-
-	const handleDelete = (task: Task) => {
-		removeTask(task.id)
-		setDeletingTask(null)
-		toast.success(`“${task.title}” deleted`)
-	}
-
-	// Planning and logging live on their own pages. The task id travels in the URL
-	// so those pages can pick it up once they support being opened this way.
-	const handlePlan = (task: Task) => {
-		navigate(`/registers/plans?task=${task.id}`)
-	}
-
-	const handleLogWork = (task: Task) => {
-		navigate(`/registers/work-logs?task=${task.id}`)
-	}
-
-	return (
-		<>
-			<BrowserTitle title="Tasks" />
-
-			<div className="flex min-h-0 flex-1 flex-col">
-				<div className="shrink-0 border-b px-4 py-3">
-					<TasksToolbar
-						draft={draft}
-						isDirty={isDirty}
-						canClear={canClear}
-						view={view}
-						onViewChange={setView}
-						onSearchChange={setDraftSearch}
-						onToggleStatus={toggleDraftStatus}
-						onTogglePriority={toggleDraftPriority}
-						onClearStatus={clearDraftStatus}
-						onClearPriority={clearDraftPriority}
-						onApply={apply}
-						onClearAll={clearAll}
-						onNewTask={openCreateDialog}
-					/>
-				</div>
-
-				{view === 'timeline' && (
-					<TasksGantt
-						tasks={filteredTasks}
-						isFiltered={hasActiveTaskFilters(query)}
-						onReschedule={handleReschedule}
-						onSelectTask={setEditingTask}
-						onClearFilters={clearAll}
-					/>
-				)}
-
-				{view === 'board' && (
-					<TasksBoard
-						tasks={filteredTasks}
-						statusFilter={query.status}
-						isFiltered={hasActiveTaskFilters(query)}
-						onClearFilters={clearAll}
-						onNewTask={openCreateDialog}
-						onStatusChange={handleStatusChange}
-						onDetails={setDetailedTask}
-						onEdit={setEditingTask}
-						onPlan={handlePlan}
-						onLogWork={handleLogWork}
-						onDelete={setDeletingTask}
-					/>
-				)}
-
-				{view === 'list' && (
-					<TasksList
-						result={result}
-						query={query}
-						onSort={toggleSort}
-						onPageChange={setPage}
-						onClearFilters={clearAll}
-						onNewTask={openCreateDialog}
-						onStatusChange={handleStatusChange}
-						onDetails={setDetailedTask}
-						onEdit={setEditingTask}
-						onPlan={handlePlan}
-						onLogWork={handleLogWork}
-						onDelete={setDeletingTask}
-					/>
-				)}
+		view, setView, query, filters, currentQuery, tasks, result, editingTask, setEditingTask,
+		deletingTask, setDeletingTask, detailedTask, setDetailedTask, actionError, clearActionError,
+		details, openCreateDialog, changeStatus, reschedule, openPlan, openWorkLog, filtered,
+		toggleSort, setPage,
+	} = page
+	const entries: ITaskActivityEntry[] = (details.data?.activity ?? []).map((entry) => ({
+		...entry, startDate: new Date(entry.startsAt), endDate: new Date(entry.endsAt),
+	}))
+	const readError = currentQuery.error ? getTaskError(currentQuery.error, 'list') : null
+	const detailsError = details.error ? getTaskError(details.error, 'details') : null
+	const hasData = currentQuery.data !== undefined
+	return <>
+		<BrowserTitle title="Tasks" />
+		<div className="flex min-h-0 flex-1 flex-col">
+			<div className="shrink-0 border-b px-4 py-3">
+				<TasksToolbar draft={filters.draft} isDirty={filters.isDirty} canClear={filters.canClear}
+					view={view} onViewChange={setView} onSearchChange={filters.setDraftSearch}
+					onToggleStatus={filters.toggleDraftStatus} onTogglePriority={filters.toggleDraftPriority}
+					onClearStatus={filters.clearDraftStatus} onClearPriority={filters.clearDraftPriority}
+					onApply={filters.apply} onClearAll={filters.clearAll} onNewTask={openCreateDialog} />
 			</div>
-
-
-			<TaskDetailsSheet
-				task={detailedTask}
-				entries={activity}
-				onOpenChange={(open) => {
-					if (!open) {
-						setDetailedTask(null)
-					}
-				}}
-				onOpenPlans={handlePlan}
-				onOpenWorkLogs={handleLogWork}
-			/>
-
-			<TaskDialog
-				task={editingTask ?? undefined}
-				open={editingTask !== undefined}
-				onOpenChange={(open) => {
-					if (!open) {
-						setEditingTask(undefined)
-					}
-				}}
-			/>
-
-			<DeleteTaskDialog
-				task={deletingTask}
-				onOpenChange={(open) => {
-					if (!open) {
-						setDeletingTask(null)
-					}
-				}}
-				onConfirm={handleDelete}
-			/>
-		</>
-	)
+			{(actionError || readError) && <div className="px-4 pt-4">
+				<Alert variant="destructive"><AlertDescription>{actionError ?? readError}</AlertDescription></Alert>
+				<div className="mt-2 flex gap-2">
+					{readError && <Button size="sm" variant="outline" onClick={() => void currentQuery.refetch()}>Try again</Button>}
+					{actionError && <Button size="sm" variant="outline" onClick={clearActionError}>Dismiss</Button>}
+				</div>
+			</div>}
+			{currentQuery.isPending && <p role="status" className="m-auto text-sm text-muted-foreground">Loading tasks…</p>}
+			{hasData && view === 'timeline' && <TasksGantt tasks={tasks} isFiltered={filtered}
+				onReschedule={reschedule}
+				onSelectTask={setEditingTask} onClearFilters={filters.clearAll} />}
+			{hasData && view === 'board' && <TasksBoard tasks={tasks} statusFilter={query.status}
+				isFiltered={filtered} onClearFilters={filters.clearAll} onNewTask={openCreateDialog}
+				onStatusChange={(task, status) => void changeStatus(task, status)}
+				onDetails={setDetailedTask} onEdit={setEditingTask} onPlan={openPlan}
+				onLogWork={openWorkLog} onDelete={setDeletingTask} />}
+			{hasData && view === 'list' && <TasksList result={result} query={query}
+				onSort={toggleSort} onPageChange={setPage} onClearFilters={filters.clearAll}
+				onNewTask={openCreateDialog} onStatusChange={(task, status) => void changeStatus(task, status)}
+				onDetails={setDetailedTask} onEdit={setEditingTask} onPlan={openPlan}
+				onLogWork={openWorkLog} onDelete={setDeletingTask} />}
+		</div>
+		<TaskDetailsSheet task={details.data?.task ?? detailedTask} entries={entries}
+			summary={details.data?.summary} loading={details.isPending && !!detailedTask} error={detailsError}
+			onRetry={() => void details.refetch()} onOpenChange={(open) => !open && setDetailedTask(null)}
+			onOpenPlans={openPlan} onOpenWorkLogs={openWorkLog} />
+		<TaskDialog task={editingTask ?? undefined} open={editingTask !== undefined}
+			onOpenChange={(open) => !open && setEditingTask(undefined)} />
+		<DeleteTaskDialog task={deletingTask} onOpenChange={(open) => !open && setDeletingTask(null)}
+			onDeleted={(task) => { if (detailedTask?.id === task.id) setDetailedTask(null) }} />
+	</>
 }
