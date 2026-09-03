@@ -16,12 +16,6 @@ import {
 	FieldSet,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-	InputGroupText,
-} from '@/components/ui/input-group'
 import { Separator } from '@/components/ui/separator'
 
 const userProfileSchema = z.object({
@@ -86,20 +80,15 @@ export function AccountSettings({ profile, onProfileChange }: AccountSettingsPro
 									<FieldError errors={[errors.name]} />
 								</Field>
 
-								<Field data-invalid={errors.username !== undefined}>
-									<FieldLabel htmlFor="profile-username">Username</FieldLabel>
-									<InputGroup>
-										<InputGroupAddon>
-											<InputGroupText>@</InputGroupText>
-										</InputGroupAddon>
-										<InputGroupInput
-											id="profile-username"
-											type="text"
-											aria-invalid={errors.username !== undefined}
-											{...register('username')}
-										/>
-									</InputGroup>
-									<FieldError errors={[errors.username]} />
+								<Field data-invalid={errors.jobTitle !== undefined}>
+									<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
+									<Input
+										id="profile-job-title"
+										placeholder="e.g. Developer"
+										aria-invalid={errors.jobTitle !== undefined}
+										{...register('jobTitle')}
+									/>
+									<FieldError errors={[errors.jobTitle]} />
 								</Field>
 
 								<Field data-invalid={errors.email !== undefined}>
@@ -111,17 +100,6 @@ export function AccountSettings({ profile, onProfileChange }: AccountSettingsPro
 										{...register('email')}
 									/>
 									<FieldError errors={[errors.email]} />
-								</Field>
-
-								<Field data-invalid={errors.jobTitle !== undefined}>
-									<FieldLabel htmlFor="profile-job-title">Job title</FieldLabel>
-									<Input
-										id="profile-job-title"
-										placeholder="e.g. Developer"
-										aria-invalid={errors.jobTitle !== undefined}
-										{...register('jobTitle')}
-									/>
-									<FieldError errors={[errors.jobTitle]} />
 								</Field>
 							</FieldGroup>
 						</FieldSet>

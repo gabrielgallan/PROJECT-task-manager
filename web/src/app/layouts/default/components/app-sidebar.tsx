@@ -17,7 +17,16 @@ import {
 } from '@/components/ui/sidebar'
 import { NavUser } from './nav-user'
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+	user: {
+		name: string | null
+		email: string
+		avatarUrl: string | null
+		jobTitle: string | null
+	}
+}
+
+export function AppSidebar({ user, ...props }: AppSidebarProps) {
 	const { pathname } = useLocation()
 	const { openCommand } = useAppCommand()
 
@@ -102,7 +111,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					</SidebarGroupContent>
 				</SidebarGroup>
 
-				<NavUser />
+				<NavUser user={user} />
 			</SidebarFooter>
 		</Sidebar>
 	)

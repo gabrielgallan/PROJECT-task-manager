@@ -10,12 +10,38 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
-export function NavUser() {
+export interface User {
+	name: string | null
+	email: string
+	avatarUrl: string | null
+	jobTitle: string | null
+}
+
+export function getUserInitials(user: User): string {
+	if (!user.name?.trim()) {
+		return user.email.charAt(0).toUpperCase()
+	}
+
+	const names = user.name.trim().split(/\s+/)
+
+	const firstInitial = names[0].charAt(0)
+	const lastInitial = names.length > 1 ? names[names.length - 1].charAt(0) : ''
+
+	return `${firstInitial}${lastInitial}`.toUpperCase()
+}
+
+interface NavUserProps {
+	user: User
+}
+
+export function NavUser({ user }: NavUserProps) {
 	const navigate = useNavigate()
 
 	function handleSignOut() {
 		navigate('/auth/sign-in')
 	}
+
+	const initials = getUserInitials(user)
 
 	return (
 		<SidebarMenu>
@@ -24,14 +50,16 @@ export function NavUser() {
 					<DropdownMenuTrigger className="flex w-full">
 						<SidebarMenuButton className="py-6">
 							<Avatar>
-								<AvatarImage src="https://github.com/gabrielgallan.png" alt="gabrielgallan" />
-								<AvatarFallback>GG</AvatarFallback>
+								<AvatarImage src={user.avatarUrl ?? ''} alt={user.email} />
+								<AvatarFallback>{initials}</AvatarFallback>
 							</Avatar>
 
 							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-medium">Gabriel Gallan</span>
+								<span className="truncate font-medium">{user.name ?? initials}</span>
 
-								<span className="truncate text-xs text-muted-foreground">Developer</span>
+								<span className="truncate text-xs text-muted-foreground">
+									{user.jobTitle ?? '-'}
+								</span>
 							</div>
 
 							<Button size="icon" className="ml-auto" variant="ghost">

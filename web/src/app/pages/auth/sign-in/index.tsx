@@ -1,10 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2 } from 'lucide-react'
+import { useMutation } from '@tanstack/react-query'
+import { HTTPError } from 'ky'
+import { AlertTriangle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FaGithub, FaGoogle } from 'react-icons/fa'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { z } from 'zod'
+import { authenticate } from '@/api/authenticate'
 import { BrowserTitle } from '@/components/browser-title'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -12,13 +17,15 @@ import { Label } from '@/components/ui/label'
 
 const signInFormSchema = z.object({
 	email: z.email('Provide a valid email address'),
-	password: z.string(),
+	password: z.string().min(1, 'Provide a valid password'),
 })
 
 type SignInFormType = z.infer<typeof signInFormSchema>
 
 export function SignInPage() {
 	const [searchParams] = useSearchParams()
+	const [error, setError] = useState<string | null>(null)
+	const navigate = useNavigate()
 
 	const {
 		watch,
@@ -34,8 +41,22 @@ export function SignInPage() {
 
 	const email = watch('email')
 
-	function handleSignIn(data: SignInFormType) {
-		console.log(data)
+	const { mutateAsync: signIn } = useMutation({
+		mutationFn: authenticate,
+	})
+
+	async function handleSignIn(data: SignInFormType) {
+		try {
+			await signIn(data)
+
+			navigate('/')
+		} catch (error) {
+			if (error instanceof HTTPError) {
+				setError(error.data.message)
+			} else {
+				setError('An error occurred')
+			}
+		}
 	}
 
 	return (
@@ -46,6 +67,16 @@ export function SignInPage() {
 					<div className="space-y-2 text-center">
 						<h1 className="text-2xl font-semibold tracking-tight">Sign In</h1>
 					</div>
+
+					{error && (
+						<Alert className="bg-rose-400/10 text-rose-500 border-none">
+							<AlertTriangle className="size-4" />
+							<AlertTitle>Sign In failed!</AlertTitle>
+							<AlertDescription>
+								<p className="text-rose-500/90">{error}</p>
+							</AlertDescription>
+						</Alert>
+					)}
 
 					<div className="space-y-2">
 						<Label htmlFor="email">Email</Label>
@@ -75,7 +106,7 @@ export function SignInPage() {
 						/>
 
 						{errors.password && (
-							<p className="text-xs font-medium text-rose-500">Provide a valid email address</p>
+							<p className="text-xs font-medium text-rose-500">{errors.password.message}</p>
 						)}
 					</div>
 

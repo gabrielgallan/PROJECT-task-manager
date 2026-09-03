@@ -1,6 +1,9 @@
+import { useQuery } from '@tanstack/react-query'
 import { Bot, Search, Settings, Workflow } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { getProfile } from '@/api/get-profile'
 import { AppCommand, useAppCommand } from '@/app/layouts/default/components/app-command'
 import { MobileBottomNav } from '@/app/layouts/default/components/mobile-botton-nav'
 import { APP_NAVIGATION_ITEMS } from '@/app/navigation'
@@ -32,6 +35,17 @@ function DefaultLayoutContent() {
 	const { openCommand } = useAppCommand()
 	const [aiChatIsOpen, setAiChatIsOpen] = useState<boolean>(false)
 
+	const { data, error } = useQuery({
+		queryKey: ['user:profile'],
+		queryFn: getProfile,
+	})
+
+	if (error || !data) {
+		toast.error('You are not logged in. Please sign in to continue.')
+
+		navigate('/auth/sign-in')
+	}
+
 	return (
 		<SidebarProvider
 			className="h-svh"
@@ -42,7 +56,7 @@ function DefaultLayoutContent() {
 				} as React.CSSProperties
 			}
 		>
-			<AppSidebar variant="inset" />
+			<AppSidebar variant="inset" user={data.profile} />
 
 			<SidebarInset className="min-h-0 overflow-hidden">
 				<div className="flex min-h-0 flex-1 flex-col">
@@ -55,7 +69,7 @@ function DefaultLayoutContent() {
 							<Button
 								size="icon"
 								variant={aiChatIsOpen ? 'default' : 'outline'}
-								className="ml-auto"
+								className="hidden ml-auto"
 								onClick={() => setAiChatIsOpen(!aiChatIsOpen)}
 							>
 								<Bot />

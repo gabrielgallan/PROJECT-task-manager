@@ -6,12 +6,57 @@ import { AppModule } from './infra/app.module'
 import { EnvService } from './infra/env/env.service'
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule, {
-		logger: ['error', 'warn', 'log', 'verbose'],
-		cors: true,
+	const app = await NestFactory.create(AppModule)
+
+	const logger = new Logger('MAIN')
+
+	const env = app.get(EnvService)
+
+	app.enableCors({
+		origin: (origin: string, callback: (err: Error | null, allow?: boolean) => void) => {
+			if (!origin) return callback(null, true)
+
+			const allowedOrigins = env.get('CORS_ORIGINS').split(',')
+
+			if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+				callback(null, true)
+			} else {
+				callback(new Error('Not allowed by CORS'))
+			}
+		},
+		methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+		allowedHeaders: [
+			'Content-Type',
+			'Authorization',
+			'X-Requested-With',
+			'Accept',
+			'Origin',
+			'Access-Control-Request-Method',
+			'Access-Control-Request-Headers',
+		],
+		credentials: true,
+		maxAge: 86400,
 	})
 
-	const config = new DocumentBuilder().setTitle('task_manager API').setVersion('1.0').build()
+	const config = new DocumentBuilder()
+		.setTitle('task_manager API')
+		.setVersion('1.0')
+		.setLicense('MIT', 'https://opensource.org/licenses/MIT')
+		.addBearerAuth({
+			type: 'http',
+			scheme: 'bearer',
+			bearerFormat: 'JWT',
+			name: 'JWT',
+			description: 'Enter JWT token',
+			in: 'header',
+		})
+		.addTag('Authentication', 'Authentication related endpoints')
+		.addTag('Profile', 'Profile related endpoints')
+		.addTag('Tasks', 'Tasks related endpoints')
+		.addTag('Plans', 'Plans related endpoints')
+		.addTag('Work-logs', 'Work-logs related endpoints')
+		.addTag('Categories', 'Categories related endpoints')
+		.build()
 
 	const document = SwaggerModule.createDocument(app, config)
 
@@ -30,11 +75,7 @@ async function bootstrap() {
 		}),
 	)
 
-	const logger = new Logger('MAIN')
-
-	const envService = app.get(EnvService)
-
-	const port = envService.get('PORT')
+	const port = env.get('PORT')
 
 	app
 		.listen(port)
@@ -44,9 +85,9 @@ async function bootstrap() {
 			process.exit(1)
 		})
 		.finally(() => {
-			logger.verbose(`HTTP server running on port ${port}`)
-			logger.verbose(`API documentation can be found on /reference`)
-			logger.verbose(`API openapi.json can be found on /reference/openapi.json`)
+			logger.log(`HTTP server running on http://localhost:${port}`)
+			logger.log(`API documentation can be found on http://localhost:${port}/reference`)
+			logger.log(`API openapi.json can be found on http://localhost:${port}/reference/openapi.json`)
 		})
 }
 bootstrap()

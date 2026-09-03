@@ -23,6 +23,7 @@ export const envSchema = z.object({
 	REDIS_URL: z.url(),
 
 	FRONTEND_URL: z.url(),
+	CORS_ORIGINS: z.string().default('*'),
 })
 
 export type Env = z.infer<typeof envSchema>
