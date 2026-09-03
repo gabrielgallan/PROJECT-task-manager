@@ -59,8 +59,8 @@ export function ForgotPasswordPage() {
 				)}
 				{sentEmail ? (
 					<>
-						<p role="status" className="break-words text-sm">
-							A recovery link was sent to {sentEmail}. Check your inbox.
+						<p role="status" className="wrap-break-word text-sm">
+							A recovery link was sent to <strong>{sentEmail}</strong>. Check your inbox.
 						</p>
 						<Button disabled={pending} onClick={() => void submit({ email: sentEmail })}>
 							{pending ? 'Sending…' : 'Resend link'}

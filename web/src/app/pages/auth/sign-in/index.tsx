@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { FaGithub, FaGoogle } from 'react-icons/fa'
 import { Link, useSearchParams } from 'react-router-dom'
 import { authenticate } from '@/api/authenticate'
 import { BrowserTitle } from '@/components/browser-title'
@@ -13,6 +14,7 @@ import { useEndSession } from '@/features/identity/hooks/use-end-session'
 import { authEmailPath } from '@/features/identity/model/identity'
 import { getIdentityError, getValidationErrors } from '@/features/identity/model/identity-errors'
 import { type SignInValues, signInSchema } from '@/features/identity/model/identity-forms'
+import { useOAuthProvider } from '@/hooks/use-oauth-provider'
 
 export function SignInPage() {
 	const [params] = useSearchParams()
@@ -28,6 +30,11 @@ export function SignInPage() {
 		resolver: zodResolver(signInSchema),
 		defaultValues: { email: params.get('email') ?? '', password: '' },
 	})
+
+	const { link: githubRedirect } = useOAuthProvider('github')
+	console.log('githubRedirect', githubRedirect.href)
+	const { link: googleRedirect } = useOAuthProvider('google')
+
 	const mutation = useMutation({
 		mutationKey: ['identity', 'login'],
 		mutationFn: authenticate,
@@ -35,6 +42,7 @@ export function SignInPage() {
 		networkMode: 'always',
 		gcTime: 0,
 	})
+
 	async function submit(values: SignInValues) {
 		if (mutation.isPending || busy) return
 		const current = capture()
@@ -101,9 +109,34 @@ export function SignInPage() {
 							</p>
 						)}
 					</div>
-					<Button type="submit" disabled={isSubmitting || busy}>
+					<Button type="submit" className="py-5" disabled={isSubmitting || busy}>
 						{isSubmitting || busy ? 'Signing in…' : 'Login'}
 					</Button>
+					<div className="grid grid-cols-2 gap-2">
+						<Button
+							onClick={() => {
+								window.location.href = githubRedirect.href
+							}}
+							variant="secondary"
+							className="cursor-pointer py-5"
+							type="button"
+							disabled={isSubmitting}
+						>
+							<FaGithub className="size-4" />
+						</Button>
+
+						<Button
+							onClick={() => {
+								window.location.href = googleRedirect.href
+							}}
+							variant="secondary"
+							className="py-5"
+							type="button"
+							disabled={isSubmitting}
+						>
+							<FaGoogle className="size-4" />
+						</Button>
+					</div>
 					<Link className="text-center text-sm underline" to="/auth/sign-up">
 						Don't have an account?
 					</Link>

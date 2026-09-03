@@ -4,6 +4,8 @@ import { DefaultLayout } from './app/layouts/default'
 import { NotFoundPage } from './app/pages/404'
 import { DashboardPage } from './app/pages/analytics/dashboard'
 import { ReportsPage } from './app/pages/analytics/reports'
+import { GithubOauthCallback } from './app/pages/api/oauth/github'
+import { GoogleOauthCallback } from './app/pages/api/oauth/google'
 import { ForgotPasswordPage } from './app/pages/auth/forgot-password'
 import { ResetPasswordPage } from './app/pages/auth/reset-password'
 import { SignInPage } from './app/pages/auth/sign-in'
@@ -64,6 +66,14 @@ export const router = createBrowserRouter([
 				],
 			},
 		],
+	},
+	{
+		path: 'api/oauth/github',
+		element: <GithubOauthCallback />,
+	},
+	{
+		path: 'api/oauth/google',
+		element: <GoogleOauthCallback />,
 	},
 	{
 		path: '*',
