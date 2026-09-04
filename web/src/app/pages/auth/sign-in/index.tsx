@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { FaGithub, FaGoogle } from 'react-icons/fa'
@@ -8,6 +9,7 @@ import { authenticate } from '@/api/authenticate'
 import { BrowserTitle } from '@/components/browser-title'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useEndSession } from '@/features/identity/hooks/use-end-session'
@@ -32,7 +34,6 @@ export function SignInPage() {
 	})
 
 	const { link: githubRedirect } = useOAuthProvider('github')
-	console.log('githubRedirect', githubRedirect.href)
 	const { link: googleRedirect } = useOAuthProvider('google')
 
 	const mutation = useMutation({
@@ -89,10 +90,10 @@ export function SignInPage() {
 						<div className="flex items-center justify-between gap-2">
 							<Label htmlFor="password">Password</Label>
 							<Link
-								className="text-xs underline"
+								className="text-xs hover:underline text-muted-foreground"
 								to={authEmailPath('/auth/forgot-password', watch('email'))}
 							>
-								Forgot your password?
+								Forgot password?
 							</Link>
 						</div>
 						<Input
@@ -110,15 +111,18 @@ export function SignInPage() {
 						)}
 					</div>
 					<Button type="submit" className="py-5" disabled={isSubmitting || busy}>
-						{isSubmitting || busy ? 'Signing in…' : 'Login'}
+						{isSubmitting || busy ? <Loader2 className="animate-spin" /> : 'Login'}
 					</Button>
+
+					<FieldSeparator>Or continue with</FieldSeparator>
+
 					<div className="grid grid-cols-2 gap-2">
 						<Button
 							onClick={() => {
 								window.location.href = githubRedirect.href
 							}}
 							variant="secondary"
-							className="cursor-pointer py-5"
+							className="py-5"
 							type="button"
 							disabled={isSubmitting}
 						>
@@ -137,9 +141,12 @@ export function SignInPage() {
 							<FaGoogle className="size-4" />
 						</Button>
 					</div>
-					<Link className="text-center text-sm underline" to="/auth/sign-up">
-						Don't have an account?
-					</Link>
+					<p className="text-center text-sm">
+						Don't have an account?{' '}
+						<Link className="text-muted-foreground underline" to="/auth/sign-up">
+							Sign up
+						</Link>
+					</p>
 				</div>
 			</form>
 		</>
