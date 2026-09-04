@@ -14,7 +14,6 @@ import {
 } from '@/features/tasks/model/task-status'
 import type { TaskStatus } from '@/features/tasks/model/task-types'
 import { cn } from '@/lib/utils'
-import { GridFrame } from './grid-frame'
 
 interface IShowcaseColumn {
 	id: TaskStatus
@@ -47,36 +46,36 @@ export function ProductShowcase() {
 
 	return (
 		<div className="mx-auto max-w-xl">
-			<GridFrame offset={34} lineClassName="border-primary-foreground/10">
-				<div>
-					<KanbanProvider columns={SHOWCASE_COLUMNS} data={cards} onDataChange={setCards}>
-						{(column) => {
-							const Icon = TASK_STATUS_ICON[column.id]
+			{/* <GridFrame offset={34} lineClassName="border-primary-foreground/10"> */}
+			<div>
+				<KanbanProvider columns={SHOWCASE_COLUMNS} data={cards} onDataChange={setCards}>
+					{(column) => {
+						const Icon = TASK_STATUS_ICON[column.id]
 
-							return (
-								// The panel paints everything `primary-foreground`, which lands
-								// invisible on the board's own surface. It has to state its own.
-								<KanbanBoard
-									key={column.id}
-									id={column.id}
-									className="h-70 text-secondary-foreground"
-								>
-									<KanbanHeader className="flex items-center gap-2">
-										<Icon className={cn(['size-3.5', TASK_STATUS_ICON_COLOR[column.id]])} />
-										{column.name}
-									</KanbanHeader>
+						return (
+							// The panel paints everything `primary-foreground`, which lands
+							// invisible on the board's own surface. It has to state its own.
+							<KanbanBoard
+								key={column.id}
+								id={column.id}
+								className="h-70 text-secondary-foreground"
+							>
+								<KanbanHeader className="flex items-center gap-2">
+									<Icon className={cn(['size-3.5', TASK_STATUS_ICON_COLOR[column.id]])} />
+									{column.name}
+								</KanbanHeader>
 
-									<KanbanCards id={column.id}>
-										{(card: IShowcaseCard) => (
-											<KanbanCard key={card.id} {...card} className="px-3 py-2" />
-										)}
-									</KanbanCards>
-								</KanbanBoard>
-							)
-						}}
-					</KanbanProvider>
-				</div>
-			</GridFrame>
+								<KanbanCards id={column.id}>
+									{(card: IShowcaseCard) => (
+										<KanbanCard key={card.id} {...card} className="px-3 py-2" />
+									)}
+								</KanbanCards>
+							</KanbanBoard>
+						)
+					}}
+				</KanbanProvider>
+			</div>
+			{/* </GridFrame> */}
 		</div>
 	)
 }

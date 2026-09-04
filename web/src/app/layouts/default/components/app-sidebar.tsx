@@ -69,7 +69,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 										<SidebarMenuButton
 											// The bar is always rendered and only changes colour, and being a pseudo
 											// element it stays square instead of following the button's rounding.
-											className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
+											className="py-5"
 											tooltip={item.label}
 											isActive={pathname.startsWith(item.path)}
 										>
@@ -93,7 +93,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
 						<SidebarMenu className="space-y-1">
 							<SidebarMenuItem>
 								<SidebarMenuButton
-									className="py-5 relative before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded before:bg-transparent data-active:before:bg-primary"
+									className="py-5"
 									tooltip="Settings"
 									isActive={pathname.startsWith('/settings')}
 								>
