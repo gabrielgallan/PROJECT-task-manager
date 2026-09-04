@@ -12,6 +12,20 @@ on:
 jobs:
   run-e2e-tests:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://docker:docker@localhost:5432/task_manager
+      REDIS_URL: redis://localhost:6379/0
+      GITHUB_OAUTH_CLIENT_ID: dummy
+      GITHUB_OAUTH_CLIENT_SECRET: dummy
+      GITHUB_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
+      GOOGLE_OAUTH_CLIENT_ID: dummy
+      GOOGLE_OAUTH_CLIENT_SECRET: dummy
+      GOOGLE_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
+      RESEND_API_KEY: dummy
+      CLOUDINARY_CLOUD_NAME: dummy
+      CLOUDINARY_API_KEY: dummy
+      CLOUDINARY_API_SECRET: dummy
 
     defaults:
       run:

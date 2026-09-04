@@ -12,18 +12,6 @@ on:
 jobs:
   run-unit-tests:
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: test
-      GITHUB_OAUTH_CLIENT_ID: dummy
-      GITHUB_OAUTH_CLIENT_SECRET: dummy
-      GITHUB_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
-      GOOGLE_OAUTH_CLIENT_ID: dummy
-      GOOGLE_OAUTH_CLIENT_SECRET: dummy
-      GOOGLE_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
-      RESEND_API_KEY: dummy
-      CLOUDINARY_CLOUD_NAME: dummy
-      CLOUDINARY_API_KEY: dummy
-      CLOUDINARY_API_SECRET: dummy
 
     defaults:
       run:
