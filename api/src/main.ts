@@ -63,12 +63,12 @@ async function bootstrap() {
 
 		const httpAdapter = app.getHttpAdapter()
 
-		httpAdapter.get('/reference/openapi.json', (_req, res) => {
+		httpAdapter.get('/api/reference/openapi.json', (_req, res) => {
 			res.json(document)
 		})
 
 		app.use(
-			'/reference',
+			'/api/reference',
 			apiReference({
 				url: '/reference/openapi.json',
 				theme: 'elysiajs',
@@ -88,8 +88,10 @@ async function bootstrap() {
 		})
 		.finally(() => {
 			logger.log(`HTTP server running on http://localhost:${port}`)
-			logger.log(`API documentation can be found on http://localhost:${port}/reference`)
-			logger.log(`API openapi.json can be found on http://localhost:${port}/reference/openapi.json`)
+			logger.log(`API documentation can be found on http://localhost:${port}/api/reference`)
+			logger.log(
+				`API openapi.json can be found on http://localhost:${port}/api/reference/openapi.json`,
+			)
 		})
 }
 bootstrap()

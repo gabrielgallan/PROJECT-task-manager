@@ -1,4 +1,4 @@
-name: Run UNIT tests - API task-manager
+name: Run E2E tests - API task-manager
 
 on:
   push:
@@ -10,24 +10,27 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-unit-tests:
+  run-e2e-tests:
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: test
-      GITHUB_OAUTH_CLIENT_ID: dummy
-      GITHUB_OAUTH_CLIENT_SECRET: dummy
-      GITHUB_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
-      GOOGLE_OAUTH_CLIENT_ID: dummy
-      GOOGLE_OAUTH_CLIENT_SECRET: dummy
-      GOOGLE_OAUTH_CLIENT_REDIRECT_URI: https://example.com/callback
-      RESEND_API_KEY: dummy
-      CLOUDINARY_CLOUD_NAME: dummy
-      CLOUDINARY_API_KEY: dummy
-      CLOUDINARY_API_SECRET: dummy
 
     defaults:
       run:
         working-directory: ./api
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: docker
+          POSTGRES_PASSWORD: docker
+          POSTGRES_DB: task_manager
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U docker -d task_manager"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -47,5 +50,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run UNIT tests
-        run: pnpm test:unit
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
