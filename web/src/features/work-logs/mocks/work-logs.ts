@@ -1,5 +1,24 @@
-import { addDays, addMinutes, eachWeekOfInterval, set, startOfDay, startOfYear, subDays } from 'date-fns'
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import {
+	addDays,
+	addMinutes,
+	eachWeekOfInterval,
+	set,
+	startOfDay,
+	startOfYear,
+	subDays,
+} from 'date-fns'
+
+export interface PrototypeWorkLog {
+	id: string
+	title: string
+	description?: string
+	startDate: string
+	endDate: string
+	taskId?: string | null
+	categoryId?: string | null
+	createdAt: string
+	updatedAt: string
+}
 
 interface ISeed {
 	/** Days before today. Work logs only ever exist in the past. */
@@ -131,11 +150,19 @@ const HISTORICAL_DURATIONS = [90, 210, 330, 450] as const
 const HISTORICAL_PROFILES = [
 	{ title: 'Integração DAHUA', taskId: 'task-1', categoryId: 'category-development' },
 	{ title: 'POC de reconhecimento de placas', taskId: 'task-2', categoryId: 'category-focus' },
-	{ title: 'Correção de fuso horário nos logs', taskId: 'task-3', categoryId: 'category-development' },
+	{
+		title: 'Correção de fuso horário nos logs',
+		taskId: 'task-3',
+		categoryId: 'category-development',
+	},
 	{ title: 'Revisão Auto Guide', taskId: 'task-4', categoryId: 'category-review' },
 	{ title: 'Relatório mensal de horas', taskId: 'task-5', categoryId: 'category-administration' },
 	{ title: 'Migração do banco de imagens', taskId: 'task-6', categoryId: 'category-focus' },
-	{ title: 'Documentação da API de eventos', taskId: 'task-8', categoryId: 'category-administration' },
+	{
+		title: 'Documentação da API de eventos',
+		taskId: 'task-8',
+		categoryId: 'category-administration',
+	},
 	{ title: 'Meetings and follow-ups', categoryId: 'category-meetings' },
 ] as const
 
@@ -144,16 +171,13 @@ const HISTORICAL_PROFILES = [
  * a visual prototype. Durations rotate through every graph level and the second
  * day on alternating weeks avoids an artificial once-a-week pattern.
  */
-function buildHistoricalWorkLogs(today: Date): IWorkLog[] {
+function buildHistoricalWorkLogs(today: Date): PrototypeWorkLog[] {
 	const yearStart = startOfYear(today)
 	const historyEnd = subDays(startOfDay(today), 10)
 
 	if (historyEnd < yearStart) return []
 
-	const weeks = eachWeekOfInterval(
-		{ start: yearStart, end: historyEnd },
-		{ weekStartsOn: 1 },
-	)
+	const weeks = eachWeekOfInterval({ start: yearStart, end: historyEnd }, { weekStartsOn: 1 })
 
 	return weeks.flatMap((weekStart, weekIndex) => {
 		const dates = [addDays(weekStart, 1 + (weekIndex % 3))]
@@ -189,7 +213,7 @@ function buildHistoricalWorkLogs(today: Date): IWorkLog[] {
 	})
 }
 
-function buildWorkLogs(): IWorkLog[] {
+export function buildPrototypeWorkLogs(): PrototypeWorkLog[] {
 	const today = new Date()
 
 	const recentLogs = SEEDS.map((seed, index) => {
@@ -222,5 +246,3 @@ function buildWorkLogs(): IWorkLog[] {
 
 	return [...buildHistoricalWorkLogs(today), ...recentLogs]
 }
-
-export const WORK_LOGS_MOCK: IWorkLog[] = buildWorkLogs()

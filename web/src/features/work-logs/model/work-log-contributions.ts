@@ -10,7 +10,7 @@ import {
 	startOfYear,
 } from 'date-fns'
 
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import type { PrototypeWorkLog } from '@/features/work-logs/mocks/work-logs'
 
 export interface IWorkLogContribution {
 	date: string
@@ -32,7 +32,7 @@ export function getWorkLogContributionLevel(minutes: number) {
 }
 
 export function buildWorkLogContributions(
-	workLogs: IWorkLog[],
+	workLogs: readonly Readonly<PrototypeWorkLog>[],
 	today = new Date(),
 ): IWorkLogContribution[] {
 	const grouped = new Map<string, { minutes: number; workLogCount: number }>()
@@ -43,12 +43,7 @@ export function buildWorkLogContributions(
 		const startDate = parseISO(workLog.startDate)
 		const endDate = parseISO(workLog.endDate)
 
-		if (
-			!isValid(startDate) ||
-			!isValid(endDate) ||
-			startDate < yearStart ||
-			startDate > today
-		) {
+		if (!isValid(startDate) || !isValid(endDate) || startDate < yearStart || startDate > today) {
 			continue
 		}
 

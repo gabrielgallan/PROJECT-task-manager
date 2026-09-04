@@ -8,11 +8,10 @@ import type { ICategory } from '@/features/categories/model/category-types'
 import { useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
 import { getHttpStatus } from '@/features/identity/model/identity-errors'
 import { planKeys } from '@/features/plans/model/plan-query-keys'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { workLogKeys } from '@/features/work-logs/model/work-log-query-keys'
 
 export function useDeleteCategoryDialog(category: ICategory, onClose: () => void) {
 	const { generation, client, capture, busy, ended } = useIdentityLifecycle()
-	const { clearCategory: clearWorkLogCategory } = useWorkLogs()
 	const [unavailable, setUnavailable] = useState(false)
 	const [error, setError] = useState<string | null>(null)
 	const [pending, setPending] = useState(false)
@@ -60,7 +59,10 @@ export function useDeleteCategoryDialog(category: ICategory, onClose: () => void
 			await mutation.mutateAsync({ categoryId: category.id })
 			if (!current()) return
 			void client.invalidateQueries({ queryKey: planKeys.all }, { throwOnError: false })
-			clearWorkLogCategory(category.id)
+			void client.invalidateQueries(
+				{ queryKey: workLogKeys.lists(generation) },
+				{ throwOnError: false },
+			)
 			toast.success('Category deleted', {
 				description: 'Associated plans and work logs are now uncategorized.',
 			})

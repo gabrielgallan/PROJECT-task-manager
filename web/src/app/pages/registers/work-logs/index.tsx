@@ -5,10 +5,11 @@ import {
 	type WorkLogsCalendarHandle,
 } from '@/app/pages/registers/work-logs/components/work-logs-calendar'
 import { BrowserTitle } from '@/components/browser-title'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCategories } from '@/features/categories/store/categories-store'
-import { useTasks } from '@/features/tasks/store/tasks-store'
 import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { taskIdSchema } from '@/features/tasks/model/task-schema'
+import { useTasks } from '@/features/tasks/store/tasks-store'
 import { useCreateAction } from '@/hooks/use-create-action'
 
 /** How the tasks page hands a task over when opening this one. */
@@ -19,36 +20,52 @@ export function WorkLogsPage() {
 	const calendarRef = useRef<WorkLogsCalendarHandle>(null)
 	const taskSource = useTasks()
 	const { tasks } = taskSource
-	const { categories, uncategorizedColor } = useCategories()
-	const { workLogs, addWorkLog, updateWorkLog, removeWorkLog } = useWorkLogs()
+	const categorySource = useCategories()
+	const { categories, uncategorizedColor } = categorySource
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
 
 	useCreateAction(openCreateDialog)
 
-	// An unknown id would filter every log out and read as an empty calendar, so
-	// the link only takes effect for a task that is actually there.
 	const initialTaskIds = useMemo(() => {
 		const taskId = searchParams.get(TASK_PARAM)
-
-		return taskId && tasks.some((task) => task.id === taskId) ? [taskId] : undefined
-	}, [searchParams, tasks])
+		return taskId && taskIdSchema.safeParse(taskId).success ? [taskId] : undefined
+	}, [searchParams])
 
 	return (
 		<>
 			<BrowserTitle title="Work logs" />
-			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
+			<TaskSourceAlert
+				error={taskSource.error}
+				loading={taskSource.isPending}
+				onRetry={() => void taskSource.refetch()}
+			/>
+			{categorySource.isPending && (
+				<p role="status" className="px-4 pt-3 text-sm text-muted-foreground">
+					Loading categories…
+				</p>
+			)}
+			{categorySource.error && (
+				<Alert variant="destructive">
+					<AlertDescription>
+						Categories could not be loaded. Work logs without a category remain available.{' '}
+						<button
+							type="button"
+							className="underline"
+							onClick={() => void categorySource.refetch()}
+						>
+							Try again
+						</button>
+					</AlertDescription>
+				</Alert>
+			)}
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<WorkLogsCalendar
 					ref={calendarRef}
-					workLogs={workLogs}
 					tasks={tasks}
 					categories={categories}
 					uncategorizedColor={uncategorizedColor}
 					initialTaskIds={initialTaskIds}
-					onCreate={addWorkLog}
-					onUpdate={updateWorkLog}
-					onDelete={removeWorkLog}
 				/>
 			</div>
 		</>

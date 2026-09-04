@@ -6,7 +6,6 @@ import { PLANS_MOCK } from '@/features/plans/mocks/plans'
 import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
 import { useTasks } from '@/features/tasks/store/tasks-store'
 import { buildWorkLogContributions } from '@/features/work-logs/model/work-log-contributions'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { CapacityCard } from './components/capacity-card'
 import { OverdueTasksCard } from './components/overdue-tasks-card'
 import { PlannedVsLoggedCard } from './components/planned-vs-logged-card'
@@ -15,6 +14,7 @@ import { TodayPlanCard } from './components/today-plan-card'
 import { UpcomingDueDatesCard } from './components/upcoming-due-dates-card'
 import { WhereTimeWentCard } from './components/where-time-went-card'
 import { WorkLogsContributionGraph } from './components/work-logs-contributions-graph'
+import { DASHBOARD_WORK_LOGS } from './fixtures/dashboard-work-logs'
 import {
 	buildDashboardWeeklyWork,
 	buildTodayPlanInsight,
@@ -28,7 +28,7 @@ export function DashboardPage() {
 	const { tasks } = taskSource
 	const { categories, uncategorizedColor } = useCategories()
 	const plans = PLANS_MOCK
-	const { workLogs } = useWorkLogs()
+	const workLogs = DASHBOARD_WORK_LOGS
 	const deadlineMetrics = useMemo(() => getDashboardDeadlineMetrics(tasks), [tasks])
 	const weeklyWork = useMemo(() => buildDashboardWeeklyWork(plans, workLogs), [plans, workLogs])
 	const todayPlan = useMemo(() => buildTodayPlanInsight(plans, tasks), [plans, tasks])

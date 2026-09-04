@@ -1,8 +1,20 @@
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { Controller } from 'react-hook-form'
+import { toast } from 'sonner'
 import { DateTimePicker } from '@/components/date-time-picker'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogMedia,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
 	Dialog,
@@ -16,219 +28,266 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { CategoryCombobox } from '@/features/categories/components/category-combobox'
 import type { ICategory } from '@/features/categories/model/category-types'
-import type { ICalendarRange } from '@/features/calendar/types'
+import { useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
+import { getHttpStatus } from '@/features/identity/model/identity-errors'
 import { TaskCombobox } from '@/features/tasks/components/task-combobox'
-import type { Task } from '@/features/tasks/model/task-types'
-import { type TWorkLogFormData, workLogSchema } from '@/features/work-logs/model/work-log-schema'
-import type { IWorkLog, TWorkLogDialogState } from '@/features/work-logs/model/work-log-types'
+import { useWorkLogForm } from '@/features/work-logs/hooks/use-work-log-form'
+import { useDeleteWorkLog } from '@/features/work-logs/hooks/use-work-log-mutations'
+import { useWorkLogPending } from '@/features/work-logs/hooks/use-work-log-pending'
+import {
+	getWorkLogError,
+	WorkLogActionBlockedError,
+} from '@/features/work-logs/model/work-log-errors'
+import type { TWorkLogDialogState, WorkLog } from '@/features/work-logs/model/work-log-types'
 
-const EMPTY_VALUES: TWorkLogFormData = {
-	title: '',
-	description: '',
-	startDate: new Date(),
-	endDate: new Date(),
-	taskId: null,
-	categoryId: null,
-}
-
-interface IWorkLogDialogProps {
+interface Props {
 	state: TWorkLogDialogState
-	tasks: Task[]
 	categories: ICategory[]
+	knownWorkLogs: readonly WorkLog[]
+	timeZone: string
 	use24HourFormat: boolean
-	/** Returns why the range cannot be recorded, or null when it is valid. */
-	validateRange: (range: ICalendarRange, ignoreId?: string) => string | null
 	onClose: () => void
-	onSubmit: (values: TWorkLogFormData, current: IWorkLog | null) => void
-	onDelete: (workLog: IWorkLog) => void
 }
 
 export function WorkLogDialog({
 	state,
-	tasks,
 	categories,
+	knownWorkLogs,
+	timeZone,
 	use24HourFormat,
-	validateRange,
 	onClose,
-	onSubmit,
-	onDelete,
-}: IWorkLogDialogProps) {
-	const isOpen = state.mode !== 'closed'
-	const isEditing = state.mode === 'edit'
+}: Props) {
+	const editing = state.mode === 'edit' ? state.item.workLog : null
+	const deleteMutation = useDeleteWorkLog()
+	const { capture } = useIdentityLifecycle()
+	const locked = useWorkLogPending(editing?.id)
+	const [deleteOpen, setDeleteOpen] = useState(false)
+	const [actionError, setActionError] = useState<string | null>(null)
+	const [actionUnavailable, setActionUnavailable] = useState(false)
 	const {
-		control,
-		register,
-		handleSubmit,
-		reset,
-		setError,
-		formState: { errors },
-	} = useForm<TWorkLogFormData>({
-		resolver: zodResolver(workLogSchema),
-		defaultValues: EMPTY_VALUES,
+		form,
+		submit,
+		pending: formPending,
+		requestError,
+		ambiguous,
+		unavailable,
+	} = useWorkLogForm(state, timeZone, knownWorkLogs, (message) => {
+		if (message) toast.success(message)
+		onClose()
 	})
+	const pending = formPending || deleteMutation.isPending || locked
+	const blocked = unavailable || actionUnavailable
+	const errors = form.formState.errors
 
-	useEffect(() => {
-		if (state.mode === 'create') {
-			reset({
-				...EMPTY_VALUES,
-				startDate: state.range.startDate,
-				endDate: state.range.endDate,
-			})
-		} else if (state.mode === 'edit') {
-			reset({
-				title: state.workLog.title,
-				description: state.workLog.description ?? '',
-				startDate: new Date(state.workLog.startDate),
-				endDate: new Date(state.workLog.endDate),
-				taskId: state.workLog.taskId ?? null,
-				categoryId: state.workLog.categoryId ?? null,
-			})
+	async function remove() {
+		if (!editing || pending || blocked) return
+		const current = capture()
+		setActionError(null)
+		try {
+			await deleteMutation.mutateAsync({ workLogId: editing.id })
+			if (!current()) return
+			toast.success('Work log deleted')
+			setDeleteOpen(false)
+			onClose()
+		} catch (error) {
+			if (!current()) return
+			if (getHttpStatus(error) === 404) setActionUnavailable(true)
+			if (!(error instanceof WorkLogActionBlockedError))
+				setActionError(getWorkLogError(error, 'delete'))
 		}
-	}, [state, reset])
-
-	const submit = (values: TWorkLogFormData) => {
-		const current = state.mode === 'edit' ? state.workLog : null
-		// Overlap needs the whole collection, so it is checked here and not in the schema.
-		const message = validateRange(
-			{ startDate: values.startDate, endDate: values.endDate },
-			current?.id,
-		)
-
-		if (message) {
-			setError('root', { message })
-			return
-		}
-
-		onSubmit(values, current)
 	}
 
 	return (
-		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>{isEditing ? 'Edit work log' : 'New work log'}</DialogTitle>
-				</DialogHeader>
+		<>
+			<Dialog
+				open={state.mode !== 'closed'}
+				onOpenChange={(open) => !open && !pending && onClose()}
+			>
+				<DialogContent className="sm:max-w-md" showCloseButton={!pending}>
+					<DialogHeader>
+						<DialogTitle>{editing ? 'Edit work log' : 'New work log'}</DialogTitle>
+					</DialogHeader>
 
-				<form id="work-log-form" onSubmit={handleSubmit(submit)} noValidate>
-					<FieldGroup>
-						<Field data-invalid={!!errors.title}>
-							<FieldLabel htmlFor="work-log-title">Title</FieldLabel>
-							<Input
-								id="work-log-title"
-								placeholder="What did you work on?"
-								aria-invalid={!!errors.title}
-								{...register('title')}
-							/>
-							<FieldError errors={errors.title ? [errors.title] : undefined} />
-						</Field>
-
-						<div className="grid gap-4 sm:grid-cols-2">
-							<Controller
-								control={control}
-								name="startDate"
-								render={({ field, fieldState }) => (
-									<DateTimePicker
-										id="work-log-start"
-										label="Start"
-										value={field.value}
-										use24HourFormat={use24HourFormat}
-										onChange={field.onChange}
-										onBlur={field.onBlur}
-										invalid={fieldState.invalid}
-										error={fieldState.error?.message}
-									/>
-								)}
-							/>
-
-							<Controller
-								control={control}
-								name="endDate"
-								render={({ field, fieldState }) => (
-									<DateTimePicker
-										id="work-log-end"
-										label="End"
-										value={field.value}
-										use24HourFormat={use24HourFormat}
-										onChange={field.onChange}
-										onBlur={field.onBlur}
-										invalid={fieldState.invalid}
-										error={fieldState.error?.message}
-									/>
-								)}
-							/>
-						</div>
-
-						<Controller
-							control={control}
-							name="taskId"
-							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor="work-log-task">Task</FieldLabel>
-									<TaskCombobox
-										id="work-log-task"
-										selectedLabel={tasks.find((task) => task.id === field.value)?.title}
-										value={field.value ?? null}
-										onChange={field.onChange}
-										onBlur={field.onBlur}
-										invalid={fieldState.invalid}
-									/>
-									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
-								</Field>
-							)}
-						/>
-
-						<Controller
-							control={control}
-							name="categoryId"
-							render={({ field, fieldState }) => (
-								<Field data-invalid={fieldState.invalid}>
-									<FieldLabel htmlFor="work-log-category">Category</FieldLabel>
-									<CategoryCombobox
-										id="work-log-category"
-										categories={categories}
-										value={field.value ?? null}
-										onChange={field.onChange}
-										onBlur={field.onBlur}
-										invalid={fieldState.invalid}
-									/>
-									<FieldError errors={fieldState.error ? [fieldState.error] : undefined} />
-								</Field>
-							)}
-						/>
-
-						<Field>
-							<FieldLabel htmlFor="work-log-description">Description</FieldLabel>
-							<Textarea
-								id="work-log-description"
-								placeholder="Optional notes"
-								{...register('description')}
-							/>
-						</Field>
-
-						{errors.root?.message && <FieldError errors={[{ message: errors.root.message }]} />}
-					</FieldGroup>
-				</form>
-
-				<DialogFooter className="sm:justify-between">
-					{state.mode === 'edit' ? (
-						<Button type="button" variant="destructive" onClick={() => onDelete(state.workLog)}>
-							<Trash2 />
-							Delete
-						</Button>
-					) : (
-						<span />
+					{(requestError || actionError) && (
+						<Alert variant="destructive">
+							<AlertDescription>{requestError ?? actionError}</AlertDescription>
+						</Alert>
 					)}
 
-					<div className="flex gap-2">
-						<Button type="button" variant="outline" onClick={onClose}>
-							Cancel
-						</Button>
-						<Button form="work-log-form" type="submit">
-							{isEditing ? 'Save' : 'Create'}
-						</Button>
-					</div>
-				</DialogFooter>
-			</DialogContent>
-		</Dialog>
+					<form id="work-log-form" onSubmit={submit} noValidate>
+						<fieldset disabled={pending || blocked}>
+							<FieldGroup>
+								<Field data-invalid={!!errors.title}>
+									<FieldLabel htmlFor="work-log-title">Title</FieldLabel>
+									<Input
+										id="work-log-title"
+										placeholder="What did you work on?"
+										aria-invalid={!!errors.title}
+										aria-describedby={errors.title ? 'work-log-title-error' : undefined}
+										{...form.register('title')}
+									/>
+									<FieldError
+										id="work-log-title-error"
+										errors={errors.title ? [errors.title] : undefined}
+									/>
+								</Field>
+
+								<div className="grid gap-4 sm:grid-cols-2">
+									{(['startDate', 'endDate'] as const).map((name) => (
+										<Controller
+											key={name}
+											control={form.control}
+											name={name}
+											render={({ field, fieldState }) => (
+												<DateTimePicker
+													id={`work-log-${name === 'startDate' ? 'start' : 'end'}`}
+													label={name === 'startDate' ? 'Start' : 'End'}
+													value={field.value}
+													use24HourFormat={use24HourFormat}
+													onChange={field.onChange}
+													onBlur={field.onBlur}
+													invalid={fieldState.invalid}
+													error={fieldState.error?.message}
+													disabled={pending}
+													description={
+														ambiguous[name === 'startDate' ? 'start' : 'end']
+															? 'This time occurs twice; the earlier occurrence will be used.'
+															: undefined
+													}
+												/>
+											)}
+										/>
+									))}
+								</div>
+
+								<Controller
+									control={form.control}
+									name="taskId"
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="work-log-task">Task</FieldLabel>
+											<TaskCombobox
+												id="work-log-task"
+												selectedLabel={
+													editing?.task?.id === field.value ? editing.task.title : undefined
+												}
+												value={field.value}
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												invalid={fieldState.invalid}
+												disabled={pending}
+												aria-describedby={fieldState.error ? 'work-log-task-error' : undefined}
+											/>
+											<FieldError
+												id="work-log-task-error"
+												errors={fieldState.error ? [fieldState.error] : undefined}
+											/>
+										</Field>
+									)}
+								/>
+
+								<Controller
+									control={form.control}
+									name="categoryId"
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="work-log-category">Category</FieldLabel>
+											<CategoryCombobox
+												id="work-log-category"
+												categories={categories}
+												selectedLabel={
+													editing?.category?.id === field.value ? editing.category.name : undefined
+												}
+												value={field.value}
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												invalid={fieldState.invalid}
+												disabled={pending}
+												aria-describedby={fieldState.error ? 'work-log-category-error' : undefined}
+											/>
+											<FieldError
+												id="work-log-category-error"
+												errors={fieldState.error ? [fieldState.error] : undefined}
+											/>
+										</Field>
+									)}
+								/>
+
+								<Field data-invalid={!!errors.description}>
+									<FieldLabel htmlFor="work-log-description">Description</FieldLabel>
+									<Textarea
+										id="work-log-description"
+										placeholder="Optional notes"
+										aria-invalid={!!errors.description}
+										aria-describedby={errors.description ? 'work-log-description-error' : undefined}
+										{...form.register('description')}
+									/>
+									<FieldError
+										id="work-log-description-error"
+										errors={errors.description ? [errors.description] : undefined}
+									/>
+								</Field>
+							</FieldGroup>
+						</fieldset>
+					</form>
+
+					<DialogFooter className="sm:justify-between">
+						{editing ? (
+							<Button
+								type="button"
+								variant="destructive"
+								disabled={pending || blocked}
+								onClick={() => setDeleteOpen(true)}
+							>
+								<Trash2 />
+								Delete
+							</Button>
+						) : (
+							<span />
+						)}
+						<div className="flex gap-2">
+							<Button type="button" variant="outline" disabled={pending} onClick={onClose}>
+								Cancel
+							</Button>
+							<Button form="work-log-form" type="submit" disabled={pending || blocked}>
+								{formPending ? (editing ? 'Saving…' : 'Creating…') : editing ? 'Save' : 'Create'}
+							</Button>
+						</div>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+
+			<AlertDialog open={deleteOpen} onOpenChange={(open) => !pending && setDeleteOpen(open)}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogMedia>
+							<Trash2 className="text-destructive" />
+						</AlertDialogMedia>
+						<AlertDialogTitle>Delete work log</AlertDialogTitle>
+						<AlertDialogDescription>
+							“{editing?.title}” will be permanently removed.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					{actionError && (
+						<Alert variant="destructive">
+							<AlertDescription>{actionError}</AlertDescription>
+						</Alert>
+					)}
+					<AlertDialogFooter>
+						<AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							variant="destructive"
+							disabled={pending || blocked}
+							onClick={(event) => {
+								event.preventDefault()
+								void remove()
+							}}
+						>
+							{deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	)
 }

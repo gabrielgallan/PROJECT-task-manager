@@ -7,6 +7,7 @@ import { editPlan } from '@/api/edit-plan'
 import { type EditPlanScheduleRequest, editPlanSchedule } from '@/api/edit-plan-schedule'
 import { useEndSession, useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
 import { getHttpStatus } from '@/features/identity/model/identity-errors'
+import { workLogKeys } from '@/features/work-logs/model/work-log-query-keys'
 import { reconcilePlans } from '../model/plan-cache'
 import { PlanActionBlockedError } from '../model/plan-errors'
 import { type PlanMutationOperation, planKeys } from '../model/plan-query-keys'
@@ -58,7 +59,7 @@ function usePlanMutation<TData, TVariables>(
 				markPlanConfirmed(client, generation, id)
 				await Promise.all([
 					reconcilePlans(client, generation, current),
-					client.invalidateQueries({ queryKey: ['work-logs'] }, { throwOnError: false }),
+					client.invalidateQueries({ queryKey: workLogKeys.all }, { throwOnError: false }),
 				])
 			} else if (operation === 'schedule') {
 				await reconcilePlans(client, generation, current, {

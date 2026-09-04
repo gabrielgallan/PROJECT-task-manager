@@ -1,16 +1,15 @@
-import { CATEGORY_DOT, type TCategoryColor } from '@/features/categories/model/category-colors'
 import { useCalendar } from '@/features/calendar/calendar-provider'
 import { formatDuration, formatTime } from '@/features/calendar/lib/formatting'
 import type { ICalendarItemRenderContext } from '@/features/calendar/types'
+import { CATEGORY_DOT, type TCategoryColor } from '@/features/categories/model/category-colors'
 import { WORK_LOG_SURFACE } from '@/features/work-logs/model/work-log-colors'
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import type { WorkLog } from '@/features/work-logs/model/work-log-types'
 import { cn } from '@/lib/utils'
 
 interface IWorkLogItemContentProps {
-	workLog: IWorkLog
+	workLog: WorkLog
 	color: TCategoryColor
 	context: ICalendarItemRenderContext
-	taskTitle?: string
 }
 
 export function getWorkLogItemClassName(
@@ -20,10 +19,11 @@ export function getWorkLogItemClassName(
 	return context.variant === 'month' ? '' : WORK_LOG_SURFACE[color]
 }
 
-export function WorkLogItemContent({ workLog, color, context, taskTitle }: IWorkLogItemContentProps) {
+export function WorkLogItemContent({ workLog, color, context }: IWorkLogItemContentProps) {
 	const { use24HourFormat } = useCalendar()
 	// A log often carries the task's own name; repeating it adds nothing.
-	const taskLabel = taskTitle && taskTitle !== workLog.title ? taskTitle : undefined
+	const taskLabel =
+		workLog.task?.title && workLog.task.title !== workLog.title ? workLog.task.title : undefined
 
 	switch (context.variant) {
 		case 'time':

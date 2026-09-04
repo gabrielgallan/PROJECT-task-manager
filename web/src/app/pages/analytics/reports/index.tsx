@@ -3,9 +3,8 @@ import { toast } from 'sonner'
 
 import { BrowserTitle } from '@/components/browser-title'
 import { useCategories } from '@/features/categories/store/categories-store'
-import { useTasks } from '@/features/tasks/store/tasks-store'
 import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { useTasks } from '@/features/tasks/store/tasks-store'
 
 import { WorkLogReportPreview } from './components/work-log-report-preview'
 import { WorkLogReportSummary } from './components/work-log-report-summary'
@@ -13,23 +12,20 @@ import {
 	type TReportExportFormat,
 	WorkLogReportToolbar,
 } from './components/work-log-report-toolbar'
+import { REPORT_WORK_LOGS } from './fixtures/report-work-logs'
 import {
 	buildWorkLogReport,
 	createDefaultWorkLogReportConfig,
 	DEFAULT_WORK_LOG_REPORT_COLUMNS,
-	isCompleteDateRange,
 	type IWorkLogReportConfig,
+	isCompleteDateRange,
 	type TWorkLogReportColumn,
 	WORK_LOG_REPORT_COLUMNS,
 } from './model/work-log-report'
 
-function rangesMatch(
-	left: IWorkLogReportConfig['range'],
-	right: IWorkLogReportConfig['range'],
-) {
+function rangesMatch(left: IWorkLogReportConfig['range'], right: IWorkLogReportConfig['range']) {
 	return (
-		left?.from?.getTime() === right?.from?.getTime() &&
-		left?.to?.getTime() === right?.to?.getTime()
+		left?.from?.getTime() === right?.from?.getTime() && left?.to?.getTime() === right?.to?.getTime()
 	)
 }
 
@@ -47,7 +43,7 @@ function configsMatch(left: IWorkLogReportConfig, right: IWorkLogReportConfig) {
 }
 
 export function ReportsPage() {
-	const { workLogs } = useWorkLogs()
+	const workLogs = REPORT_WORK_LOGS
 	const taskSource = useTasks()
 	const { tasks } = taskSource
 	const { categories } = useCategories()
@@ -132,7 +128,11 @@ export function ReportsPage() {
 	return (
 		<>
 			<BrowserTitle title="Reports" />
-			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
+			<TaskSourceAlert
+				error={taskSource.error}
+				loading={taskSource.isPending}
+				onRetry={() => void taskSource.refetch()}
+			/>
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<WorkLogReportToolbar
@@ -147,16 +147,10 @@ export function ReportsPage() {
 					exportDisabled={!isRangeComplete || report.rows.length === 0}
 					onRangeChange={(range) => setConfig((current) => ({ ...current, range }))}
 					onToggleTask={toggleTask}
-					onClearTasks={() =>
-						setConfig((current) => ({ ...current, taskIds: [] }))
-					}
+					onClearTasks={() => setConfig((current) => ({ ...current, taskIds: [] }))}
 					onToggleCategory={toggleCategory}
-					onClearCategories={() =>
-						setConfig((current) => ({ ...current, categoryIds: [] }))
-					}
-					onGroupChange={(groupBy) =>
-						setConfig((current) => ({ ...current, groupBy }))
-					}
+					onClearCategories={() => setConfig((current) => ({ ...current, categoryIds: [] }))}
+					onGroupChange={(groupBy) => setConfig((current) => ({ ...current, groupBy }))}
 					onToggleColumn={toggleColumn}
 					onSelectAllColumns={() =>
 						setConfig((current) => ({

@@ -1,6 +1,6 @@
 # SPEC 06 — Integração de Work Logs do frontend com a API
 
-Status: proposta para implementação posterior.
+Status: implementada. Resultados da validação registrados na seção 18.
 Data: 2026-09-03.
 
 ## 1. Objetivo, escopo e fronteiras
@@ -16,7 +16,7 @@ continua útil quando um ou ambos não existem ou suas fontes estão temporariam
 Timezone é preferência de apresentação e interpretação civil, não atributo persistido do Work
 Log, embora a API exija `timeZone` nas três operações que podem validar seu intervalo.
 
-Incluído na implementação futura:
+Incluído nesta implementação:
 
 - cinco calls HTTP tipadas, DTOs de transporte, modelo lido, receipt de criação, mappers,
   query keys, query por intervalo, mutations, locks e reconciliação de cache;
@@ -875,7 +875,7 @@ reabrir contratos, timezone, estratégia de cache ou fronteiras administrativas.
 52. Não há alteração em backend, expansão administrativa, redesign, projetos, subtarefas,
     recorrência, timer ou tracking em tempo real.
 
-## 17. Verificação futura
+## 17. Verificação
 
 ### 17.1. Verificação estática
 
@@ -920,5 +920,34 @@ status, quantidade de requests e ausência de parse em `204`. Cobrir:
 - navegação por teclado, foco visível, labels, touch e edição por formulário.
 
 A matriz manual deve registrar separadamente problemas preexistentes do calendário/API e
-regressões da implementação futura. Esta SPEC não autoriza corrigir diagnósticos alheios ao
+regressões da implementação. Esta SPEC não autoriza corrigir diagnósticos alheios ao
 escopo.
+
+## 18. Registro da implementação
+
+A integração foi implementada exclusivamente no frontend: cinco calls Ky tipadas, modelos de
+transporte/leitura/calendário separados, React Query por geração/intervalo/filtros, mutations
+com locks, reconciliação determinística, projeção temporal com `@js-temporal/polyfill`, “Log
+now” lazy e remoção do store operacional Jotai. Dashboard e Reports passaram a usar fixtures
+administrativas próprias e imutáveis. Nenhum arquivo em `api/` foi alterado.
+
+Verificação executada:
+
+- `pnpm --dir web run typecheck`: aprovado;
+- `pnpm --dir web exec tsc --noEmit -p tsconfig.app.json`: mantém somente os sete diagnósticos
+  preexistentes em `product-showcase.tsx` e `radial-metric-card.tsx`, sem novo diagnóstico;
+- `pnpm --dir web run build`: aprovado, mantendo o aviso preexistente de bundle acima de 500 kB;
+- Biome somente nos arquivos TypeScript alterados: sem erros; permanece o aviso preexistente
+  `lint/performance/noAccumulatingSpread` em `work-log-report.ts`;
+- `git diff --check`: aprovado; o Git apenas informou normalização futura de LF para CRLF;
+- testes focais dos helpers confirmaram normalização/ordenação de filtros, intervalos
+  semiabertos, adjacência e overlap, sugestão de “Log now” sem expandir gap curto,
+  reconciliação para fora do cache, horário DST inexistente/repetido e dias de 23/25 horas;
+- smoke manual com API autenticada confirmou carregamento e navegação de dia/semana/mês,
+  filtro remoto, “Log now”, validação obrigatória e foco, criação, edição, submit sem mudanças,
+  confirmação acessível/cancelamento de exclusão e ausência de erros no console. O registro
+  criado exclusivamente para o smoke foi removido ao final.
+
+A matriz manual completa de falhas de rede/status, timezones opostos, drag/resize, limpeza de
+relações, confirmação de Plan e troca de conta durante operações em voo não foi executada nesta
+entrega e continua sendo necessária antes da validação de produção desses cenários.

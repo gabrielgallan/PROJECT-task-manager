@@ -1,190 +1,117 @@
-import {
-	differenceInMinutes,
-	endOfWeek,
-	isSameDay,
-	isSameMonth,
-	isWithinInterval,
-	parseISO,
-	startOfWeek,
-	subMinutes,
-} from 'date-fns'
-import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { ICalendarRange, TCalendarView } from '@/features/calendar/types'
-import {
-	DEFAULT_WORK_LOG_DURATION,
-	MIN_WORK_LOG_DURATION,
-} from '@/features/work-logs/model/work-log-constants'
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import { Temporal } from '@js-temporal/polyfill'
+import { instantToCalendarDate, isValidTimeZone } from '@/features/calendar/lib/time-zone'
+import type { ICalendarRange } from '@/features/calendar/types'
+import { DEFAULT_WORK_LOG_DURATION } from './work-log-constants'
+import type { WorkLog } from './work-log-types'
 
-const weekOptions = { weekStartsOn: WEEK_STARTS_ON } as const
-
-export function toRange(workLog: IWorkLog): ICalendarRange {
-	return {
-		startDate: parseISO(workLog.startDate),
-		endDate: parseISO(workLog.endDate),
-	}
+function durationMinutes(startsAt: string, endsAt: string): number {
+	return Math.max(0, Math.floor((Date.parse(endsAt) - Date.parse(startsAt)) / 60_000))
 }
 
-export function createWorkLog(input: {
-	title: string
-	startDate: Date
-	endDate: Date
-	description?: string
-	taskId?: string | null
-	categoryId?: string | null
-}): IWorkLog {
-	const now = new Date().toISOString()
-
-	return {
-		id: crypto.randomUUID(),
-		title: input.title,
-		description: input.description?.trim() ? input.description : undefined,
-		startDate: input.startDate.toISOString(),
-		endDate: input.endDate.toISOString(),
-		taskId: input.taskId ?? null,
-		categoryId: input.categoryId ?? null,
-		createdAt: now,
-		updatedAt: now,
-	}
+function sameCivilDay(startsAt: string, endsAt: string, timeZone: string): boolean {
+	const start = Temporal.Instant.from(startsAt).toZonedDateTimeISO(timeZone).toPlainDate()
+	const end = Temporal.Instant.from(endsAt).toZonedDateTimeISO(timeZone).toPlainDate()
+	return start.equals(end)
 }
 
-/**
- * Two logs may touch (one ends exactly when the next starts) but never overlap:
- * without that guarantee the sum of durations stops being time actually worked.
- */
 export function findOverlap(
-	workLogs: IWorkLog[],
-	range: ICalendarRange,
+	workLogs: readonly WorkLog[],
+	startsAt: string,
+	endsAt: string,
 	ignoreId?: string,
-): IWorkLog | null {
+): WorkLog | null {
 	return (
-		workLogs.find((workLog) => {
-			if (workLog.id === ignoreId) {
-				return false
-			}
-
-			const { startDate, endDate } = toRange(workLog)
-
-			return range.startDate < endDate && range.endDate > startDate
-		}) ?? null
+		workLogs.find(
+			(workLog) =>
+				workLog.id !== ignoreId &&
+				Date.parse(startsAt) < Date.parse(workLog.endsAt) &&
+				Date.parse(endsAt) > Date.parse(workLog.startsAt),
+		) ?? null
 	)
 }
 
-export function isInFuture(range: ICalendarRange): boolean {
-	return range.endDate > new Date()
-}
-
-export function crossesMidnight(range: ICalendarRange): boolean {
-	return !isSameDay(range.startDate, range.endDate)
-}
-
-/** The single place that answers "can this interval be recorded?". */
-export function validateRange(
-	workLogs: IWorkLog[],
-	range: ICalendarRange,
+export function validateWorkLogInterval(
+	workLogs: readonly WorkLog[],
+	startsAt: string,
+	endsAt: string,
+	timeZone: string,
 	ignoreId?: string,
+	now = new Date().toISOString(),
 ): string | null {
-	if (range.endDate <= range.startDate) {
-		return 'End must be after start'
-	}
-
-	if (crossesMidnight(range)) {
-		return 'A work log must start and end on the same day'
-	}
-
-	if (isInFuture(range)) {
-		return 'Work logs record time already spent'
-	}
-
-	const conflict = findOverlap(workLogs, range, ignoreId)
-
-	if (conflict) {
-		return `Overlaps "${conflict.title}"`
-	}
-
+	if (!isValidTimeZone(timeZone)) return 'Select a valid timezone in Settings.'
+	if (Date.parse(endsAt) <= Date.parse(startsAt)) return 'End must be after start.'
+	if (!sameCivilDay(startsAt, endsAt, timeZone))
+		return 'A work log must start and end on the same day.'
+	if (Date.parse(endsAt) > Date.parse(now)) return 'Work logs record time already spent.'
+	if (findOverlap(workLogs, startsAt, endsAt, ignoreId))
+		return 'This time conflicts with work that is already recorded.'
 	return null
 }
 
-export function getLogsForView(
-	workLogs: IWorkLog[],
-	selectedDate: Date,
-	view: TCalendarView,
-): IWorkLog[] {
-	return workLogs.filter((workLog) => {
-		const startDate = parseISO(workLog.startDate)
-
-		switch (view) {
-			case 'day':
-				return isSameDay(startDate, selectedDate)
-			case 'week':
-				return isWithinInterval(startDate, {
-					start: startOfWeek(selectedDate, weekOptions),
-					end: endOfWeek(selectedDate, weekOptions),
-				})
-			default:
-				return isSameMonth(startDate, selectedDate)
-		}
-	})
+export function sumMinutes(workLogs: readonly WorkLog[]): number {
+	return workLogs.reduce(
+		(total, workLog) => total + durationMinutes(workLog.startsAt, workLog.endsAt),
+		0,
+	)
 }
 
-export function sumMinutes(workLogs: IWorkLog[]): number {
-	return workLogs.reduce((total, workLog) => {
-		const { startDate, endDate } = toRange(workLog)
-
-		return total + Math.max(0, differenceInMinutes(endDate, startDate))
-	}, 0)
+export function getUntrackedMinutes(workLogs: readonly WorkLog[]): number {
+	if (workLogs.length < 2) return 0
+	const first = Math.min(...workLogs.map((workLog) => Date.parse(workLog.startsAt)))
+	const last = Math.max(...workLogs.map((workLog) => Date.parse(workLog.endsAt)))
+	return Math.max(0, Math.floor((last - first) / 60_000) - sumMinutes(workLogs))
 }
 
-/**
- * Time left unrecorded between the first and the last log of a day. No working
- * hours are assumed, so a short day never shows a false debt.
- */
-export function getUntrackedMinutes(workLogs: IWorkLog[]): number {
-	if (workLogs.length < 2) {
-		return 0
-	}
+export type LogNowSuggestion =
+	| {
+			range: ICalendarRange
+			original: { startsAt: string; endsAt: string }
+			error?: never
+	  }
+	| { range?: never; error: string }
 
-	const ranges = workLogs.map(toRange)
-	const first = Math.min(...ranges.map((range) => range.startDate.getTime()))
-	const last = Math.max(...ranges.map((range) => range.endDate.getTime()))
-	const span = differenceInMinutes(new Date(last), new Date(first))
+export function getLogNowSuggestion(
+	workLogs: readonly WorkLog[],
+	now: string,
+	dayStart: string,
+	timeZone: string,
+): LogNowSuggestion {
+	const nowMs = Date.parse(now)
+	if (workLogs.some((workLog) => Date.parse(workLog.endsAt) >= nowMs))
+		return { error: 'There is no completed free interval ending now.' }
 
-	return Math.max(0, span - sumMinutes(workLogs))
-}
+	const previousEnds = workLogs
+		.map((workLog) => Date.parse(workLog.endsAt))
+		.filter((value) => value < nowMs)
+	const fallback = Temporal.Instant.from(now)
+		.subtract({ minutes: DEFAULT_WORK_LOG_DURATION })
+		.toString()
+	const startsAt = previousEnds.length
+		? new Date(Math.max(...previousEnds)).toISOString()
+		: Date.parse(fallback) < Date.parse(dayStart)
+			? dayStart
+			: fallback
 
-/**
- * Range for the "Log now" shortcut: from the end of the last log of the day up
- * to now, which is how work is actually recorded — after the fact.
- */
-export function getLogNowRange(workLogs: IWorkLog[], now = new Date()): ICalendarRange {
-	const todayEnds = workLogs
-		.filter((workLog) => isSameDay(parseISO(workLog.startDate), now))
-		.map((workLog) => parseISO(workLog.endDate).getTime())
-		.filter((time) => time <= now.getTime())
-
-	const lastEnd = todayEnds.length > 0 ? new Date(Math.max(...todayEnds)) : null
-	const gap = lastEnd ? differenceInMinutes(now, lastEnd) : 0
+	if (
+		Date.parse(startsAt) >= nowMs ||
+		findOverlap(workLogs, startsAt, now) ||
+		!sameCivilDay(startsAt, now, timeZone)
+	)
+		return { error: 'There is no completed free interval ending now.' }
 
 	return {
-		startDate:
-			lastEnd && gap >= MIN_WORK_LOG_DURATION
-				? lastEnd
-				: subMinutes(now, DEFAULT_WORK_LOG_DURATION),
-		endDate: now,
+		range: {
+			startDate: instantToCalendarDate(startsAt, timeZone),
+			endDate: instantToCalendarDate(now, timeZone),
+		},
+		original: { startsAt, endsAt: now },
 	}
 }
 
 export function formatMinutes(total: number): string {
 	const hours = Math.floor(total / 60)
 	const minutes = total % 60
-
-	if (hours === 0) {
-		return `${minutes}m`
-	}
-
-	if (minutes === 0) {
-		return `${hours}h`
-	}
-
+	if (hours === 0) return `${minutes}m`
+	if (minutes === 0) return `${hours}h`
 	return `${hours}h ${minutes}m`
 }

@@ -13,7 +13,7 @@ import type { DateRange } from 'react-day-picker'
 
 import { NO_CATEGORY_FILTER } from '@/features/categories/model/category-rules'
 import type { Task } from '@/features/tasks/model/task-types'
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import type { PrototypeWorkLog } from '@/features/work-logs/mocks/work-logs'
 
 export type TWorkLogReportGroup = 'day' | 'task' | 'none'
 
@@ -35,7 +35,7 @@ export interface IWorkLogReportConfig {
 }
 
 export interface IWorkLogReportRow {
-	workLog: IWorkLog
+	workLog: Readonly<PrototypeWorkLog>
 	startDate: Date
 	endDate: Date
 	durationMinutes: number
@@ -87,9 +87,7 @@ export const DEFAULT_WORK_LOG_REPORT_COLUMNS: TWorkLogReportColumn[] = [
 	'title',
 ]
 
-export function createDefaultWorkLogReportConfig(
-	today = new Date(),
-): IWorkLogReportConfig {
+export function createDefaultWorkLogReportConfig(today = new Date()): IWorkLogReportConfig {
 	return {
 		range: {
 			from: startOfMonth(today),
@@ -141,9 +139,7 @@ function buildGroups(
 			: row.workLog.taskId
 				? `task:${row.workLog.taskId}`
 				: NO_TASK_REPORT_FILTER
-		const label = isDayGroup
-			? format(row.startDate, 'EEEE, MMMM d, yyyy')
-			: row.taskLabel
+		const label = isDayGroup ? format(row.startDate, 'EEEE, MMMM d, yyyy') : row.taskLabel
 		const existing = groups.get(key)
 
 		if (existing) {
@@ -169,7 +165,7 @@ function buildGroups(
 }
 
 export function buildWorkLogReport(
-	workLogs: IWorkLog[],
+	workLogs: readonly Readonly<PrototypeWorkLog>[],
 	tasks: Task[],
 	config: IWorkLogReportConfig,
 ): IWorkLogReportResult {
@@ -223,17 +219,14 @@ export function buildWorkLogReport(
 		.sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
 
 	const activeDays = new Set(rows.map((row) => format(row.startDate, 'yyyy-MM-dd')))
-	const taskIds = new Set(
-		rows.flatMap((row) => (row.workLog.taskId ? [row.workLog.taskId] : [])),
-	)
+	const taskIds = new Set(rows.flatMap((row) => (row.workLog.taskId ? [row.workLog.taskId] : [])))
 
 	const summary = rows.reduce<IWorkLogReportSummary>(
 		(totals, row) => ({
 			...totals,
 			totalMinutes: totals.totalMinutes + row.durationMinutes,
 			workLogCount: totals.workLogCount + 1,
-			unassignedMinutes:
-				totals.unassignedMinutes + (row.workLog.taskId ? 0 : row.durationMinutes),
+			unassignedMinutes: totals.unassignedMinutes + (row.workLog.taskId ? 0 : row.durationMinutes),
 		}),
 		{
 			totalMinutes: 0,

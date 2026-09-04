@@ -19,7 +19,7 @@ import { planKeys } from '@/features/plans/model/plan-query-keys'
 import { useDeleteTask } from '@/features/tasks/hooks/use-task-mutations'
 import { getTaskError, TaskActionBlockedError } from '@/features/tasks/model/task-errors'
 import type { Task } from '@/features/tasks/model/task-types'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { workLogKeys } from '@/features/work-logs/model/work-log-query-keys'
 
 export function DeleteTaskDialog({
 	task,
@@ -50,8 +50,7 @@ function OpenDeleteTaskDialog({
 	onDeleted: (task: Task) => void
 }) {
 	const mutation = useDeleteTask()
-	const { capture, busy, ended, client } = useIdentityLifecycle()
-	const { clearTask: clearWorkLogTask } = useWorkLogs()
+	const { capture, busy, ended, client, generation } = useIdentityLifecycle()
 	const [error, setError] = useState<string | null>(null)
 	const [unavailable, setUnavailable] = useState(false)
 	const [pending, setPending] = useState(false)
@@ -67,7 +66,10 @@ function OpenDeleteTaskDialog({
 			await mutation.mutateAsync({ taskId: task.id })
 			if (!current()) return
 			void client.invalidateQueries({ queryKey: planKeys.all }, { throwOnError: false })
-			clearWorkLogTask(task.id)
+			void client.invalidateQueries(
+				{ queryKey: workLogKeys.lists(generation) },
+				{ throwOnError: false },
+			)
 			toast.success('Task deleted', {
 				description: 'Associated plans and work logs are now unassigned.',
 			})

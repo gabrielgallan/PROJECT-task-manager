@@ -18,7 +18,7 @@ import {
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
 import type { PrototypePlan } from '@/features/plans/mocks/plans'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
-import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
+import type { PrototypeWorkLog } from '@/features/work-logs/mocks/work-logs'
 
 export const WEEKLY_CAPACITY_MINUTES = 40 * 60
 
@@ -82,7 +82,7 @@ function getIntervalMinutes(startDate: Date, endDate: Date) {
 	return Math.max(0, differenceInMinutes(endDate, startDate))
 }
 
-function getItemMinutes(item: Pick<PrototypePlan | IWorkLog, 'startDate' | 'endDate'>) {
+function getItemMinutes(item: Pick<PrototypePlan | PrototypeWorkLog, 'startDate' | 'endDate'>) {
 	const startDate = parseISO(item.startDate)
 	const endDate = parseISO(item.endDate)
 
@@ -118,7 +118,7 @@ export function getDashboardDeadlineMetrics(
 
 export function buildDashboardWeeklyWork(
 	plans: PrototypePlan[],
-	workLogs: IWorkLog[],
+	workLogs: readonly Readonly<PrototypeWorkLog>[],
 	today = new Date(),
 ): IDashboardWeeklyWork {
 	const startDate = startOfWeek(today, { weekStartsOn: WEEK_STARTS_ON })
@@ -203,7 +203,7 @@ export function buildTodayPlanInsight(
 }
 
 export function buildWhereTimeWentInsight(
-	workLogs: IWorkLog[],
+	workLogs: readonly Readonly<PrototypeWorkLog>[],
 	tasks: Task[],
 	today = new Date(),
 	limit = 4,
