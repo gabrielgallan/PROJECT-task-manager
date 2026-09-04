@@ -70,7 +70,7 @@ async function bootstrap() {
 		app.use(
 			'/api/reference',
 			apiReference({
-				url: '/reference/openapi.json',
+				url: '/api/reference/openapi.json',
 				theme: 'elysiajs',
 				layout: 'modern',
 			}),
