@@ -38,42 +38,44 @@ async function bootstrap() {
 		maxAge: 86400,
 	})
 
-	const config = new DocumentBuilder()
-		.setTitle('task_manager API')
-		.setVersion('1.0')
-		.setLicense('MIT', 'https://opensource.org/licenses/MIT')
-		.addBearerAuth({
-			type: 'http',
-			scheme: 'bearer',
-			bearerFormat: 'JWT',
-			name: 'JWT',
-			description: 'Enter JWT token',
-			in: 'header',
+	if (env.get('NODE_ENV') !== 'production') {
+		const config = new DocumentBuilder()
+			.setTitle('task_manager API')
+			.setVersion('1.0')
+			.setLicense('MIT', 'https://opensource.org/licenses/MIT')
+			.addBearerAuth({
+				type: 'http',
+				scheme: 'bearer',
+				bearerFormat: 'JWT',
+				name: 'JWT',
+				description: 'Enter JWT token',
+				in: 'header',
+			})
+			.addTag('Authentication', 'Authentication related endpoints')
+			.addTag('Profile', 'Profile related endpoints')
+			.addTag('Tasks', 'Tasks related endpoints')
+			.addTag('Plans', 'Plans related endpoints')
+			.addTag('Work-logs', 'Work-logs related endpoints')
+			.addTag('Categories', 'Categories related endpoints')
+			.build()
+
+		const document = SwaggerModule.createDocument(app, config)
+
+		const httpAdapter = app.getHttpAdapter()
+
+		httpAdapter.get('/reference/openapi.json', (_req, res) => {
+			res.json(document)
 		})
-		.addTag('Authentication', 'Authentication related endpoints')
-		.addTag('Profile', 'Profile related endpoints')
-		.addTag('Tasks', 'Tasks related endpoints')
-		.addTag('Plans', 'Plans related endpoints')
-		.addTag('Work-logs', 'Work-logs related endpoints')
-		.addTag('Categories', 'Categories related endpoints')
-		.build()
 
-	const document = SwaggerModule.createDocument(app, config)
-
-	const httpAdapter = app.getHttpAdapter()
-
-	httpAdapter.get('/reference/openapi.json', (_req, res) => {
-		res.json(document)
-	})
-
-	app.use(
-		'/reference',
-		apiReference({
-			url: '/reference/openapi.json',
-			theme: 'elysiajs',
-			layout: 'modern',
-		}),
-	)
+		app.use(
+			'/reference',
+			apiReference({
+				url: '/reference/openapi.json',
+				theme: 'elysiajs',
+				layout: 'modern',
+			}),
+		)
+	}
 
 	const port = env.get('PORT')
 

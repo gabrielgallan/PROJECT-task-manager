@@ -2,8 +2,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AuthLayout } from './app/layouts/auth'
 import { DefaultLayout } from './app/layouts/default'
 import { NotFoundPage } from './app/pages/404'
-import { DashboardPage } from './app/pages/analytics/dashboard'
-import { ReportsPage } from './app/pages/analytics/reports'
 import { GithubOauthCallback } from './app/pages/api/oauth/github'
 import { GoogleOauthCallback } from './app/pages/api/oauth/google'
 import { ForgotPasswordPage } from './app/pages/auth/forgot-password'
@@ -44,17 +42,17 @@ export const router = createBrowserRouter([
 					{ path: 'work-logs', element: <WorkLogsPage /> },
 				],
 			},
-			{
-				path: 'analytics',
-				element: <DefaultLayout />,
-				children: [
-					{
-						path: 'dashboard',
-						element: <DashboardPage />,
-					},
-					{ path: 'reports', element: <ReportsPage /> },
-				],
-			},
+			// {
+			// 	path: 'analytics',
+			// 	element: <DefaultLayout />,
+			// 	children: [
+			// 		{
+			// 			path: 'dashboard',
+			// 			element: <DashboardPage />,
+			// 		},
+			// 		{ path: 'reports', element: <ReportsPage /> },
+			// 	],
+			// },
 			{
 				path: 'settings',
 				element: <DefaultLayout />,
@@ -77,6 +75,10 @@ export const router = createBrowserRouter([
 	},
 	{
 		path: '*',
+		element: <NotFoundPage />,
+	},
+	{
+		path: '404',
 		element: <NotFoundPage />,
 	},
 ])

@@ -1,9 +1,7 @@
 import {
 	Calendar,
 	CalendarPlus,
-	ChartColumnBig,
 	ChartNoAxesGantt,
-	FileChartLine,
 	FileClock,
 	FilePlusCorner,
 	type LucideIcon,
@@ -46,27 +44,27 @@ export const APP_NAVIGATION_ITEMS = [
 		group: 'registers',
 		keywords: ['work log', 'time', 'timesheet', 'logged work'],
 	},
-	{
-		label: 'Dashboard',
-		mobileLabel: 'Stats',
-		path: '/analytics/dashboard',
-		icon: ChartColumnBig,
-		group: 'analytics',
-		keywords: ['dashboard', 'stats', 'analytics', 'overview'],
-	},
-	{
-		label: 'Reports',
-		mobileLabel: 'Reports',
-		path: '/analytics/reports',
-		icon: FileChartLine,
-		group: 'analytics',
-		keywords: ['report', 'analytics', 'summary'],
-	},
+	// {
+	// 	label: 'Dashboard',
+	// 	mobileLabel: 'Stats',
+	// 	path: '/analytics/dashboard',
+	// 	icon: ChartColumnBig,
+	// 	group: 'analytics',
+	// 	keywords: ['dashboard', 'stats', 'analytics', 'overview'],
+	// },
+	// {
+	// 	label: 'Reports',
+	// 	mobileLabel: 'Reports',
+	// 	path: '/analytics/reports',
+	// 	icon: FileChartLine,
+	// 	group: 'analytics',
+	// 	keywords: ['report', 'analytics', 'summary'],
+	// },
 ] as const satisfies readonly IAppNavigationItem[]
 
 export const APP_NAVIGATION_GROUPS = [
 	{ value: 'registers', label: undefined },
-	{ value: 'analytics', label: 'Analytics' },
+	// { value: 'analytics', label: 'Analytics' },
 ] as const satisfies readonly { value: TAppNavigationGroup; label: string | undefined }[]
 
 export interface IAppQuickAction {

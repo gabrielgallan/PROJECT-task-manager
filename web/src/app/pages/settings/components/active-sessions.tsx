@@ -148,7 +148,7 @@ export function ActiveSessions({ active }: { active: boolean }) {
 									</p>
 								</div>
 								{session.isCurrent ? (
-									<span className="rounded-md bg-indigo-500/20 text-indigo-500 px-2 py-1 text-xs font-bold">
+									<span className="rounded-sm bg-indigo-500/20 text-indigo-500 px-2 py-1 text-xs">
 										Current
 									</span>
 								) : (
