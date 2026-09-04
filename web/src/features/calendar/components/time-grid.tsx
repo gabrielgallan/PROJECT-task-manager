@@ -1,12 +1,12 @@
-import { isToday } from 'date-fns'
+import { isSameDay } from 'date-fns'
 import { type ReactNode, useEffect, useRef } from 'react'
 import { useCalendar } from '@/features/calendar/calendar-provider'
 import { CurrentTimeIndicator } from '@/features/calendar/components/current-time-indicator'
 import { DroppableSlot } from '@/features/calendar/components/droppable-slot'
 import { TimeItem } from '@/features/calendar/components/time-item'
 import {
-	HOURS,
 	HOUR_HEIGHT,
+	HOURS,
 	SLOT_MINUTES,
 	SLOTS_PER_HOUR,
 	WORK_DAY_END_HOUR,
@@ -41,7 +41,13 @@ export function TimeGutter() {
 
 type TDayColumnProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'onCreate' | 'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+	| 'onCreate'
+	| 'onOpen'
+	| 'onMove'
+	| 'onResize'
+	| 'renderItem'
+	| 'getItemClassName'
+	| 'isItemDisabled'
 > & {
 	day: Date
 	items: TItem[]
@@ -58,8 +64,10 @@ export function DayColumn<TItem extends ICalendarItem>({
 	onResize,
 	renderItem,
 	getItemClassName,
+	isItemDisabled,
 }: TDayColumnProps<TItem>) {
 	const layouts = layoutDayItems(getItemsForDay(items, day))
+	const { getNow } = useCalendar()
 	const { activeItemId, endDrag } = useDragDrop()
 
 	const handleDropItem = (targetDay: Date, hour: number, minute: number) => {
@@ -107,10 +115,11 @@ export function DayColumn<TItem extends ICalendarItem>({
 					onResize={onResize}
 					renderItem={renderItem}
 					getItemClassName={getItemClassName}
+					isItemDisabled={isItemDisabled}
 				/>
 			))}
 
-			{isToday(day) && <CurrentTimeIndicator showLabel={showCurrentTimeLabel} />}
+			{isSameDay(day, getNow()) && <CurrentTimeIndicator showLabel={showCurrentTimeLabel} />}
 		</div>
 	)
 }
@@ -123,10 +132,7 @@ export function TimeGridScroller({ children }: { children: ReactNode }) {
 	}, [])
 
 	return (
-		<div
-			ref={ref}
-			className="calendar-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain"
-		>
+		<div ref={ref} className="calendar-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain">
 			{children}
 		</div>
 	)

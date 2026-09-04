@@ -1,225 +1,305 @@
+import { Temporal } from '@js-temporal/polyfill'
 import { Plus } from 'lucide-react'
-import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { CategoryFilter } from '@/features/categories/components/category-filter'
-import type { TCategoryColor } from '@/features/categories/model/category-colors'
 import {
-	NO_CATEGORY_FILTER,
-	resolveCategoryColor,
-} from '@/features/categories/model/category-rules'
-import type { ICategory } from '@/features/categories/model/category-types'
+	forwardRef,
+	useCallback,
+	useEffect,
+	useImperativeHandle,
+	useMemo,
+	useRef,
+	useState,
+} from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { Calendar } from '@/features/calendar/calendar'
 import { SLOT_MINUTES, WORK_DAY_START_HOUR } from '@/features/calendar/constants'
-import type { ICalendarRange } from '@/features/calendar/types'
-import { PlanDialog } from '@/features/plans/calendar/plan-dialog'
-import { NO_TASK_FILTER, PlanFilter } from '@/features/plans/calendar/plan-filter'
-import { getPlanItemClassName, PlanItemContent } from '@/features/plans/calendar/plan-item-content'
+import {
+	calendarDateToInstant,
+	calendarDayStartToInstant,
+	InvalidCalendarTimeError,
+	instantToCalendarDate,
+	instantToCalendarText,
+	useTimeZone,
+} from '@/features/calendar/lib/time-zone'
+import type { ICalendarRange, ICalendarVisibleRange } from '@/features/calendar/types'
+import { CategoryFilter } from '@/features/categories/components/category-filter'
+import { CATEGORY_COLORS, type TCategoryColor } from '@/features/categories/model/category-colors'
+import { NO_CATEGORY_FILTER } from '@/features/categories/model/category-rules'
+import type { ICategory } from '@/features/categories/model/category-types'
+import { useIdentityLifecycle } from '@/features/identity/hooks/use-end-session'
+import { useEditPlanSchedule } from '@/features/plans/hooks/use-plan-mutations'
+import { usePlanPendingIds } from '@/features/plans/hooks/use-plan-pending'
+import { usePlansQuery } from '@/features/plans/hooks/use-plans-query'
 import {
 	DEFAULT_PLAN_DURATION,
 	DEFAULT_PLAN_VIEW,
 	PLAN_STORAGE_KEY,
 	PLAN_VIEWS,
 } from '@/features/plans/model/plan-constants'
-import type { IPlan, TPlanDialogState } from '@/features/plans/model/plan-types'
+import { getPlanError, PlanActionBlockedError } from '@/features/plans/model/plan-errors'
+import type { PlanCalendarItem, TPlanDialogState } from '@/features/plans/model/plan-types'
 import type { Task } from '@/features/tasks/model/task-types'
+import { PlanDialog } from './plan-dialog'
+import { NO_TASK_FILTER, PlanFilter } from './plan-filter'
+import { getPlanItemClassName, PlanItemContent } from './plan-item-content'
 
-interface IPlansCalendarProps {
-	plans: IPlan[]
+interface Props {
 	tasks: Task[]
 	categories: ICategory[]
 	uncategorizedColor: TCategoryColor
-	/** Which task the page was opened for, so a link from the task carries over. */
 	initialTaskIds?: string[]
-	onCreate: (plan: IPlan) => void
-	onUpdate: (plan: IPlan) => void
-	onDelete: (plan: IPlan) => void
-	/**
-	 * Records the plan as work done elsewhere. Returns whether it was accepted,
-	 * so the plan is only marked when the record was actually created.
-	 */
-	onConfirmPlan?: (plan: IPlan) => boolean
 }
-
 export interface PlansCalendarHandle {
 	openCreate: () => void
 }
 
-function getCommandCreateRange(now = new Date()): ICalendarRange {
-	const startDate = new Date(now)
-	const roundedMinutes = Math.ceil(startDate.getMinutes() / SLOT_MINUTES) * SLOT_MINUTES
-
+function commandRange(timeZone: string): ICalendarRange {
+	const startDate = instantToCalendarDate(new Date().toISOString(), timeZone)
 	startDate.setSeconds(0, 0)
-	startDate.setMinutes(roundedMinutes)
-
-	return {
-		startDate,
-		endDate: new Date(startDate.getTime() + DEFAULT_PLAN_DURATION * 60_000),
-	}
+	startDate.setMinutes(Math.ceil(startDate.getMinutes() / SLOT_MINUTES) * SLOT_MINUTES)
+	return { startDate, endDate: new Date(startDate.getTime() + DEFAULT_PLAN_DURATION * 60_000) }
 }
 
-export const PlansCalendar = forwardRef<PlansCalendarHandle, IPlansCalendarProps>(
-	function PlansCalendar(
-		{
-			plans,
-			tasks,
-			categories,
-			uncategorizedColor,
-			initialTaskIds,
-			onCreate,
-			onUpdate,
-			onDelete,
-			onConfirmPlan,
-		},
-		ref,
-	) {
+export const PlansCalendar = forwardRef<PlansCalendarHandle, Props>(function PlansCalendar(
+	{ tasks, categories, uncategorizedColor, initialTaskIds },
+	ref,
+) {
+	const [timeZone] = useTimeZone()
 	const [dialog, setDialog] = useState<TPlanDialogState>({ mode: 'closed' })
-	const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>(initialTaskIds ?? [])
+	const [visibleRange, setVisibleRange] = useState<ICalendarVisibleRange | null>(null)
+	const [selectedTaskIds, setSelectedTaskIds] = useState(initialTaskIds ?? [])
 	const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([])
-
-	const taskTitles = useMemo(() => new Map(tasks.map((task) => [task.id, task.title])), [tasks])
-	const categoriesById = useMemo(
-		() => new Map(categories.map((category) => [category.id, category])),
-		[categories],
+	const [scheduleError, setScheduleError] = useState<string | null>(null)
+	const [previews, setPreviews] = useState(() => new Map<string, PlanCalendarItem>())
+	const { capture, generation } = useIdentityLifecycle()
+	const seenGeneration = useRef(generation)
+	const schedule = useEditPlanSchedule()
+	const isPlanPending = usePlanPendingIds()
+	const getNow = useCallback(
+		() => instantToCalendarDate(new Date().toISOString(), timeZone),
+		[timeZone],
 	)
-	const getPlanColor = (plan: IPlan) =>
-		resolveCategoryColor(plan.categoryId, categoriesById, uncategorizedColor)
+	useEffect(() => {
+		if (seenGeneration.current === generation) return
+		seenGeneration.current = generation
+		setPreviews(new Map())
+		setScheduleError(null)
+		setDialog({ mode: 'closed' })
+		setSelectedTaskIds([])
+		setSelectedCategoryIds([])
+	}, [generation])
+	const request = useMemo(
+		() => ({
+			from: visibleRange
+				? calendarDayStartToInstant(visibleRange.startDate, timeZone)
+				: new Date(0).toISOString(),
+			to: visibleRange
+				? calendarDayStartToInstant(visibleRange.endDate, timeZone)
+				: new Date(1).toISOString(),
+			taskId: selectedTaskIds.filter((id) => id !== NO_TASK_FILTER),
+			categoryId: selectedCategoryIds.filter((id) => id !== NO_CATEGORY_FILTER),
+			...(selectedTaskIds.includes(NO_TASK_FILTER) ? { withoutTask: true as const } : {}),
+			...(selectedCategoryIds.includes(NO_CATEGORY_FILTER)
+				? { withoutCategory: true as const }
+				: {}),
+		}),
+		[selectedCategoryIds, selectedTaskIds, timeZone, visibleRange],
+	)
+	const query = usePlansQuery(request, timeZone, !!visibleRange)
+	const plans = useMemo(
+		() => (query.data ?? []).map((item) => previews.get(item.id) ?? item),
+		[previews, query.data],
+	)
+	const itemsRange = visibleRange
+		? { startDate: visibleRange.startDate, endDate: visibleRange.endDate }
+		: null
 
-	const visiblePlans = useMemo(() => {
-		return plans.filter((plan) => {
-			const matchesTask =
-				selectedTaskIds.length === 0 ||
-				selectedTaskIds.includes(plan.taskId ?? NO_TASK_FILTER)
-			const matchesCategory =
-				selectedCategoryIds.length === 0 ||
-				selectedCategoryIds.includes(plan.categoryId ?? NO_CATEGORY_FILTER)
-
-			return matchesTask && matchesCategory
-		})
-	}, [plans, selectedTaskIds, selectedCategoryIds])
-
+	const publishRange = useCallback(
+		(range: ICalendarVisibleRange) =>
+			setVisibleRange((current) =>
+				current?.view === range.view &&
+				current.startDate.getTime() === range.startDate.getTime() &&
+				current.endDate.getTime() === range.endDate.getTime()
+					? current
+					: range,
+			),
+		[],
+	)
 	const closeDialog = () => setDialog({ mode: 'closed' })
-	const openCreateDialog = (range: ICalendarRange) => setDialog({ mode: 'create', range })
+	const openCreate = (range: ICalendarRange) => setDialog({ mode: 'create', range })
+	useImperativeHandle(ref, () => ({ openCreate: () => openCreate(commandRange(timeZone)) }), [
+		timeZone,
+	])
 
-	useImperativeHandle(ref, () => ({
-		openCreate: () => openCreateDialog(getCommandCreateRange()),
-	}))
-
-	const createPlan = (plan: IPlan) => {
-		onCreate(plan)
-		toast.success('Plan created')
-		closeDialog()
+	function colorFor(item: PlanCalendarItem): TCategoryColor {
+		const color = item.plan.category?.color
+		return color && CATEGORY_COLORS.some((known) => known === color)
+			? (color as TCategoryColor)
+			: uncategorizedColor
 	}
 
-	const updatePlan = (plan: IPlan) => {
-		onUpdate(plan)
-		toast.success('Plan updated')
-		closeDialog()
+	async function reschedule(
+		item: PlanCalendarItem,
+		range: ICalendarRange,
+		kind: 'move' | 'resize',
+	) {
+		const current = capture()
+		setScheduleError(null)
+		try {
+			let startsAt = item.plan.startsAt
+			let endsAt = item.plan.endsAt
+			if (kind === 'move') {
+				startsAt = calendarDateToInstant(range.startDate, timeZone).iso
+				const duration = Date.parse(item.plan.endsAt) - Date.parse(item.plan.startsAt)
+				endsAt = Temporal.Instant.from(startsAt).add({ milliseconds: duration }).toString()
+			} else {
+				const oldStart = instantToCalendarDate(item.plan.startsAt, timeZone)
+				const oldEnd = instantToCalendarDate(item.plan.endsAt, timeZone)
+				if (oldStart.getTime() !== range.startDate.getTime())
+					startsAt = calendarDateToInstant(range.startDate, timeZone).iso
+				if (oldEnd.getTime() !== range.endDate.getTime())
+					endsAt = calendarDateToInstant(range.endDate, timeZone).iso
+			}
+			if (startsAt === item.plan.startsAt && endsAt === item.plan.endsAt) return
+			if (Date.parse(endsAt) <= Date.parse(startsAt)) throw new Error('invalid range')
+			const nextPreview = {
+				...item,
+				startDate: instantToCalendarText(startsAt, timeZone),
+				endDate: instantToCalendarText(endsAt, timeZone),
+				plan: { ...item.plan, startsAt, endsAt },
+			}
+			setPreviews((current) => new Map(current).set(item.id, nextPreview))
+			await schedule.mutateAsync({
+				planId: item.id,
+				...(startsAt !== item.plan.startsAt ? { startsAt } : {}),
+				...(endsAt !== item.plan.endsAt ? { endsAt } : {}),
+			})
+		} catch (error) {
+			if (!current()) return
+			if (error instanceof InvalidCalendarTimeError)
+				setScheduleError('This time does not exist in the selected timezone.')
+			else if (error instanceof Error && error.message === 'invalid range')
+				setScheduleError('End must be after start.')
+			else if (!(error instanceof PlanActionBlockedError))
+				setScheduleError(getPlanError(error, 'schedule'))
+		} finally {
+			if (current())
+				setPreviews((values) => {
+					const next = new Map(values)
+					next.delete(item.id)
+					return next
+				})
+		}
 	}
-
-	const deletePlan = (plan: IPlan) => {
-		onDelete(plan)
-		toast.success('Plan deleted')
-		closeDialog()
-	}
-
-	const confirmPlan = (plan: IPlan) => {
-		if (!onConfirmPlan?.(plan)) return
-
-		onUpdate({ ...plan, confirmedAt: new Date().toISOString() })
-		closeDialog()
-	}
-
-	// Dragging only moves the plan in time, so it goes straight through.
-	const updatePlanRange = (plan: IPlan, range: ICalendarRange) =>
-		onUpdate({
-			...plan,
-			startDate: range.startDate.toISOString(),
-			endDate: range.endDate.toISOString(),
-		})
-
-	const toggleTaskFilter = (taskId: string) =>
-		setSelectedTaskIds((previous) =>
-			previous.includes(taskId) ? previous.filter((id) => id !== taskId) : [...previous, taskId],
-		)
-	const toggleCategoryFilter = (categoryId: string) =>
-		setSelectedCategoryIds((previous) =>
-			previous.includes(categoryId)
-				? previous.filter((id) => id !== categoryId)
-				: [...previous, categoryId],
-		)
 
 	return (
-		<Calendar
-			items={visiblePlans}
-			defaultView={DEFAULT_PLAN_VIEW}
-			availableViews={PLAN_VIEWS}
-			storageKey={PLAN_STORAGE_KEY}
-			settings={{ weekends: true, timeFormat: true }}
-			onCreate={openCreateDialog}
-			onOpen={(plan) => setDialog({ mode: 'edit', plan })}
-			onMove={updatePlanRange}
-			onResize={updatePlanRange}
-			renderItem={(plan, context) => (
-				<PlanItemContent
-					plan={plan}
-					color={getPlanColor(plan)}
-					context={context}
-					taskTitle={plan.taskId ? taskTitles.get(plan.taskId) : undefined}
-				/>
+		<>
+			{query.isPending && (
+				<p role="status" className="px-4 py-2 text-sm text-muted-foreground">
+					Loading plans…
+				</p>
 			)}
-			getItemClassName={(plan, context) => getPlanItemClassName(getPlanColor(plan), context)}
-			renderToolbarActions={({ selectedDate }) => ({
-				beforeViews: (
-					<div className="flex items-center gap-2">
-						<PlanFilter
-							tasks={tasks}
-							selectedTaskIds={selectedTaskIds}
-							onToggle={toggleTaskFilter}
-							onClear={() => setSelectedTaskIds([])}
-						/>
-						<CategoryFilter
-							categories={categories}
-							selectedCategoryIds={selectedCategoryIds}
-							onToggle={toggleCategoryFilter}
-							onClear={() => setSelectedCategoryIds([])}
-							compactOnMobile
-						/>
-					</div>
-				),
-				afterSettings: (
-					<Button
-						size="sm"
-						onClick={() => {
-							const startDate = new Date(selectedDate)
-
-							startDate.setHours(WORK_DAY_START_HOUR, 0, 0, 0)
-
-							openCreateDialog({
-								startDate,
-								endDate: new Date(startDate.getTime() + DEFAULT_PLAN_DURATION * 60_000),
-							})
-						}}
-					>
-						<Plus />
-						<span className="max-md:sr-only">New plan</span>
-					</Button>
-				),
-			})}
-			renderOverlay={({ use24HourFormat }) => (
-				<PlanDialog
-					state={dialog}
-					tasks={tasks}
-					categories={categories}
-					use24HourFormat={use24HourFormat}
-					onClose={closeDialog}
-					onCreate={createPlan}
-					onUpdate={updatePlan}
-					onDelete={deletePlan}
-					onConfirm={onConfirmPlan ? confirmPlan : undefined}
-				/>
+			{query.isFetching && !query.isPending && (
+				<p role="status" className="px-4 py-1 text-xs text-muted-foreground">
+					Refreshing plans…
+				</p>
 			)}
-		/>
+			{query.error && (
+				<Alert variant="destructive" className="mb-2">
+					<AlertDescription>
+						{getPlanError(query.error, 'list')}{' '}
+						<Button type="button" variant="link" onClick={() => void query.refetch()}>
+							Try again
+						</Button>
+					</AlertDescription>
+				</Alert>
+			)}
+			{scheduleError && (
+				<Alert variant="destructive" className="mb-2">
+					<AlertDescription>{scheduleError}</AlertDescription>
+				</Alert>
+			)}
+			<Calendar
+				items={plans}
+				getNow={getNow}
+				itemsRange={itemsRange}
+				onVisibleRangeChange={publishRange}
+				defaultView={DEFAULT_PLAN_VIEW}
+				availableViews={PLAN_VIEWS}
+				storageKey={PLAN_STORAGE_KEY}
+				settings={{ weekends: true, timeFormat: true }}
+				onCreate={openCreate}
+				onOpen={(item) => setDialog({ mode: 'edit', plan: item })}
+				onMove={(item, range) => void reschedule(item, range, 'move')}
+				onResize={(item, range) => void reschedule(item, range, 'resize')}
+				renderItem={(item, context) => (
+					<PlanItemContent
+						plan={item.plan}
+						color={colorFor(item)}
+						context={context}
+						taskTitle={item.plan.task?.title}
+					/>
+				)}
+				getItemClassName={(item, context) => getPlanItemClassName(colorFor(item), context)}
+				isItemDisabled={(item) => isPlanPending(item.id)}
+				renderToolbarActions={({ selectedDate }) => ({
+					beforeViews: (
+						<div className="flex items-center gap-2">
+							<PlanFilter
+								tasks={tasks}
+								selectedTaskIds={selectedTaskIds}
+								onToggle={(id) =>
+									setSelectedTaskIds((values) =>
+										values.includes(id) ? values.filter((value) => value !== id) : [...values, id],
+									)
+								}
+								onClear={() => setSelectedTaskIds([])}
+							/>
+							<CategoryFilter
+								categories={categories}
+								selectedCategoryIds={selectedCategoryIds}
+								onToggle={(id) =>
+									setSelectedCategoryIds((values) =>
+										values.includes(id) ? values.filter((value) => value !== id) : [...values, id],
+									)
+								}
+								onClear={() => setSelectedCategoryIds([])}
+								compactOnMobile
+							/>
+						</div>
+					),
+					afterSettings: (
+						<Button
+							size="sm"
+							onClick={() => {
+								const startDate = new Date(selectedDate)
+								startDate.setHours(WORK_DAY_START_HOUR, 0, 0, 0)
+								openCreate({
+									startDate,
+									endDate: new Date(startDate.getTime() + DEFAULT_PLAN_DURATION * 60_000),
+								})
+							}}
+						>
+							<Plus />
+							<span className="max-md:sr-only">New plan</span>
+						</Button>
+					),
+				})}
+				renderOverlay={({ use24HourFormat }) => (
+					<PlanDialog
+						key={dialog.mode === 'edit' ? `edit:${dialog.plan.id}` : dialog.mode}
+						state={dialog}
+						tasks={tasks}
+						categories={categories}
+						timeZone={timeZone}
+						use24HourFormat={use24HourFormat}
+						onClose={closeDialog}
+					/>
+				)}
+			/>
+			{query.isSuccess && plans.length === 0 && (
+				<p className="px-4 py-2 text-sm text-muted-foreground">No plans in this range.</p>
+			)}
+		</>
 	)
-	},
-)
+})

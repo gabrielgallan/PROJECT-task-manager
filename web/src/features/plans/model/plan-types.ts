@@ -1,18 +1,23 @@
 import type { ICalendarItem, ICalendarRange } from '@/features/calendar/types'
+import type { IsoDateTime, PlanCategorySummaryDto, PlanTaskSummaryDto } from './plan-api-types'
 
-export interface IPlan extends ICalendarItem {
+export interface Plan {
+	id: string
 	title: string
-	description?: string
-	taskId?: string | null
-	categoryId?: string | null
-	/**
-	 * When this plan was recorded as done. It is a local mark, not a reference:
-	 * plans never point at work logs, so the two modules stay independent.
-	 */
-	confirmedAt?: string | null
+	description: string | null
+	task: PlanTaskSummaryDto | null
+	category: PlanCategorySummaryDto | null
+	startsAt: IsoDateTime
+	endsAt: IsoDateTime
+	confirmedAt: IsoDateTime | null
 }
+
+export interface PlanCalendarItem extends ICalendarItem {
+	plan: Plan
+}
+export type IPlan = PlanCalendarItem
 
 export type TPlanDialogState =
 	| { mode: 'closed' }
 	| { mode: 'create'; range: ICalendarRange }
-	| { mode: 'edit'; plan: IPlan }
+	| { mode: 'edit'; plan: PlanCalendarItem }

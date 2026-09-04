@@ -1,4 +1,4 @@
-import { format, isToday } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import { useCalendar } from '@/features/calendar/calendar-provider'
 import { AllDayRow } from '@/features/calendar/components/all-day-row'
 import {
@@ -13,11 +13,18 @@ import { cn } from '@/lib/utils'
 
 type TDayViewProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+	| 'items'
+	| 'onCreate'
+	| 'onOpen'
+	| 'onMove'
+	| 'onResize'
+	| 'renderItem'
+	| 'getItemClassName'
+	| 'isItemDisabled'
 >
 
 export function CalendarDayView<TItem extends ICalendarItem>(props: TDayViewProps<TItem>) {
-	const { selectedDate } = useCalendar()
+	const { selectedDate, getNow } = useCalendar()
 	const { timed, multiDay } = splitItemsBySpan(props.items)
 
 	return (
@@ -32,7 +39,7 @@ export function CalendarDayView<TItem extends ICalendarItem>(props: TDayViewProp
 						<span
 							className={cn(
 								'flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
-								isToday(selectedDate) && 'bg-primary text-primary-foreground',
+								isSameDay(selectedDate, getNow()) && 'bg-primary text-primary-foreground',
 							)}
 						>
 							{format(selectedDate, 'd')}
@@ -57,6 +64,7 @@ export function CalendarDayView<TItem extends ICalendarItem>(props: TDayViewProp
 								onOpen={props.onOpen}
 								renderItem={props.renderItem}
 								getItemClassName={props.getItemClassName}
+								isItemDisabled={props.isItemDisabled}
 							/>
 						</div>
 					</div>

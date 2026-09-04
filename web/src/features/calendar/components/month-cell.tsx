@@ -1,4 +1,4 @@
-import { isToday, parseISO, set } from 'date-fns'
+import { isSameDay, parseISO, set } from 'date-fns'
 import { useState } from 'react'
 import { useCalendar } from '@/features/calendar/calendar-provider'
 import { SLOT_MINUTES, WORK_DAY_START_HOUR } from '@/features/calendar/constants'
@@ -11,7 +11,7 @@ const MAX_VISIBLE = 3
 
 type TMonthCellProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'onCreate' | 'onOpen' | 'onMove' | 'renderItem' | 'getItemClassName'
+	'onCreate' | 'onOpen' | 'onMove' | 'renderItem' | 'getItemClassName' | 'isItemDisabled'
 > & {
 	cell: ICalendarCell
 	items: TItem[]
@@ -25,9 +25,10 @@ export function MonthCell<TItem extends ICalendarItem>({
 	onMove,
 	renderItem,
 	getItemClassName,
+	isItemDisabled,
 }: TMonthCellProps<TItem>) {
 	const { date, day, currentMonth } = cell
-	const { setSelectedDate, setView } = useCalendar()
+	const { setSelectedDate, setView, getNow } = useCalendar()
 	const { activeItemId, startDrag, endDrag } = useDragDrop()
 	const [isOver, setIsOver] = useState(false)
 	const cellItems = getItemsForCell(date, items)
@@ -50,6 +51,7 @@ export function MonthCell<TItem extends ICalendarItem>({
 	}
 
 	return (
+		// biome-ignore lint/a11y/noStaticElementInteractions: native drag-and-drop target; buttons provide keyboard alternatives
 		<div
 			className={cn(
 				'group flex min-h-28 flex-col gap-0.5 border-r border-b p-1 transition-colors',
@@ -76,7 +78,7 @@ export function MonthCell<TItem extends ICalendarItem>({
 					className={cn(
 						'flex size-6 items-center justify-center rounded-full text-xs font-medium tabular-nums',
 						!currentMonth && 'text-muted-foreground/60',
-						isToday(date) && 'bg-primary font-semibold text-primary-foreground',
+						isSameDay(date, getNow()) && 'bg-primary font-semibold text-primary-foreground',
 					)}
 				>
 					{day}
@@ -105,7 +107,8 @@ export function MonthCell<TItem extends ICalendarItem>({
 						<button
 							key={item.id}
 							type="button"
-							draggable={Boolean(onMove)}
+							draggable={Boolean(onMove) && !isItemDisabled?.(item)}
+							disabled={isItemDisabled?.(item)}
 							onDragStart={(event) => {
 								event.dataTransfer.effectAllowed = 'move'
 								event.dataTransfer.setData('text/plain', item.id)

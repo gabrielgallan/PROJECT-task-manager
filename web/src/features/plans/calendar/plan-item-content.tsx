@@ -1,14 +1,13 @@
 import { CircleCheck } from 'lucide-react'
-import { CATEGORY_DOT, type TCategoryColor } from '@/features/categories/model/category-colors'
 import { useOptionalCalendar } from '@/features/calendar/calendar-provider'
 import { formatDuration, formatTime } from '@/features/calendar/lib/formatting'
 import type { ICalendarItemRenderContext } from '@/features/calendar/types'
+import { CATEGORY_DOT, type TCategoryColor } from '@/features/categories/model/category-colors'
 import { PLAN_SURFACE } from '@/features/plans/model/plan-colors'
-import type { IPlan } from '@/features/plans/model/plan-types'
 import { cn } from '@/lib/utils'
 
 interface IPlanItemContentProps {
-	plan: IPlan
+	plan: { title: string; description?: string | null; confirmedAt?: string | null }
 	color: TCategoryColor
 	context: ICalendarItemRenderContext
 	taskTitle?: string

@@ -16,7 +16,7 @@ import {
 } from 'date-fns'
 
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { IPlan } from '@/features/plans/model/plan-types'
+import type { PrototypePlan } from '@/features/plans/mocks/plans'
 import type { Task, TaskStatus } from '@/features/tasks/model/task-types'
 import type { IWorkLog } from '@/features/work-logs/model/work-log-types'
 
@@ -46,7 +46,7 @@ export interface IDashboardWeeklyWork {
 export type TTodayPlanState = 'recorded' | 'now' | 'upcoming' | 'past'
 
 export interface ITodayPlanItem {
-	plan: IPlan
+	plan: PrototypePlan
 	startDate: Date
 	endDate: Date
 	durationMinutes: number
@@ -82,7 +82,7 @@ function getIntervalMinutes(startDate: Date, endDate: Date) {
 	return Math.max(0, differenceInMinutes(endDate, startDate))
 }
 
-function getItemMinutes(item: Pick<IPlan | IWorkLog, 'startDate' | 'endDate'>) {
+function getItemMinutes(item: Pick<PrototypePlan | IWorkLog, 'startDate' | 'endDate'>) {
 	const startDate = parseISO(item.startDate)
 	const endDate = parseISO(item.endDate)
 
@@ -117,7 +117,7 @@ export function getDashboardDeadlineMetrics(
 }
 
 export function buildDashboardWeeklyWork(
-	plans: IPlan[],
+	plans: PrototypePlan[],
 	workLogs: IWorkLog[],
 	today = new Date(),
 ): IDashboardWeeklyWork {
@@ -158,7 +158,7 @@ export function buildDashboardWeeklyWork(
 }
 
 function getTodayPlanState(
-	plan: IPlan,
+	plan: PrototypePlan,
 	startDate: Date,
 	endDate: Date,
 	now: Date,
@@ -170,7 +170,7 @@ function getTodayPlanState(
 }
 
 export function buildTodayPlanInsight(
-	plans: IPlan[],
+	plans: PrototypePlan[],
 	tasks: Task[],
 	now = new Date(),
 ): ITodayPlanInsight {

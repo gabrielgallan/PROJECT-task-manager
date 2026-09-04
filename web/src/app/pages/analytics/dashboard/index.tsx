@@ -2,9 +2,9 @@ import { format } from 'date-fns'
 import { useMemo } from 'react'
 import { BrowserTitle } from '@/components/browser-title'
 import { useCategories } from '@/features/categories/store/categories-store'
-import { usePlans } from '@/features/plans/store/plans-store'
-import { useTasks } from '@/features/tasks/store/tasks-store'
+import { PLANS_MOCK } from '@/features/plans/mocks/plans'
 import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
+import { useTasks } from '@/features/tasks/store/tasks-store'
 import { buildWorkLogContributions } from '@/features/work-logs/model/work-log-contributions'
 import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
 import { CapacityCard } from './components/capacity-card'
@@ -27,7 +27,7 @@ export function DashboardPage() {
 	const taskSource = useTasks()
 	const { tasks } = taskSource
 	const { categories, uncategorizedColor } = useCategories()
-	const { plans } = usePlans()
+	const plans = PLANS_MOCK
 	const { workLogs } = useWorkLogs()
 	const deadlineMetrics = useMemo(() => getDashboardDeadlineMetrics(tasks), [tasks])
 	const weeklyWork = useMemo(() => buildDashboardWeeklyWork(plans, workLogs), [plans, workLogs])
@@ -38,7 +38,11 @@ export function DashboardPage() {
 	return (
 		<>
 			<BrowserTitle title="Dashboard" />
-			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
+			<TaskSourceAlert
+				error={taskSource.error}
+				loading={taskSource.isPending}
+				onRetry={() => void taskSource.refetch()}
+			/>
 
 			<div className="styled-scrollbar flex flex-col overflow-auto p-4 gap-4">
 				<p className="text-base font-medium">{format(new Date(), 'EEE, MMMM dd, yyyy')}</p>

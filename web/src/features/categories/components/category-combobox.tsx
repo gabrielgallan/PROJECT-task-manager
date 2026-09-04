@@ -25,6 +25,9 @@ interface ICategoryComboboxProps {
 	onBlur?: () => void
 	invalid?: boolean
 	placeholder?: string
+	disabled?: boolean
+	selectedLabel?: string
+	'aria-describedby'?: string
 }
 
 export function CategoryCombobox({
@@ -35,16 +38,20 @@ export function CategoryCombobox({
 	onBlur,
 	invalid,
 	placeholder = 'No category',
+	disabled,
+	selectedLabel,
+	'aria-describedby': describedBy,
 }: ICategoryComboboxProps) {
-	const options = useMemo<ICategoryOption[]>(
-		() =>
-			categories.map((category) => ({
-				value: category.id,
-				label: category.name,
-				color: category.color,
-			})),
-		[categories],
-	)
+	const options = useMemo<ICategoryOption[]>(() => {
+		const values = categories.map((category) => ({
+			value: category.id,
+			label: category.name,
+			color: category.color,
+		}))
+		if (value && selectedLabel && !values.some((option) => option.value === value))
+			values.push({ value, label: selectedLabel, color: 'slate' })
+		return values
+	}, [categories, selectedLabel, value])
 
 	const selected = useMemo(
 		() => options.find((option) => option.value === value) ?? null,
@@ -64,6 +71,8 @@ export function CategoryCombobox({
 				placeholder={placeholder}
 				showClear
 				aria-invalid={invalid}
+				aria-describedby={describedBy}
+				disabled={disabled}
 				onBlur={onBlur}
 			/>
 

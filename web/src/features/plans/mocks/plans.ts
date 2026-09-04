@@ -1,8 +1,18 @@
 import { addDays, set, startOfWeek } from 'date-fns'
+import { WEEK_STARTS_ON } from '@/features/calendar/constants'
 import { CATEGORY_ID_BY_COLOR } from '@/features/categories/mocks/categories'
 import type { TCategoryColor } from '@/features/categories/model/category-colors'
-import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { IPlan } from '@/features/plans/model/plan-types'
+
+export interface PrototypePlan {
+	id: string
+	title: string
+	description?: string
+	startDate: string
+	endDate: string
+	taskId?: string | null
+	categoryId?: string | null
+	confirmedAt?: string | null
+}
 
 interface ISeed {
 	day: number
@@ -123,7 +133,7 @@ const SEEDS: ISeed[] = [
 	},
 ]
 
-function buildPlans(): IPlan[] {
+function buildPlans(): PrototypePlan[] {
 	const weekStart = startOfWeek(new Date(), { weekStartsOn: WEEK_STARTS_ON })
 
 	return SEEDS.map((seed, index) => {
@@ -154,4 +164,4 @@ function buildPlans(): IPlan[] {
 	})
 }
 
-export const PLANS_MOCK: IPlan[] = buildPlans()
+export const PLANS_MOCK: PrototypePlan[] = buildPlans()

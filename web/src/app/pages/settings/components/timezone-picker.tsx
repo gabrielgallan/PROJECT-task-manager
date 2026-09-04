@@ -10,29 +10,10 @@ import {
 	CommandList,
 } from '@/components/ui/command'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { getBrowserTimeZone, isValidTimeZone, useTimeZone } from '@/features/calendar/lib/time-zone'
 
-const TIMEZONE_STORAGE_KEY = 'task_manager.timezone'
 const UTC_TIMEZONE = 'UTC'
-
-function isValidTimezone(timezone: string) {
-	try {
-		new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format()
-		return true
-	} catch {
-		return false
-	}
-}
-
-function getLocalTimezone() {
-	try {
-		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-		return timezone && isValidTimezone(timezone) ? timezone : UTC_TIMEZONE
-	} catch {
-		return UTC_TIMEZONE
-	}
-}
-
-const localTimezone = getLocalTimezone()
+const localTimezone = getBrowserTimeZone()
 
 const timezones = Array.from(
 	new Set([
@@ -40,19 +21,7 @@ const timezones = Array.from(
 		localTimezone,
 		...(typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : []),
 	]),
-).filter(isValidTimezone)
-
-function getInitialTimezone() {
-	if (typeof window === 'undefined') return localTimezone
-
-	try {
-		const storedTimezone = window.localStorage.getItem(TIMEZONE_STORAGE_KEY)
-		return storedTimezone && isValidTimezone(storedTimezone) ? storedTimezone : localTimezone
-	} catch (error) {
-		console.warn(`Error reading localStorage key "${TIMEZONE_STORAGE_KEY}":`, error)
-		return localTimezone
-	}
-}
+).filter(isValidTimeZone)
 
 function getTimezoneOffset(timeZone: string) {
 	try {
@@ -114,9 +83,9 @@ interface TimezonePickerProps {
 export function TimezonePicker({ value, onValueChange }: TimezonePickerProps) {
 	const [open, setOpen] = useState(false)
 	const [search, setSearch] = useState('')
-	const [storedTimezone, setStoredTimezone] = useState(getInitialTimezone)
+	const [storedTimezone, setStoredTimezone] = useTimeZone()
 
-	const selectedTimezone = value && isValidTimezone(value) ? value : storedTimezone
+	const selectedTimezone = value && isValidTimeZone(value) ? value : storedTimezone
 	const selectedName = formatTimezoneName(selectedTimezone)
 	const selectedOffset = formatTimezoneOffset(getTimezoneOffset(selectedTimezone))
 
@@ -127,16 +96,9 @@ export function TimezonePicker({ value, onValueChange }: TimezonePickerProps) {
 	}
 
 	const handleSelect = (timezone: string) => {
-		if (!isValidTimezone(timezone)) return
+		if (!isValidTimeZone(timezone)) return
 
 		setStoredTimezone(timezone)
-
-		try {
-			window.localStorage.setItem(TIMEZONE_STORAGE_KEY, timezone)
-		} catch (error) {
-			console.warn(`Error setting localStorage key "${TIMEZONE_STORAGE_KEY}":`, error)
-		}
-
 		onValueChange?.(timezone)
 		setSearch('')
 		setOpen(false)

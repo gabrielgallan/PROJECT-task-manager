@@ -14,6 +14,7 @@ type TCalendarBodyProps<TItem extends ICalendarItem> = Pick<
 	| 'onResize'
 	| 'renderItem'
 	| 'getItemClassName'
+	| 'isItemDisabled'
 	| 'getAgendaEmptyText'
 >
 

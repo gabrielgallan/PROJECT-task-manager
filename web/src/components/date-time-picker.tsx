@@ -16,6 +16,8 @@ interface IDateTimePickerProps {
 	onBlur?: () => void
 	invalid?: boolean
 	error?: string
+	description?: string
+	disabled?: boolean
 }
 
 export function DateTimePicker({
@@ -27,6 +29,8 @@ export function DateTimePicker({
 	onBlur,
 	invalid,
 	error,
+	description,
+	disabled,
 }: IDateTimePickerProps) {
 	const hours = use24HourFormat
 		? Array.from({ length: 24 }, (_, index) => index)
@@ -79,6 +83,12 @@ export function DateTimePicker({
 							type="button"
 							variant="outline"
 							aria-invalid={invalid}
+							disabled={disabled}
+							aria-describedby={
+								[error ? `${id}-error` : undefined, description ? `${id}-description` : undefined]
+									.filter(Boolean)
+									.join(' ') || undefined
+							}
 							onBlur={onBlur}
 							className={cn(
 								'w-full justify-start pl-3 text-left font-normal',
@@ -166,7 +176,12 @@ export function DateTimePicker({
 				</PopoverContent>
 			</Popover>
 
-			{error && <FieldError>{error}</FieldError>}
+			{error && <FieldError id={`${id}-error`}>{error}</FieldError>}
+			{description && (
+				<p id={`${id}-description`} className="text-xs text-muted-foreground">
+					{description}
+				</p>
+			)}
 		</Field>
 	)
 }

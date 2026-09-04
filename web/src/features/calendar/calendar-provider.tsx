@@ -22,6 +22,8 @@ const DEFAULT_SETTINGS: ICalendarSettings = {
 	showWeekends: false,
 }
 
+const getLocalNow = () => new Date()
+
 interface ICalendarContext {
 	selectedDate: Date
 	setSelectedDate: (date: Date | undefined) => void
@@ -31,6 +33,7 @@ interface ICalendarContext {
 	toggleTimeFormat: () => void
 	showWeekends: boolean
 	toggleWeekends: () => void
+	getNow: () => Date
 }
 
 const CalendarContext = createContext<ICalendarContext | null>(null)
@@ -40,6 +43,7 @@ interface ICalendarProviderProps {
 	defaultView?: TCalendarView
 	availableViews: readonly TCalendarView[]
 	storageKey: string
+	getNow?: () => Date
 }
 
 export function CalendarProvider({
@@ -47,6 +51,7 @@ export function CalendarProvider({
 	defaultView,
 	availableViews,
 	storageKey,
+	getNow = getLocalNow,
 }: ICalendarProviderProps) {
 	const fallbackView =
 		defaultView && availableViews.includes(defaultView)
@@ -56,7 +61,7 @@ export function CalendarProvider({
 		...DEFAULT_SETTINGS,
 		view: fallbackView,
 	})
-	const [selectedDate, setSelectedDate] = useState(() => new Date())
+	const [selectedDate, setSelectedDate] = useState(getNow)
 	const view = availableViews.includes(settings.view) ? settings.view : fallbackView
 
 	const updateSettings = useCallback(
@@ -86,8 +91,9 @@ export function CalendarProvider({
 			toggleTimeFormat: () => updateSettings({ use24HourFormat: !settings.use24HourFormat }),
 			showWeekends: settings.showWeekends,
 			toggleWeekends: () => updateSettings({ showWeekends: !settings.showWeekends }),
+			getNow,
 		}),
-		[selectedDate, handleSelectDate, settings, updateSettings, view, availableViews],
+		[selectedDate, handleSelectDate, settings, updateSettings, view, availableViews, getNow],
 	)
 
 	return <CalendarContext.Provider value={value}>{children}</CalendarContext.Provider>

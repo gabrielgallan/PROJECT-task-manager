@@ -1,4 +1,4 @@
-import { format, isToday } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 import { useCalendar } from '@/features/calendar/calendar-provider'
 import { AllDayRow } from '@/features/calendar/components/all-day-row'
 import {
@@ -14,11 +14,18 @@ import { cn } from '@/lib/utils'
 
 type TWeekViewProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+	| 'items'
+	| 'onCreate'
+	| 'onOpen'
+	| 'onMove'
+	| 'onResize'
+	| 'renderItem'
+	| 'getItemClassName'
+	| 'isItemDisabled'
 >
 
 export function CalendarWeekView<TItem extends ICalendarItem>(props: TWeekViewProps<TItem>) {
-	const { selectedDate, showWeekends, setView, setSelectedDate } = useCalendar()
+	const { selectedDate, showWeekends, setView, setSelectedDate, getNow } = useCalendar()
 	const days = getWeekDays(selectedDate, showWeekends)
 	const { timed, multiDay } = splitItemsBySpan(props.items)
 
@@ -44,7 +51,7 @@ export function CalendarWeekView<TItem extends ICalendarItem>(props: TWeekViewPr
 								<span
 									className={cn(
 										'flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums',
-										isToday(day) && 'bg-primary text-primary-foreground',
+										isSameDay(day, getNow()) && 'bg-primary text-primary-foreground',
 									)}
 								>
 									{format(day, 'd')}
@@ -71,6 +78,7 @@ export function CalendarWeekView<TItem extends ICalendarItem>(props: TWeekViewPr
 								onOpen={props.onOpen}
 								renderItem={props.renderItem}
 								getItemClassName={props.getItemClassName}
+								isItemDisabled={props.isItemDisabled}
 							/>
 						</div>
 					</div>
@@ -83,14 +91,12 @@ export function CalendarWeekView<TItem extends ICalendarItem>(props: TWeekViewPr
 					{days.map((day, index) => (
 						<div
 							key={day.toISOString()}
-							className={cn('flex flex-1 border-l', isToday(day) && 'bg-primary/[0.03]')}
+							className={cn(
+								'flex flex-1 border-l',
+								isSameDay(day, getNow()) && 'bg-primary/[0.03]',
+							)}
 						>
-							<DayColumn
-								{...props}
-								items={timed}
-								day={day}
-								showCurrentTimeLabel={index === 0}
-							/>
+							<DayColumn {...props} items={timed} day={day} showCurrentTimeLabel={index === 0} />
 						</div>
 					))}
 				</div>

@@ -11,13 +11,14 @@ interface IProps {
 }
 
 export function CurrentTimeIndicator({ showLabel = false }: IProps) {
-	const { use24HourFormat } = useCalendar()
-	const [now, setNow] = useState(() => new Date())
+	const { use24HourFormat, getNow } = useCalendar()
+	const [now, setNow] = useState(getNow)
 
 	useEffect(() => {
-		const timer = window.setInterval(() => setNow(new Date()), 60_000)
+		setNow(getNow())
+		const timer = window.setInterval(() => setNow(getNow()), 60_000)
 		return () => window.clearInterval(timer)
-	}, [])
+	}, [getNow])
 
 	const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes()
 	const top = (minutesSinceMidnight / 60) * HOUR_HEIGHT
@@ -27,8 +28,8 @@ export function CurrentTimeIndicator({ showLabel = false }: IProps) {
 			className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
 			style={{ top: `${top}px` }}
 		>
-			<span className={cn(["absolute -left-1 size-2 rounded-full", indicatorColor])} />
-			<span className={cn(["h-px w-full", indicatorColor])} />
+			<span className={cn(['absolute -left-1 size-2 rounded-full', indicatorColor])} />
+			<span className={cn(['h-px w-full', indicatorColor])} />
 
 			{showLabel && (
 				<span

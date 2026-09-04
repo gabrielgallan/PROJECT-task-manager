@@ -11,7 +11,7 @@ interface IRowItem<TItem extends ICalendarItem> {
 
 type TAllDayRowProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'onOpen' | 'renderItem' | 'getItemClassName'
+	'onOpen' | 'renderItem' | 'getItemClassName' | 'isItemDisabled'
 > & {
 	days: Date[]
 	items: TItem[]
@@ -23,6 +23,7 @@ export function AllDayRow<TItem extends ICalendarItem>({
 	onOpen,
 	renderItem,
 	getItemClassName,
+	isItemDisabled,
 }: TAllDayRowProps<TItem>) {
 	const rows = useMemo(() => {
 		if (days.length === 0) return []
@@ -30,11 +31,16 @@ export function AllDayRow<TItem extends ICalendarItem>({
 		const rangeStart = startOfDay(days[0])
 		const rangeEnd = endOfDay(days[days.length - 1])
 		const rowItems: IRowItem<TItem>[] = items
-			.filter((item) => parseISO(item.startDate) <= rangeEnd && parseISO(item.endDate) >= rangeStart)
+			.filter(
+				(item) => parseISO(item.startDate) <= rangeEnd && parseISO(item.endDate) >= rangeStart,
+			)
 			.map((item) => {
 				const start = parseISO(item.startDate)
 				const end = parseISO(item.endDate)
-				const startIndex = differenceInCalendarDays(start < rangeStart ? rangeStart : start, rangeStart)
+				const startIndex = differenceInCalendarDays(
+					start < rangeStart ? rangeStart : start,
+					rangeStart,
+				)
 				const endIndex = differenceInCalendarDays(end > rangeEnd ? rangeEnd : end, rangeStart)
 				return { item, startIndex, span: endIndex - startIndex + 1 }
 			})
@@ -61,7 +67,6 @@ export function AllDayRow<TItem extends ICalendarItem>({
 	return (
 		<div className="flex flex-col gap-px py-1">
 			{rows.map((row, rowIndex) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: rows are positional, not identities
 				<div
 					key={rowIndex}
 					className="grid gap-px"
@@ -79,6 +84,7 @@ export function AllDayRow<TItem extends ICalendarItem>({
 							<button
 								key={item.id}
 								type="button"
+								disabled={isItemDisabled?.(item)}
 								onClick={() => onOpen?.(item)}
 								style={{ gridColumn: `${startIndex + 1} / span ${span}` }}
 								className={cn(

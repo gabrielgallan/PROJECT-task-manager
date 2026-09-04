@@ -8,7 +8,7 @@ import type { ICalendarItem, ICalendarProps } from '@/features/calendar/types'
 
 type TMonthViewProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'renderItem' | 'getItemClassName'
+	'items' | 'onCreate' | 'onOpen' | 'onMove' | 'renderItem' | 'getItemClassName' | 'isItemDisabled'
 >
 
 export function CalendarMonthView<TItem extends ICalendarItem>(props: TMonthViewProps<TItem>) {

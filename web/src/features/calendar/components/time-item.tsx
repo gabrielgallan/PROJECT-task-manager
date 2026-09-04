@@ -16,7 +16,7 @@ const COMPACT_HEIGHT = 34
 
 type TTimeItemProps<TItem extends ICalendarItem> = Pick<
 	ICalendarProps<TItem>,
-	'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName'
+	'onOpen' | 'onMove' | 'onResize' | 'renderItem' | 'getItemClassName' | 'isItemDisabled'
 > & {
 	layout: ICalendarItemLayout<TItem>
 	day: Date
@@ -32,8 +32,10 @@ export function TimeItem<TItem extends ICalendarItem>({
 	onResize,
 	renderItem,
 	getItemClassName,
+	isItemDisabled,
 }: TTimeItemProps<TItem>) {
 	const { item, column, columns } = layout
+	const disabled = isItemDisabled?.(item) ?? false
 	const { startDrag, endDrag, isDragging, activeItemId } = useDragDrop()
 	const [resizeOffset, setResizeOffset] = useState<{ top: number; bottom: number } | null>(null)
 	const dragMovedRef = useRef(false)
@@ -120,7 +122,8 @@ export function TimeItem<TItem extends ICalendarItem>({
 		>
 			<button
 				type="button"
-				draggable={Boolean(onMove) && !isResizing}
+				draggable={Boolean(onMove) && !isResizing && !disabled}
+				disabled={disabled}
 				onDragStart={(event) => {
 					if (!onMove) return
 					dragMovedRef.current = true
@@ -148,7 +151,7 @@ export function TimeItem<TItem extends ICalendarItem>({
 			>
 				{renderItem(item, renderContext)}
 
-				{onResize && (
+				{onResize && !disabled && (
 					<>
 						<span
 							role="presentation"

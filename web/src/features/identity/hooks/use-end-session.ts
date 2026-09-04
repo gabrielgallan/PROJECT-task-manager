@@ -5,6 +5,8 @@ import { toast } from 'sonner'
 import { getProfile } from '@/api/get-profile'
 import { signOut } from '@/api/sign-out'
 import { categoryKeys } from '@/features/categories/model/category-query-keys'
+import { planKeys } from '@/features/plans/model/plan-query-keys'
+import { clearPlanRuntime } from '@/features/plans/model/plan-runtime'
 import { taskKeys } from '@/features/tasks/model/task-query-keys'
 import { profileQueryKey, sessionsQueryKey } from '../model/identity'
 import { getHttpStatus, getIdentityError } from '../model/identity-errors'
@@ -36,11 +38,14 @@ async function clearIdentity(client: QueryClient) {
 		client.cancelQueries({ queryKey: sessionsQueryKey, exact: true }),
 		client.cancelQueries({ queryKey: categoryKeys.all }),
 		client.cancelQueries({ queryKey: taskKeys.all }),
+		client.cancelQueries({ queryKey: planKeys.all }),
 	])
 	client.removeQueries({ queryKey: profileQueryKey, exact: true })
 	client.removeQueries({ queryKey: sessionsQueryKey, exact: true })
 	client.removeQueries({ queryKey: categoryKeys.all })
 	client.removeQueries({ queryKey: taskKeys.all })
+	client.removeQueries({ queryKey: planKeys.all })
+	clearPlanRuntime(client)
 	const mutations = client.getMutationCache()
 	for (const mutation of mutations.findAll({ mutationKey: ['identity'] })) {
 		mutations.remove(mutation)
@@ -49,6 +54,9 @@ async function clearIdentity(client: QueryClient) {
 		mutations.remove(mutation)
 	}
 	for (const mutation of mutations.findAll({ mutationKey: taskKeys.all })) {
+		mutations.remove(mutation)
+	}
+	for (const mutation of mutations.findAll({ mutationKey: planKeys.all })) {
 		mutations.remove(mutation)
 	}
 }

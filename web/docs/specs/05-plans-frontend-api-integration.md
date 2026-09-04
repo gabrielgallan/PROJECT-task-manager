@@ -1,6 +1,6 @@
 # SPEC 05 — Integração de Plans do frontend com a API
 
-Status: especificação para implementação futura. Esta entrega altera somente documentação.
+Status: implementada. Resultados da validação registrados na seção 13.
 Data: 2026-09-03.
 
 ## 1. Objetivo, princípios e limites
@@ -822,9 +822,22 @@ Não adicionar uma suíte ampla nova apenas para esta integração. Testes focai
 de intervalo/timezone, normalização de query e reconciliação podem ser incluídos se a
 infraestrutura de teste já disponível comportar isso sem expansão transversal.
 
-## 13. Entrega desta task de documentação
+## 13. Registro da implementação
 
-Criar somente `web/docs/specs/05-plans-frontend-api-integration.md`, revisar sua
-correspondência com os contratos locais e fazer um único commit contendo apenas a SPEC, com a
-mensagem `docs(web): specify plans frontend API integration`. Não fazer push e não implementar
-nenhum item desta especificação nesta task.
+A integração foi implementada no frontend sem alterações em `api/`: seis calls Ky, modelos
+separados, React Query por intervalo/filtros, mutations protegidas por geração e lock, projeção
+temporal com `@js-temporal/polyfill`, exposição do intervalo visível pelo calendário e remoção
+do store operacional de Plans. Dashboard continua usando fixture explícita e Work Logs seguem
+com seu store de protótipo.
+
+Verificação executada:
+
+- `pnpm --dir web run build`: aprovado, mantendo o aviso preexistente de bundle acima de 500 kB;
+- Biome nos arquivos alterados e `git diff --check`: aprovados;
+- cenários puros do Temporal confirmaram horário inexistente/repetido e dias de 23/25 horas;
+- `pnpm --dir web run typecheck`: aprovado;
+- a compilação explícita de `tsconfig.app.json` mantém apenas os sete diagnósticos preexistentes
+  em `product-showcase.tsx` e `radial-metric-card.tsx`, sem diagnóstico nesta entrega.
+
+A matriz manual com API autenticada não foi executada nesta implementação e permanece como
+validação de integração necessária antes de considerar os cenários de rede comprovados.

@@ -21,6 +21,10 @@ export interface ICalendarRange {
 	endDate: Date
 }
 
+export interface ICalendarVisibleRange extends ICalendarRange {
+	view: TCalendarView
+}
+
 export type TCalendarItemVariant = 'time' | 'month' | 'agenda' | 'all-day'
 
 export interface ICalendarItemRenderContext {
@@ -60,8 +64,12 @@ export interface ICalendarProps<TItem extends ICalendarItem> {
 	onOpen?: (item: TItem) => void
 	onMove?: (item: TItem, range: ICalendarRange) => void
 	onResize?: (item: TItem, range: ICalendarRange) => void
+	onVisibleRangeChange?: (range: ICalendarVisibleRange) => void
+	itemsRange?: ICalendarRange | null
+	getNow?: () => Date
 	renderItem: (item: TItem, context: ICalendarItemRenderContext) => ReactNode
 	getItemClassName?: (item: TItem, context: ICalendarItemRenderContext) => string
+	isItemDisabled?: (item: TItem) => boolean
 	getAgendaEmptyText?: (selectedDate: Date) => string
 	renderToolbarActions?: (context: ICalendarToolbarContext) => ICalendarToolbarActions
 	renderSettingsItems?: () => ReactNode

@@ -7,6 +7,7 @@ import {
 	endOfWeek,
 	format,
 	isSameMonth,
+	startOfDay,
 	startOfMonth,
 	startOfWeek,
 	subDays,
@@ -14,7 +15,7 @@ import {
 	subWeeks,
 } from 'date-fns'
 import { WEEK_STARTS_ON } from '@/features/calendar/constants'
-import type { ICalendarCell, TCalendarView } from '@/features/calendar/types'
+import type { ICalendarCell, ICalendarVisibleRange, TCalendarView } from '@/features/calendar/types'
 
 const RANGE_FORMAT = 'MMM d, yyyy'
 const weekOptions = { weekStartsOn: WEEK_STARTS_ON } as const
@@ -64,4 +65,22 @@ export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
 		currentMonth: isSameMonth(date, selectedDate),
 		date,
 	}))
+}
+
+export function getVisibleCalendarRange(
+	view: TCalendarView,
+	selectedDate: Date,
+): ICalendarVisibleRange {
+	if (view === 'day') {
+		const startDate = startOfDay(selectedDate)
+		return { view, startDate, endDate: addDays(startDate, 1) }
+	}
+	if (view === 'week') {
+		const startDate = startOfWeek(selectedDate, weekOptions)
+		return { view, startDate, endDate: addDays(startDate, 7) }
+	}
+	const cells = getCalendarCells(selectedDate)
+	const startDate = startOfDay(cells[0]?.date ?? selectedDate)
+	const endDate = addDays(startOfDay(cells.at(-1)?.date ?? selectedDate), 1)
+	return { view, startDate, endDate }
 }

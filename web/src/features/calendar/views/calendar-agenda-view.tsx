@@ -1,4 +1,4 @@
-import { format, isSameMonth, isToday, parseISO } from 'date-fns'
+import { format, isSameDay, isSameMonth, parseISO } from 'date-fns'
 import { CalendarOff } from 'lucide-react'
 import { useMemo } from 'react'
 import { useCalendar } from '@/features/calendar/calendar-provider'
@@ -19,7 +19,7 @@ export function CalendarAgendaView<TItem extends ICalendarItem>({
 	getItemClassName,
 	getEmptyText,
 }: TAgendaViewProps<TItem>) {
-	const { selectedDate } = useCalendar()
+	const { selectedDate, getNow } = useCalendar()
 	const groups = useMemo(() => {
 		const monthItems = items
 			.filter((item) => isSameMonth(parseISO(item.startDate), selectedDate))
@@ -60,7 +60,7 @@ export function CalendarAgendaView<TItem extends ICalendarItem>({
 								<p
 									className={cn(
 										'text-lg font-semibold tabular-nums',
-										isToday(day) && 'text-primary',
+										isSameDay(day, getNow()) && 'text-primary',
 									)}
 								>
 									{format(day, 'd')}

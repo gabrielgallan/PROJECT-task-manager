@@ -1,16 +1,12 @@
-import { parseISO } from 'date-fns'
 import { useCallback, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { toast } from 'sonner'
 import { BrowserTitle } from '@/components/browser-title'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCategories } from '@/features/categories/store/categories-store'
 import { PlansCalendar, type PlansCalendarHandle } from '@/features/plans/calendar/plans-calendar'
-import type { IPlan } from '@/features/plans/model/plan-types'
-import { usePlans } from '@/features/plans/store/plans-store'
-import { useTasks } from '@/features/tasks/store/tasks-store'
+import { planIdSchema } from '@/features/plans/model/plan-schema'
 import { TaskSourceAlert } from '@/features/tasks/components/task-source-alert'
-import { createWorkLog, validateRange } from '@/features/work-logs/model/work-log-rules'
-import { useWorkLogs } from '@/features/work-logs/store/work-logs-store'
+import { useTasks } from '@/features/tasks/store/tasks-store'
 import { useCreateAction } from '@/hooks/use-create-action'
 
 /** How the tasks page hands a task over when opening this one. */
@@ -19,70 +15,49 @@ const TASK_PARAM = 'task'
 export function PlansPage() {
 	const [searchParams] = useSearchParams()
 	const calendarRef = useRef<PlansCalendarHandle>(null)
-	const { plans, addPlan, updatePlan, removePlan } = usePlans()
-	const { categories, uncategorizedColor } = useCategories()
+	const categorySource = useCategories()
+	const { categories, uncategorizedColor } = categorySource
 	const taskSource = useTasks()
 	const { tasks } = taskSource
-	const { workLogs, addWorkLog } = useWorkLogs()
 	const openCreateDialog = useCallback(() => calendarRef.current?.openCreate(), [])
 
 	useCreateAction(openCreateDialog)
 
-	// An unknown id would filter every plan out and read as an empty calendar,
-	// so the link only takes effect for a task that is actually there.
 	const initialTaskIds = useMemo(() => {
 		const taskId = searchParams.get(TASK_PARAM)
-
-		return taskId && tasks.some((task) => task.id === taskId) ? [taskId] : undefined
-	}, [searchParams, tasks])
-
-	/**
-	 * The two modules are wired here, at the page, and only through plain fields:
-	 * neither feature imports the other.
-	 */
-	const recordPlanAsWorkLog = (plan: IPlan) => {
-		const range = {
-			startDate: parseISO(plan.startDate),
-			endDate: parseISO(plan.endDate),
-		}
-		const message = validateRange(workLogs, range)
-
-		if (message) {
-			toast.error(message)
-			return false
-		}
-
-		addWorkLog(
-			createWorkLog({
-				title: plan.title,
-				startDate: range.startDate,
-				endDate: range.endDate,
-				taskId: plan.taskId,
-				categoryId: plan.categoryId,
-			}),
-		)
-		toast.success('Work log recorded')
-
-		return true
-	}
+		return taskId && planIdSchema.safeParse(taskId).success ? [taskId] : undefined
+	}, [searchParams])
 
 	return (
 		<>
 			<BrowserTitle title="Plans" />
-			<TaskSourceAlert error={taskSource.error} loading={taskSource.isPending} onRetry={() => void taskSource.refetch()} />
+			<TaskSourceAlert
+				error={taskSource.error}
+				loading={taskSource.isPending}
+				onRetry={() => void taskSource.refetch()}
+			/>
+			{categorySource.error && (
+				<Alert variant="destructive">
+					<AlertDescription>
+						Categories could not be loaded. Plans without a category remain available.{' '}
+						<button
+							type="button"
+							className="underline"
+							onClick={() => void categorySource.refetch()}
+						>
+							Try again
+						</button>
+					</AlertDescription>
+				</Alert>
+			)}
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				<PlansCalendar
 					ref={calendarRef}
-					plans={plans}
 					tasks={tasks}
 					categories={categories}
 					uncategorizedColor={uncategorizedColor}
 					initialTaskIds={initialTaskIds}
-					onCreate={addPlan}
-					onUpdate={updatePlan}
-					onDelete={removePlan}
-					onConfirmPlan={recordPlanAsWorkLog}
 				/>
 			</div>
 		</>
