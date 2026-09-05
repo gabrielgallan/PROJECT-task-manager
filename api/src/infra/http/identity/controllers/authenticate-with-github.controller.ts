@@ -76,7 +76,8 @@ export class AuthenticateWithGithubController {
 
 		response.cookie(SESSION_COOKIE_NAME, token, {
 			httpOnly: true,
-			sameSite: 'lax',
+			secure: true,
+			sameSite: 'none',
 			path: '/',
 			maxAge: 1000 * 60 * 60 * 24 * 7,
 		})
