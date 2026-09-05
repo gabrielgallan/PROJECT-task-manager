@@ -1,4 +1,3 @@
-import { LanguageSelect } from '@/components/language-select'
 import { ThemeSelect } from '@/components/theme-select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -41,7 +40,7 @@ export function SystemSettings() {
 
 						<FieldGroup>
 							<FieldLegend variant="legend">Timezone & Preferences</FieldLegend>
-							<Field>
+							{/* <Field>
 								<div className="flex items-center justify-between">
 									<div>
 										<FieldLabel>Language</FieldLabel>
@@ -51,9 +50,9 @@ export function SystemSettings() {
 
 									<LanguageSelect />
 								</div>
-							</Field>
+							</Field> */}
 
-							<FieldSeparator />
+							{/* <FieldSeparator /> */}
 
 							<Field>
 								<div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

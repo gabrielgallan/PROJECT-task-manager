@@ -1,14 +1,7 @@
 import { Pencil, Plus, Tags, Trash2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-	Card,
-	CardAction,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldLabel, FieldSeparator } from '@/components/ui/field'
 import {
 	Item,
@@ -49,9 +42,9 @@ export function CategoriesSettings() {
 			<Card className="bg-transparent ring-transparent">
 				<CardHeader>
 					<CardTitle className="text-lg">Categories</CardTitle>
-					<CardDescription>
+					{/* <CardDescription>
 						Use categories to color plans and work logs consistently.
-					</CardDescription>
+					</CardDescription> */}
 					<CardAction>
 						<Button size="sm" disabled={busy} onClick={() => setDialog({ mode: 'create' })}>
 							<Plus />

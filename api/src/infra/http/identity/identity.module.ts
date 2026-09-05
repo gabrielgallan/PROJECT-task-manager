@@ -12,6 +12,7 @@ import { ResetPasswordUseCase } from '@/domain/identity/application/use-cases/re
 import { RevokeAllSessionsUseCase } from '@/domain/identity/application/use-cases/revoke-all-sessions'
 import { RevokeSessionUseCase } from '@/domain/identity/application/use-cases/revoke-session'
 import { UploadAvatarUseCase } from '@/domain/identity/application/use-cases/upload-avatar'
+import { EnvModule } from '@/infra/env/env.module'
 import { AuthModule } from '../../auth/auth.module'
 import { CryptographyModule } from '../../cryptography/cryptography.module'
 import { DatabaseModule } from '../../database/database.module'
@@ -34,7 +35,7 @@ import { SignOutController } from './controllers/sign-out.controller'
 import { UploadAvatarController } from './controllers/upload-avatar.controller'
 
 @Module({
-	imports: [DatabaseModule, AuthModule, CryptographyModule, EmailModule, StorageModule],
+	imports: [EnvModule, DatabaseModule, AuthModule, CryptographyModule, EmailModule, StorageModule],
 	controllers: [
 		RegisterController,
 		AuthenticateController,
