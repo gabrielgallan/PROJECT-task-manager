@@ -1,4 +1,4 @@
-import { ChevronDown, LogOut } from 'lucide-react'
+import { ChevronDown, Loader2, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
 	DropdownMenu,
@@ -28,7 +28,7 @@ export function MobileNavUser({ user }: { user: IdentityProfile }) {
 					<AvatarFallback>{getUserInitials(user)}</AvatarFallback>
 				</Avatar>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
+			<DropdownMenuContent align="end" className="w-46">
 				<div className="grid max-w-64 gap-1 px-2 py-2 text-sm">
 					<span className="truncate font-medium">{getDisplayName(user)}</span>
 					<span className="truncate text-xs text-muted-foreground">{user.email}</span>
@@ -36,7 +36,7 @@ export function MobileNavUser({ user }: { user: IdentityProfile }) {
 				<DropdownMenuSeparator />
 				<DropdownMenuItem disabled={busy} onClick={() => void handleSignOut()}>
 					<LogOut />
-					{busy ? 'Signing out…' : 'Log out'}
+					{busy ? <Loader2 className="animate-spin" /> : 'Log out'}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
