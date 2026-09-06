@@ -6,6 +6,7 @@ import { Calendar } from '@/components/ui/calendar'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,16 +27,16 @@ function DateField({ id, label, placeholder, description, value, onChange, onBlu
 	const errorId = `${id}-error`
 	return <Field data-invalid={invalid}>
 		<FieldLabel htmlFor={id}>{label}</FieldLabel>
-		<div className="flex gap-1">
+		<InputGroup>
 			<Popover>
-				<PopoverTrigger render={<Button id={id} type="button" variant="outline" className="w-full justify-between font-normal" disabled={disabled} aria-invalid={invalid} aria-describedby={error ? errorId : undefined} onBlur={onBlur} />}>
-					<span className={cn(!date && 'text-muted-foreground')}>{date ? date.toLocaleDateString(undefined, { dateStyle: 'long' }) : placeholder}</span>
+				<PopoverTrigger render={<Button id={id} type="button" variant="ghost" data-slot="input-group-control" className="h-full min-w-0 flex-1 shrink justify-between px-2.5 font-normal shadow-none focus-visible:border-transparent focus-visible:ring-0" disabled={disabled} aria-invalid={invalid} aria-describedby={error ? errorId : undefined} onBlur={onBlur} />}>
+					<span className={cn('min-w-0 flex-1 truncate text-left', !date && 'text-muted-foreground')}>{date ? date.toLocaleDateString(undefined, { dateStyle: 'long' }) : placeholder}</span>
 					<CalendarIcon className="size-4 text-muted-foreground" />
 				</PopoverTrigger>
 				<PopoverContent align="start" className="w-auto p-0"><Calendar mode="single" selected={date} onSelect={(selected) => onChange(localToTaskDate(selected))} autoFocus /></PopoverContent>
 			</Popover>
-			{value && <Button type="button" variant="ghost" size="icon" disabled={disabled} onClick={() => onChange(null)} aria-label={`Clear ${label.toLowerCase()}`}><X /></Button>}
-		</div>
+			{value && <InputGroupAddon align="inline-end"><InputGroupButton size="icon-xs" disabled={disabled} onClick={() => onChange(null)} aria-label={`Clear ${label.toLowerCase()}`}><X /></InputGroupButton></InputGroupAddon>}
+		</InputGroup>
 		{description && <FieldDescription>{description}</FieldDescription>}
 		{error && <p id={errorId} className="text-sm text-destructive">{error}</p>}
 	</Field>

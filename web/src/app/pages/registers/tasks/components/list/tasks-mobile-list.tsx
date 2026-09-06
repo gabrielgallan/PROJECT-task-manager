@@ -55,9 +55,9 @@ const SWIPE_TARGET: Record<TaskStatus, Partial<Record<SwipeDirection, TaskStatus
 }
 
 const SWIPE_ACTION_COLOR: Record<TaskStatus, string> = {
-	BACKLOG: 'bg-slate-600 text-white dark:bg-slate-500 dark:text-slate-950',
-	IN_PROGRESS: 'bg-amber-400 text-amber-950',
-	DONE: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-emerald-950',
+	BACKLOG: 'bg-slate-400 text-background',
+	IN_PROGRESS: 'bg-orange-300 text-background',
+	DONE: 'bg-emerald-400 text-background',
 }
 
 function dueText(task: Task): string {
