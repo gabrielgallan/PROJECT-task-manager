@@ -8,14 +8,15 @@ import { DeleteTaskDialog } from './components/delete-task-dialog'
 import type { ITaskActivityEntry } from './components/details/task-activity'
 import { TaskDetailsSheet } from './components/details/task-details-sheet'
 import { TasksGantt } from './components/gantt/tasks-gantt'
-import { TasksMobileList } from './components/list/tasks-mobile-list'
 import { TasksList } from './components/list/tasks-list'
+import { TasksMobileList } from './components/list/tasks-mobile-list'
 import { TaskDialog } from './components/task-dialog'
 import { TasksToolbar } from './components/tasks-toolbar'
 import { useTasksPage } from './hooks/use-tasks-page'
 
 export function TasksPage() {
-	const page = useTasksPage()
+	const isMobile = useIsMobile()
+	const page = useTasksPage(isMobile)
 
 	const {
 		view,
@@ -55,8 +56,6 @@ export function TasksPage() {
 	const detailsError = details.error ? getTaskError(details.error, 'details') : null
 
 	const hasData = currentQuery.data !== undefined
-
-	const isMobile = useIsMobile()
 
 	return (
 		<>
@@ -128,7 +127,19 @@ export function TasksPage() {
 					/>
 				)}
 
-				{hasData && view === 'list' && isMobile && <TasksMobileList />}
+				{hasData && view === 'list' && isMobile && (
+					<TasksMobileList
+						result={result}
+						filtered={filtered}
+						onPageChange={setPage}
+						onClearFilters={filters.clearAll}
+						onNewTask={openCreateDialog}
+						onStatusChange={changeStatus}
+						onDetails={setDetailedTask}
+						onEdit={setEditingTask}
+						onDelete={setDeletingTask}
+					/>
+				)}
 
 				{hasData && view === 'list' && !isMobile && (
 					<TasksList
