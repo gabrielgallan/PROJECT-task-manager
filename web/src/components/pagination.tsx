@@ -16,7 +16,7 @@ export function Pagination({ page, total, limit, onPageChange }: PaginationProps
 			<span className="text-sm text-muted-foreground">{total} total item(s)</span>
 
 			<div className="flex items-center gap-4 lg:gap-8">
-				<div className="flex text-sm font-medium">
+				<div className="hidden sm:flex text-sm font-medium">
 					Page {page} of {pages}
 				</div>
 				<div className="flex items-center gap-2">

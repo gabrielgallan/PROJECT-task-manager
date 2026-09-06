@@ -93,9 +93,12 @@ export function TasksToolbar({
 	}
 
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2">
-			<form className="flex flex-wrap items-center gap-2" onSubmit={handleSubmit}>
-				<InputGroup className="w-full sm:w-64">
+		<form
+			className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center"
+			onSubmit={handleSubmit}
+		>
+			<div className="flex min-w-0 items-center gap-2 md:contents">
+				<InputGroup className="min-w-0 flex-1 md:order-1 md:w-64 md:flex-none">
 					<InputGroupAddon>
 						<Search />
 					</InputGroupAddon>
@@ -122,55 +125,68 @@ export function TasksToolbar({
 					)}
 				</InputGroup>
 
-				<TaskFacetFilter
-					label="Status"
-					options={STATUS_OPTIONS}
-					selected={draft.status}
-					onToggle={onToggleStatus}
-					onClear={onClearStatus}
-				/>
+				<div className="flex shrink-0 items-center gap-2 md:order-3">
+					{/* Filled while there is something pending, so an edited but unapplied
+					    filter never passes for an applied one. */}
+					<Button
+						type="submit"
+						aria-label="Search tasks"
+						size={isMobile ? 'icon' : 'sm'}
+						variant={isDirty ? 'default' : 'outline'}
+					>
+						<Search />
+						{!isMobile && 'Search'}
+					</Button>
 
-				<TaskFacetFilter
-					label="Priority"
-					options={PRIORITY_OPTIONS}
-					selected={draft.priority}
-					onToggle={onTogglePriority}
-					onClear={onClearPriority}
-				/>
-
-				{/* Filled while there is something pending, so an edited but unapplied
-				    filter never passes for an applied one. */}
-				<Button
-					type="submit"
-					size={isMobile ? 'icon' : 'sm'}
-					variant={isDirty ? 'default' : 'outline'}
-				>
-					<Search />
-					{!isMobile && 'Search'}
-				</Button>
-
-				{/* Kept in place rather than toggled, so the pair never shifts around. */}
-				<Button
-					type="button"
-					variant="ghost"
-					size={isMobile ? 'icon' : 'sm'}
-					disabled={!canClear}
-					onClick={onClearAll}
-				>
-					<X />
-					{!isMobile && 'Clear filters'}
-				</Button>
-			</form>
-
-			{/* Views and the main action share the right side, as in the calendar pages. */}
-			<div className="flex ml-auto items-center gap-2">
-				<PageViewTabs views={TASK_VIEWS} value={view} onChange={onViewChange} />
-
-				<Button onClick={onNewTask} size={isMobile ? 'icon' : 'sm'}>
-					<Plus />
-					{!isMobile && 'New task'}
-				</Button>
+					{/* Kept in place rather than toggled, so the pair never shifts around. */}
+					<Button
+						type="button"
+						aria-label="Clear filters"
+						variant="ghost"
+						size={isMobile ? 'icon' : 'sm'}
+						disabled={!canClear}
+						onClick={onClearAll}
+					>
+						<X />
+						{!isMobile && 'Clear filters'}
+					</Button>
+				</div>
 			</div>
-		</div>
+
+			<div className="flex flex-wrap items-center justify-between gap-2 md:contents">
+				<div className="flex items-center gap-2 md:order-2">
+					<TaskFacetFilter
+						label="Status"
+						options={STATUS_OPTIONS}
+						selected={draft.status}
+						onToggle={onToggleStatus}
+						onClear={onClearStatus}
+					/>
+
+					<TaskFacetFilter
+						label="Priority"
+						options={PRIORITY_OPTIONS}
+						selected={draft.priority}
+						onToggle={onTogglePriority}
+						onClear={onClearPriority}
+					/>
+				</div>
+
+				{/* Views and the main action share the right side, as in the calendar pages. */}
+				<div className="ml-auto flex items-center gap-2 md:order-4">
+					<PageViewTabs views={TASK_VIEWS} value={view} onChange={onViewChange} />
+
+					<Button
+						type="button"
+						aria-label="New task"
+						onClick={onNewTask}
+						size={isMobile ? 'icon' : 'sm'}
+					>
+						<Plus />
+						{!isMobile && 'New task'}
+					</Button>
+				</div>
+			</div>
+		</form>
 	)
 }

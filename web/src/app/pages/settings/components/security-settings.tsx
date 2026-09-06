@@ -119,11 +119,8 @@ export function SecuritySettings({
 							</div>
 						))}
 					</fieldset>
-					<p className="text-sm text-muted-foreground">
-						Use 6–18 characters for your new password.
-					</p>
 					<Link
-						className="block text-sm underline"
+						className="block text-sm text-foreground/80 hover:text-foreground hover:underline"
 						to={authEmailPath('/auth/forgot-password', profile.email)}
 					>
 						Forgot or haven't set a password? Send a recovery link

@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { buildTaskGanttData } from '@/features/tasks/model/task-gantt'
 import type { Task } from '@/features/tasks/model/task-types'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 
 interface ITasksGanttProps {
@@ -45,6 +46,7 @@ export function TasksGantt({
 	const [zoom, setZoom] = useState(DEFAULT_GANTT_ZOOM)
 	const [pendingId, setPendingId] = useState<string | null>(null)
 	const [revisions, setRevisions] = useState<Record<string, number>>({})
+	const isMobile = useIsMobile()
 
 	const { groups, undatedTasks } = useMemo(() => buildTaskGanttData(tasks), [tasks])
 
@@ -114,27 +116,29 @@ export function TasksGantt({
 						)}
 					</div>
 				) : (
-					/* Remounting per range and zoom re-anchors the view on the focus date. */
+					/* Remounting per viewport, range and zoom re-anchors the view on the focus date. */
 					<GanttProvider
-						key={`${range}-${zoom}`}
+						key={`${isMobile ? 'mobile' : 'desktop'}-${range}-${zoom}`}
 						range={range}
 						zoom={zoom}
 						initialScrollDate={focusDate}
 					>
-						<GanttSidebar label="Tasks">
-							{groups.map((group) => (
-								<GanttSidebarGroup key={group.status} name={group.name}>
-									{group.features.map((feature) => (
-										<GanttSidebarItem
-											key={feature.id}
-											feature={feature}
-											onSelectItem={selectTaskById}
-											className={feature.task.status === 'DONE' ? 'opacity-50' : undefined}
-										/>
-									))}
-								</GanttSidebarGroup>
-							))}
-						</GanttSidebar>
+						{!isMobile && (
+							<GanttSidebar label="Tasks">
+								{groups.map((group) => (
+									<GanttSidebarGroup key={group.status} name={group.name}>
+										{group.features.map((feature) => (
+											<GanttSidebarItem
+												key={feature.id}
+												feature={feature}
+												onSelectItem={selectTaskById}
+												className={feature.task.status === 'DONE' ? 'opacity-50' : undefined}
+											/>
+										))}
+									</GanttSidebarGroup>
+								))}
+							</GanttSidebar>
+						)}
 
 						<GanttTimeline>
 							<GanttHeader />

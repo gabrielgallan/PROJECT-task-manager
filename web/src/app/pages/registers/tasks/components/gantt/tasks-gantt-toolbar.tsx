@@ -119,7 +119,7 @@ export function TasksGanttToolbar({
 }: ITasksGanttToolbarProps) {
 	return (
 		<header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b px-3 py-2">
-			<div className="flex items-center gap-2">
+			<div className="hidden items-center gap-2 md:flex">
 				<span className="text-sm font-semibold">Delivery timeline</span>
 
 				{undatedTasks.length > 0 && (
@@ -127,10 +127,12 @@ export function TasksGanttToolbar({
 				)}
 			</div>
 
-			<div className="flex items-center gap-3">
-				<PriorityLegend />
+			<div className="flex w-full items-center justify-between gap-3 md:w-auto md:justify-start">
+				<div className="hidden md:contents">
+					<PriorityLegend />
 
-				<Separator orientation="vertical" className="h-4" />
+					<Separator orientation="vertical" className="h-4" />
+				</div>
 
 				<div className="flex items-center">
 					<Button

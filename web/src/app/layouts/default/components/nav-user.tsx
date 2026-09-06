@@ -1,4 +1,4 @@
-import { EllipsisVertical, LogOut } from 'lucide-react'
+import { EllipsisVertical, Loader2, LogOut } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
 	DropdownMenu,
@@ -38,7 +38,7 @@ export function NavUser({ user }: { user: IdentityProfile }) {
 					<DropdownMenuContent side="right" align="end">
 						<DropdownMenuItem disabled={busy} onClick={() => void handleSignOut()}>
 							<LogOut />
-							{busy ? 'Signing out…' : 'Log out'}
+							{busy ? <Loader2 className="animate-spin" /> : 'Log out'}
 						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>

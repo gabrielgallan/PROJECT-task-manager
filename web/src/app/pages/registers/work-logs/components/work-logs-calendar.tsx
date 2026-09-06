@@ -1,5 +1,5 @@
 import { Temporal } from '@js-temporal/polyfill'
-import { Plus } from 'lucide-react'
+import { Loader2, Plus } from 'lucide-react'
 import {
 	forwardRef,
 	useCallback,
@@ -50,6 +50,7 @@ import type {
 	TWorkLogDialogState,
 	WorkLogCalendarItem,
 } from '@/features/work-logs/model/work-log-types'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { WorkLogSummary } from './work-log-day-summary'
 import { WorkLogDialog } from './work-log-dialog'
 import { NO_TASK_FILTER, WorkLogFilter } from './work-log-filter'
@@ -86,6 +87,8 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, Props>(functi
 		() => instantToCalendarDate(new Date().toISOString(), timeZone),
 		[timeZone],
 	)
+
+	const isMobile = useIsMobile()
 
 	useEffect(() => {
 		if (seenGeneration.current === generation) return
@@ -300,11 +303,13 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, Props>(functi
 				isItemDisabled={(item) => isWorkLogPending(item.id)}
 				renderToolbarActions={({ view }) => ({
 					beforeViews: (
-						<div className="flex items-center gap-3">
-							<WorkLogSummary
-								loggedMinutes={sumMinutes(workLogs)}
-								untrackedMinutes={view === 'day' ? getUntrackedMinutes(workLogs) : 0}
-							/>
+						<WorkLogSummary
+							loggedMinutes={sumMinutes(workLogs)}
+							untrackedMinutes={view === 'day' ? getUntrackedMinutes(workLogs) : 0}
+						/>
+					),
+					filters: (
+						<div className="flex items-center gap-2">
 							<WorkLogFilter
 								tasks={tasks}
 								selectedTaskIds={selectedTaskIds}
@@ -329,9 +334,15 @@ export const WorkLogsCalendar = forwardRef<WorkLogsCalendarHandle, Props>(functi
 						</div>
 					),
 					afterSettings: (
-						<Button size="sm" disabled={logNow.pending} onClick={() => void openLogNow()}>
+						<Button
+							size={isMobile ? 'icon' : 'sm'}
+							disabled={logNow.pending}
+							onClick={() => void openLogNow()}
+						>
 							<Plus />
-							<span className="max-md:sr-only">{logNow.pending ? 'Loading…' : 'Log now'}</span>
+							<span className="max-md:sr-only">
+								{logNow.pending ? <Loader2 className="animate-spin" /> : 'Log now'}
+							</span>
 						</Button>
 					),
 				})}

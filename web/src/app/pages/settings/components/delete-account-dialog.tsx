@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { Loader2, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { deleteUser } from '@/api/delete-user'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -57,6 +58,7 @@ export function DeleteAccountDialog({ email }: { email: string }) {
 			}}
 		>
 			<AlertDialogTrigger render={<Button variant="destructive" disabled={busy} />}>
+				<Trash2 />
 				Delete account
 			</AlertDialogTrigger>
 			<AlertDialogContent>
@@ -75,8 +77,8 @@ export function DeleteAccountDialog({ email }: { email: string }) {
 					className="space-y-4"
 				>
 					<div className="space-y-2">
-						<Label htmlFor="delete-confirmation" className="block break-words">
-							Type {email} to confirm
+						<Label htmlFor="delete-confirmation" className="block wrap-break-word">
+							Type <strong>{email}</strong> to confirm
 						</Label>
 						<Input
 							id="delete-confirmation"
@@ -99,7 +101,7 @@ export function DeleteAccountDialog({ email }: { email: string }) {
 							variant="destructive"
 							disabled={pending || confirmation.trim() !== email}
 						>
-							{pending ? 'Deleting…' : 'Delete account'}
+							{pending ? <Loader2 className="animate-spin" /> : 'Delete account'}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

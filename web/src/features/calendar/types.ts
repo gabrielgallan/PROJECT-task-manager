@@ -40,6 +40,7 @@ export interface ICalendarToolbarContext {
 }
 
 export interface ICalendarToolbarActions {
+	filters?: ReactNode
 	beforeViews?: ReactNode
 	afterSettings?: ReactNode
 }

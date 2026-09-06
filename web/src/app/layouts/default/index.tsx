@@ -109,12 +109,12 @@ function DefaultLayoutContent() {
 
 					{/* Mobile */}
 					<header className="md:hidden flex shrink-0 items-center justify-between border-b p-2">
-						<div className="flex items-center">
+						<div className="flex items-center gap-2">
 							<div className="p-2 bg-primary rounded-lg">
-								<Workflow className="text-primary-foreground size-4" />
+								<Workflow className="text-primary-foreground size-4.5" />
 							</div>
 
-							<Button size="icon" variant="ghost" onClick={() => navigate('/settings')}>
+							<Button variant="ghost" size="icon" onClick={() => navigate('/settings')}>
 								<Settings />
 							</Button>
 

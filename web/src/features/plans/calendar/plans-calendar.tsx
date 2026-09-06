@@ -39,6 +39,7 @@ import {
 import { getPlanError, PlanActionBlockedError } from '@/features/plans/model/plan-errors'
 import type { PlanCalendarItem, TPlanDialogState } from '@/features/plans/model/plan-types'
 import type { Task } from '@/features/tasks/model/task-types'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { PlanDialog } from './plan-dialog'
 import { NO_TASK_FILTER, PlanFilter } from './plan-filter'
 import { getPlanItemClassName, PlanItemContent } from './plan-item-content'
@@ -79,6 +80,9 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, Props>(function Pla
 		() => instantToCalendarDate(new Date().toISOString(), timeZone),
 		[timeZone],
 	)
+
+	const isMobile = useIsMobile()
+
 	useEffect(() => {
 		if (seenGeneration.current === generation) return
 		seenGeneration.current = generation
@@ -243,7 +247,7 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, Props>(function Pla
 				getItemClassName={(item, context) => getPlanItemClassName(colorFor(item), context)}
 				isItemDisabled={(item) => isPlanPending(item.id)}
 				renderToolbarActions={({ selectedDate }) => ({
-					beforeViews: (
+					filters: (
 						<div className="flex items-center gap-2">
 							<PlanFilter
 								tasks={tasks}
@@ -270,7 +274,7 @@ export const PlansCalendar = forwardRef<PlansCalendarHandle, Props>(function Pla
 					),
 					afterSettings: (
 						<Button
-							size="sm"
+							size={isMobile ? 'icon' : 'sm'}
 							onClick={() => {
 								const startDate = new Date(selectedDate)
 								startDate.setHours(WORK_DAY_START_HOUR, 0, 0, 0)

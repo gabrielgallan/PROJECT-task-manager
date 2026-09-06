@@ -20,8 +20,10 @@ import { AuthenticateWithProviderUseCase } from '@/domain/identity/application/u
 import { UnsupportedAuthProviderError } from '@/domain/identity/application/use-cases/errors/unsupported-auth-provider-error'
 import { Public } from '@/infra/auth/public.decorator'
 import { SESSION_COOKIE_NAME } from '@/infra/auth/session-cookie'
+import { EnvService } from '@/infra/env/env.service'
 import { ApiErrorResponseDto } from '../../dto/api-error-response.dto'
 import { ZodValidationPipe } from '../../pipes/zod-validation-pipe'
+import { normalizeIpAddress } from '../../utils/normalize-ip-address'
 import { AuthenticateResponseDto } from './dto/authenticate.dto'
 import {
 	AuthenticateWithProviderDto,
@@ -32,7 +34,10 @@ import {
 @Public()
 @Controller('/api/sessions/google')
 export class AuthenticateWithGoogleController {
-	constructor(private authenticateWithGoogle: AuthenticateWithProviderUseCase) {}
+	constructor(
+		private authenticateWithGoogle: AuthenticateWithProviderUseCase,
+		private envService: EnvService,
+	) {}
 
 	@ApiOperation({ summary: 'authenticate with google' })
 	@ApiCreatedResponse({ type: AuthenticateResponseDto })
@@ -55,7 +60,7 @@ export class AuthenticateWithGoogleController {
 		const result = await this.authenticateWithGoogle.execute({
 			provider: 'GOOGLE',
 			code,
-			ipAddress: request.ip,
+			ipAddress: normalizeIpAddress(request.ip),
 			userAgent: request.header('user-agent'),
 		})
 
@@ -75,8 +80,8 @@ export class AuthenticateWithGoogleController {
 
 		response.cookie(SESSION_COOKIE_NAME, token, {
 			httpOnly: true,
-			secure: true,
-			sameSite: 'none',
+			secure: this.envService.get('NODE_ENV') === 'production',
+			sameSite: this.envService.get('NODE_ENV') === 'production' ? 'none' : 'lax',
 			path: '/',
 			maxAge: 1000 * 60 * 60 * 24 * 7,
 		})
