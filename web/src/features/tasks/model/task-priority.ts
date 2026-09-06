@@ -27,3 +27,10 @@ export const TASK_PRIORITY_COLOR: Record<TaskPriority, string> = {
 	HIGH: 'bg-rose-500',
 	CRITICAL: 'bg-violet-400',
 }
+
+export const TASK_PRIORITY_BADGE_COLOR: Record<TaskPriority, string> = {
+	LOW: 'bg-slate-500/20 text-slate-600 dark:text-slate-400',
+	MEDIUM: 'bg-amber-500/20 text-amber-700 dark:text-amber-400',
+	HIGH: 'bg-rose-500/20 text-rose-700 dark:text-rose-400',
+	CRITICAL: 'bg-violet-500/20 text-violet-700 dark:text-violet-400',
+}
